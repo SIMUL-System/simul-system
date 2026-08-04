@@ -1,0 +1,30 @@
+{
+  "recommendations": [
+    // Java / Maven (backend)
+    "vscjava.vscode-java-pack",
+    "vmware.vscode-spring-boot",
+    "vscjava.vscode-spring-boot-dashboard",
+
+    // React / Front-end
+    "dsznajder.es7-react-js-snippets",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "formulahendry.auto-rename-tag",
+    "formulahendry.auto-close-tag",
+
+    // PostgreSQL
+    "ms-ossdata.vscode-pgsql",
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-pg",
+
+    // Git / GitHub
+    "eamodio.gitlens",
+    "github.vscode-pull-request-github",
+
+    // Produtividade geral
+    "editorconfig.editorconfig",
+    "gruntfuggly.todo-tree",
+    "mikestead.dotenv",
+    "rangav.vscode-thunder-client"
+  ]
+}
