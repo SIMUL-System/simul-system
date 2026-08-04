@@ -1,0 +1,57 @@
+### === Java / Maven (backend) === ###
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+.mvn/
+mvnw
+mvnw.cmd
+*.iml
+.classpath
+.project
+.settings/
+
+### === Node / React (frontend & mobile) === ###
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+build/
+.next/
+.turbo/
+coverage/
+.eslintcache
+
+### === Variáveis de ambiente / segredos === ###
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+application-secrets.properties
+
+### === IDEs e editores === ###
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+### === Sistema operacional === ###
+.DS_Store
+Thumbs.db
+desktop.ini
+
+### === Banco de dados / dumps locais === ###
+*.sql.bak
+*.dump
+
+### === Diversos === ###
+*.tmp
+*.temp
+logs/
