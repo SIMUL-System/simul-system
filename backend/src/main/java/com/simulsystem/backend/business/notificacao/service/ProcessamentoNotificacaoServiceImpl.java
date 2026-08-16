@@ -112,9 +112,10 @@ public class ProcessamentoNotificacaoServiceImpl
 
         } catch (RuntimeException exception) {
             historicoNotificacaoService.marcarComoFalha(
-                    historico.getId(),
-                    exception.getMessage()
-            );
+        historico.getId(),
+        exception.getMessage(),
+        referencia
+);
         }
     }
 

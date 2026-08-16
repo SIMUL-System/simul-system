@@ -52,6 +52,12 @@ public class HistoricoNotificacao {
     @Column(name = "status", nullable = false, length = 30)
     private StatusNotificacao status;
 
+    @Column(name = "numero_tentativas", nullable = false)
+    private Integer numeroTentativas;
+
+    @Column(name = "proxima_tentativa")
+    private LocalDateTime proximaTentativa;
+
     @Column(name = "data_envio")
     private LocalDateTime dataEnvio;
 
@@ -73,6 +79,10 @@ public class HistoricoNotificacao {
 
         if (status == null) {
             status = StatusNotificacao.PENDENTE;
+        }
+
+        if (numeroTentativas == null) {
+            numeroTentativas = 0;
         }
     }
 

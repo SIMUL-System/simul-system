@@ -10,11 +10,15 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
 public class HistoricoNotificacaoServiceImpl
         implements HistoricoNotificacaoService {
+
+    private static final int LIMITE_TENTATIVAS = 3;
+    private static final long INTERVALO_RETRY_MINUTOS = 5;
 
     private final HistoricoNotificacaoRepository repository;
 
@@ -58,20 +62,13 @@ public class HistoricoNotificacaoServiceImpl
         historico.setDataHoraColeta(dataHoraColeta);
         historico.setCanal(canal);
         historico.setStatus(StatusNotificacao.PENDENTE);
+        historico.setNumeroTentativas(0);
 
         try {
             return Optional.of(
                     repository.saveAndFlush(historico)
             );
         } catch (DataIntegrityViolationException exception) {
-            /*
-             * Proteção para concorrência:
-             * duas execuções podem consultar ao mesmo tempo e ambas
-             * encontrarem "não existe".
-             *
-             * A constraint UNIQUE do PostgreSQL garante que somente
-             * uma delas consiga criar o registro.
-             */
             return Optional.empty();
         }
     }
@@ -96,8 +93,11 @@ public class HistoricoNotificacaoServiceImpl
         HistoricoNotificacao historico =
                 buscarPorId(historicoId);
 
+        incrementarTentativas(historico);
+
         historico.setStatus(StatusNotificacao.ENVIADO);
         historico.setDataEnvio(dataEnvio);
+        historico.setProximaTentativa(null);
         historico.setMensagemErro(null);
 
         repository.save(historico);
@@ -106,7 +106,8 @@ public class HistoricoNotificacaoServiceImpl
     @Override
     public void marcarComoFalha(
             Long historicoId,
-            String mensagemErro
+            String mensagemErro,
+            LocalDateTime referencia
     ) {
         if (historicoId == null) {
             throw new IllegalArgumentException(
@@ -114,8 +115,16 @@ public class HistoricoNotificacaoServiceImpl
             );
         }
 
+        if (referencia == null) {
+            throw new IllegalArgumentException(
+                    "A data e hora de referência são obrigatórias."
+            );
+        }
+
         HistoricoNotificacao historico =
                 buscarPorId(historicoId);
+
+        incrementarTentativas(historico);
 
         historico.setStatus(StatusNotificacao.FALHA);
         historico.setDataEnvio(null);
@@ -123,7 +132,34 @@ public class HistoricoNotificacaoServiceImpl
                 limitarMensagemErro(mensagemErro)
         );
 
+        if (historico.getNumeroTentativas() < LIMITE_TENTATIVAS) {
+            historico.setProximaTentativa(
+                    referencia.plusMinutes(
+                            INTERVALO_RETRY_MINUTOS
+                    )
+            );
+        } else {
+            historico.setProximaTentativa(null);
+        }
+
         repository.save(historico);
+    }
+
+    @Override
+    public List<HistoricoNotificacao> buscarFalhasElegiveisParaRetry(
+            LocalDateTime referencia
+    ) {
+        if (referencia == null) {
+            throw new IllegalArgumentException(
+                    "A data e hora de referência são obrigatórias."
+            );
+        }
+
+        return repository.buscarFalhasElegiveisParaRetry(
+                StatusNotificacao.FALHA,
+                referencia,
+                LIMITE_TENTATIVAS
+        );
     }
 
     private HistoricoNotificacao buscarPorId(Long historicoId) {
@@ -133,6 +169,25 @@ public class HistoricoNotificacaoServiceImpl
                                 "Histórico de notificação não encontrado."
                         )
                 );
+    }
+
+    private void incrementarTentativas(
+            HistoricoNotificacao historico
+    ) {
+        int tentativasAtuais =
+                historico.getNumeroTentativas() == null
+                        ? 0
+                        : historico.getNumeroTentativas();
+
+        int novaQuantidade =
+                Math.min(
+                        tentativasAtuais + 1,
+                        LIMITE_TENTATIVAS
+                );
+
+        historico.setNumeroTentativas(
+                novaQuantidade
+        );
     }
 
     private void validarDadosReserva(
