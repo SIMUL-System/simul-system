@@ -12,6 +12,8 @@ import com.simulsystem.backend.business.usuario.model.Usuario;
 import com.simulsystem.backend.business.usuario.service.UsuarioService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class PreferenciaNotificacaoServiceImpl
         implements PreferenciaNotificacaoService {
@@ -121,5 +123,10 @@ public class PreferenciaNotificacaoServiceImpl
         return mapper.toResponseDTO(
                 preferenciaAtualizada
         );
+    }
+
+    @Override
+    public List<PreferenciaNotificacao> buscarElegiveisParaProcessamento() {
+        return repository.buscarElegiveisParaProcessamento();
     }
 }

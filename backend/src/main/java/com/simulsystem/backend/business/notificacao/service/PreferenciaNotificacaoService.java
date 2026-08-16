@@ -2,6 +2,9 @@ package com.simulsystem.backend.business.notificacao.service;
 
 import com.simulsystem.backend.business.notificacao.dto.PreferenciaNotificacaoRequestDTO;
 import com.simulsystem.backend.business.notificacao.dto.PreferenciaNotificacaoResponseDTO;
+import com.simulsystem.backend.business.notificacao.model.PreferenciaNotificacao;
+
+import java.util.List;
 
 public interface PreferenciaNotificacaoService {
 
@@ -18,4 +21,6 @@ public interface PreferenciaNotificacaoService {
             String emailUsuario,
             PreferenciaNotificacaoRequestDTO requestDTO
     );
+
+    List<PreferenciaNotificacao> buscarElegiveisParaProcessamento();
 }
