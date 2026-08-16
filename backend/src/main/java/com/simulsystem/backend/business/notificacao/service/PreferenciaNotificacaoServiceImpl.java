@@ -6,6 +6,8 @@ import com.simulsystem.backend.business.notificacao.mapper.PreferenciaNotificaca
 import com.simulsystem.backend.business.notificacao.model.PreferenciaNotificacao;
 import com.simulsystem.backend.business.notificacao.repository.PreferenciaNotificacaoRepository;
 import com.simulsystem.backend.business.notificacao.validation.PreferenciaNotificacaoValidation;
+import com.simulsystem.backend.business.rota.model.Rota;
+import com.simulsystem.backend.business.rota.validation.RotaValidation;
 import com.simulsystem.backend.business.usuario.model.Usuario;
 import com.simulsystem.backend.business.usuario.service.UsuarioService;
 import org.springframework.stereotype.Service;
@@ -18,17 +20,20 @@ public class PreferenciaNotificacaoServiceImpl
     private final PreferenciaNotificacaoMapper mapper;
     private final PreferenciaNotificacaoValidation validation;
     private final UsuarioService usuarioService;
+    private final RotaValidation rotaValidation;
 
     public PreferenciaNotificacaoServiceImpl(
             PreferenciaNotificacaoRepository repository,
             PreferenciaNotificacaoMapper mapper,
             PreferenciaNotificacaoValidation validation,
-            UsuarioService usuarioService
+            UsuarioService usuarioService,
+            RotaValidation rotaValidation
     ) {
         this.repository = repository;
         this.mapper = mapper;
         this.validation = validation;
         this.usuarioService = usuarioService;
+        this.rotaValidation = rotaValidation;
     }
 
     @Override
@@ -45,10 +50,16 @@ public class PreferenciaNotificacaoServiceImpl
                 usuario.getId()
         );
 
+        Rota rota =
+                rotaValidation.buscarRotaExistente(
+                        requestDTO.rotaId()
+                );
+
         PreferenciaNotificacao preferencia =
                 mapper.toEntity(
                         requestDTO,
-                        usuario
+                        usuario,
+                        rota
                 );
 
         PreferenciaNotificacao preferenciaSalva =
@@ -73,7 +84,9 @@ public class PreferenciaNotificacaoServiceImpl
                         usuario.getId()
                 );
 
-        return mapper.toResponseDTO(preferencia);
+        return mapper.toResponseDTO(
+                preferencia
+        );
     }
 
     @Override
@@ -91,9 +104,15 @@ public class PreferenciaNotificacaoServiceImpl
                         usuario.getId()
                 );
 
+        Rota rota =
+                rotaValidation.buscarRotaExistente(
+                        requestDTO.rotaId()
+                );
+
         mapper.atualizarEntity(
                 preferencia,
-                requestDTO
+                requestDTO,
+                rota
         );
 
         PreferenciaNotificacao preferenciaAtualizada =

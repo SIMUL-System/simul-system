@@ -3,6 +3,7 @@ package com.simulsystem.backend.business.notificacao.mapper;
 import com.simulsystem.backend.business.notificacao.dto.PreferenciaNotificacaoRequestDTO;
 import com.simulsystem.backend.business.notificacao.dto.PreferenciaNotificacaoResponseDTO;
 import com.simulsystem.backend.business.notificacao.model.PreferenciaNotificacao;
+import com.simulsystem.backend.business.rota.model.Rota;
 import com.simulsystem.backend.business.usuario.model.Usuario;
 import org.springframework.stereotype.Component;
 
@@ -11,13 +12,20 @@ public class PreferenciaNotificacaoMapper {
 
     public PreferenciaNotificacao toEntity(
             PreferenciaNotificacaoRequestDTO requestDTO,
-            Usuario usuario
+            Usuario usuario,
+            Rota rota
     ) {
         PreferenciaNotificacao preferencia =
                 new PreferenciaNotificacao();
 
         preferencia.setUsuario(usuario);
-        preferencia.setEmailAtivo(requestDTO.emailAtivo());
+        preferencia.setRota(rota);
+        preferencia.setEmailAtivo(
+                requestDTO.emailAtivo()
+        );
+        preferencia.setWebPushAtivo(
+                requestDTO.webPushAtivo()
+        );
         preferencia.setAntecedenciaHoras(
                 requestDTO.antecedenciaHoras()
         );
@@ -27,9 +35,16 @@ public class PreferenciaNotificacaoMapper {
 
     public void atualizarEntity(
             PreferenciaNotificacao preferencia,
-            PreferenciaNotificacaoRequestDTO requestDTO
+            PreferenciaNotificacaoRequestDTO requestDTO,
+            Rota rota
     ) {
-        preferencia.setEmailAtivo(requestDTO.emailAtivo());
+        preferencia.setRota(rota);
+        preferencia.setEmailAtivo(
+                requestDTO.emailAtivo()
+        );
+        preferencia.setWebPushAtivo(
+                requestDTO.webPushAtivo()
+        );
         preferencia.setAntecedenciaHoras(
                 requestDTO.antecedenciaHoras()
         );
@@ -41,7 +56,10 @@ public class PreferenciaNotificacaoMapper {
         return new PreferenciaNotificacaoResponseDTO(
                 preferencia.getId(),
                 preferencia.getUsuario().getId(),
+                preferencia.getRota().getId(),
+                preferencia.getRota().getNome(),
                 preferencia.getEmailAtivo(),
+                preferencia.getWebPushAtivo(),
                 preferencia.getAntecedenciaHoras(),
                 preferencia.getDataCriacao(),
                 preferencia.getDataAtualizacao()

@@ -1,5 +1,6 @@
 package com.simulsystem.backend.business.notificacao.model;
 
+import com.simulsystem.backend.business.rota.model.Rota;
 import com.simulsystem.backend.business.usuario.model.Usuario;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -27,8 +28,18 @@ public class PreferenciaNotificacao {
     )
     private Usuario usuario;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "rota_id",
+            nullable = false
+    )
+    private Rota rota;
+
     @Column(name = "email_ativo", nullable = false)
     private Boolean emailAtivo;
+
+    @Column(name = "web_push_ativo", nullable = false)
+    private Boolean webPushAtivo;
 
     @Column(name = "antecedencia_horas", nullable = false)
     private Integer antecedenciaHoras;
@@ -48,6 +59,10 @@ public class PreferenciaNotificacao {
 
         if (emailAtivo == null) {
             emailAtivo = true;
+        }
+
+        if (webPushAtivo == null) {
+            webPushAtivo = false;
         }
 
         if (antecedenciaHoras == null) {
