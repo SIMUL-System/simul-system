@@ -37,16 +37,20 @@ public SecurityFilterChain securityFilterChain(
                     )
             )
             .authorizeHttpRequests(auth -> auth
-                    .requestMatchers(
-                            HttpMethod.POST,
-                            "/api/usuarios"
-                    ).permitAll()
-                    .requestMatchers(
-                            HttpMethod.POST,
-                            "/api/auth/login"
-                    ).permitAll()
-                    .anyRequest().authenticated()
-            )
+        .requestMatchers(
+                HttpMethod.POST,
+                "/api/usuarios"
+        ).permitAll()
+        .requestMatchers(
+                HttpMethod.POST,
+                "/api/auth/login"
+        ).permitAll()
+        .requestMatchers(
+                HttpMethod.GET,
+                "/api/rotas/consulta"
+        ).permitAll()
+        .anyRequest().authenticated()
+)
             .exceptionHandling(exception -> exception
                     .authenticationEntryPoint(
                             jwtAuthenticationEntryPoint

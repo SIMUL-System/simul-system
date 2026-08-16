@@ -32,5 +32,18 @@ public ProblemDetail handleUsuarioNaoEncontrado(
 
     return problem;
 }
+
+@ExceptionHandler(AreaAtendidaNaoEncontradaException.class)
+public ProblemDetail handleAreaAtendidaNaoEncontrada(
+        AreaAtendidaNaoEncontradaException exception
+) {
+    ProblemDetail problem =
+            ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+
+    problem.setTitle("Área atendida não encontrada");
+    problem.setDetail(exception.getMessage());
+
+    return problem;
+}
     
 }
