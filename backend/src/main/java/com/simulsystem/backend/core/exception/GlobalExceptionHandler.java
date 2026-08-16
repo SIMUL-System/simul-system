@@ -45,5 +45,31 @@ public ProblemDetail handleAreaAtendidaNaoEncontrada(
 
     return problem;
 }
+
+@ExceptionHandler(CronogramaJaCadastradoException.class)
+public ProblemDetail handleCronogramaJaCadastrado(
+        CronogramaJaCadastradoException exception
+) {
+    ProblemDetail problem =
+            ProblemDetail.forStatus(HttpStatus.CONFLICT);
+
+    problem.setTitle("Cronograma já cadastrado");
+    problem.setDetail(exception.getMessage());
+
+    return problem;
+}
+
+@ExceptionHandler(HorarioCronogramaInvalidoException.class)
+public ProblemDetail handleHorarioCronogramaInvalido(
+        HorarioCronogramaInvalidoException exception
+) {
+    ProblemDetail problem =
+            ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+
+    problem.setTitle("Horário do cronograma inválido");
+    problem.setDetail(exception.getMessage());
+
+    return problem;
+}
     
 }

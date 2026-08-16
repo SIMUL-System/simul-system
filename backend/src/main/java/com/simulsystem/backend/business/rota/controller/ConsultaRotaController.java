@@ -1,6 +1,6 @@
 package com.simulsystem.backend.business.rota.controller;
 
-import com.simulsystem.backend.business.rota.dto.AreaAtendidaResponseDTO;
+import com.simulsystem.backend.business.rota.dto.ConsultaColetaResponseDTO;
 import com.simulsystem.backend.business.rota.service.RotaService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,11 +19,11 @@ public class ConsultaRotaController {
     }
 
     @GetMapping("/consulta")
-    public ResponseEntity<AreaAtendidaResponseDTO> consultar(
+    public ResponseEntity<ConsultaColetaResponseDTO> consultar(
             @RequestParam String cidade,
             @RequestParam String bairro
     ) {
-        AreaAtendidaResponseDTO response =
+        ConsultaColetaResponseDTO response =
                 rotaService.consultarPorCidadeEBairro(
                         cidade,
                         bairro
