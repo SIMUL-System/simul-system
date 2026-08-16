@@ -6,13 +6,22 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface CronogramaRepository extends JpaRepository<Cronograma, Long> {
+public interface CronogramaRepository
+        extends JpaRepository<Cronograma, Long> {
 
-    List<Cronograma> findByRotaIdAndAtivoTrue(Long rotaId);
+    List<Cronograma> findByRotaIdAndAtivoTrue(
+            Long rotaId
+    );
 
     boolean existsByRotaIdAndDiaSemanaAndAtivoTrue(
             Long rotaId,
             DiaSemana diaSemana
+    );
+
+    boolean existsByRotaIdAndDiaSemanaAndAtivoTrueAndIdNot(
+            Long rotaId,
+            DiaSemana diaSemana,
+            Long id
     );
 
     List<Cronograma> findAllByOrderByRotaIdAscDiaSemanaAsc();

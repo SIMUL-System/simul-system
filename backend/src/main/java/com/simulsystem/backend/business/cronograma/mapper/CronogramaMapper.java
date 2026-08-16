@@ -38,4 +38,14 @@ public class CronogramaMapper {
                 cronograma.getDataAtualizacao()
         );
     }
+    public void atualizarEntity(
+        Cronograma cronograma,
+        CronogramaRequestDTO requestDTO,
+        Rota rota
+) {
+    cronograma.setRota(rota);
+    cronograma.setDiaSemana(requestDTO.diaSemana());
+    cronograma.setHorarioInicio(requestDTO.horarioInicio());
+    cronograma.setHorarioFim(requestDTO.horarioFim());
+}
 }

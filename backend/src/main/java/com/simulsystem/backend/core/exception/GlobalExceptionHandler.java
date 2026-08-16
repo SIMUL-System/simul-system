@@ -98,4 +98,16 @@ public class GlobalExceptionHandler {
 
         return problem;
     }
+    @ExceptionHandler(CronogramaNaoEncontradoException.class)
+public ProblemDetail handleCronogramaNaoEncontrado(
+        CronogramaNaoEncontradoException exception
+) {
+    ProblemDetail problem =
+            ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+
+    problem.setTitle("Cronograma não encontrado");
+    problem.setDetail(exception.getMessage());
+
+    return problem;
+}
 }

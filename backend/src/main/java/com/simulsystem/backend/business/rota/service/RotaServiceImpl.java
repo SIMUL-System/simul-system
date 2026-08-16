@@ -16,6 +16,7 @@ import com.simulsystem.backend.business.rota.repository.RotaRepository;
 import com.simulsystem.backend.business.rota.validation.AreaAtendidaValidation;
 import com.simulsystem.backend.business.rota.validation.RotaValidation;
 import org.springframework.stereotype.Service;
+import java.util.Comparator;
 
 import java.util.List;
 
@@ -101,9 +102,16 @@ public class RotaServiceImpl implements RotaService {
                 );
 
         List<Cronograma> cronogramas =
-                cronogramaRepository.findByRotaIdAndAtivoTrue(
-                        areaAtendida.getRota().getId()
-                );
+        cronogramaRepository.findByRotaIdAndAtivoTrue(
+                areaAtendida.getRota().getId()
+        );
+
+cronogramas.sort(
+        Comparator.comparingInt(
+                cronograma ->
+                        cronograma.getDiaSemana().ordinal()
+        )
+);
 
         return rotaMapper.toConsultaColetaResponseDTO(
                 areaAtendida,
@@ -132,6 +140,23 @@ public RotaResponseDTO atualizarRota(
             rota,
             requestDTO
     );
+
+    Rota rotaAtualizada =
+            rotaRepository.save(rota);
+
+    return rotaMapper.toResponseDTO(
+            rotaAtualizada
+    );
+}
+@Override
+public RotaResponseDTO alterarStatus(
+        Long id,
+        boolean ativo
+) {
+    Rota rota =
+            rotaValidation.buscarRotaExistente(id);
+
+    rota.setAtivo(ativo);
 
     Rota rotaAtualizada =
             rotaRepository.save(rota);

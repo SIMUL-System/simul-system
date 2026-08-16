@@ -37,9 +37,10 @@ public class CronogramaServiceImpl implements CronogramaService {
             CronogramaRequestDTO requestDTO
     ) {
 
-        Rota rota = rotaValidation.buscarRotaExistente(
-                requestDTO.rotaId()
-        );
+        Rota rota =
+                rotaValidation.buscarRotaExistente(
+                        requestDTO.rotaId()
+                );
 
         cronogramaValidation.validarCronogramaNaoDuplicado(
                 requestDTO.rotaId(),
@@ -64,12 +65,72 @@ public class CronogramaServiceImpl implements CronogramaService {
                 cronogramaSalvo
         );
     }
+
     @Override
-public List<CronogramaResponseDTO> listar() {
-    return cronogramaRepository
-            .findAllByOrderByRotaIdAscDiaSemanaAsc()
-            .stream()
-            .map(cronogramaMapper::toResponseDTO)
-            .toList();
+    public List<CronogramaResponseDTO> listar() {
+        return cronogramaRepository
+                .findAllByOrderByRotaIdAscDiaSemanaAsc()
+                .stream()
+                .map(cronogramaMapper::toResponseDTO)
+                .toList();
+    }
+
+    @Override
+    public CronogramaResponseDTO atualizar(
+            Long id,
+            CronogramaRequestDTO requestDTO
+    ) {
+
+        Cronograma cronograma =
+                cronogramaValidation
+                        .buscarCronogramaExistente(id);
+
+        Rota rota =
+                rotaValidation.buscarRotaExistente(
+                        requestDTO.rotaId()
+                );
+
+        cronogramaValidation
+                .validarCronogramaNaoDuplicadoNaAtualizacao(
+                        id,
+                        requestDTO.rotaId(),
+                        requestDTO.diaSemana()
+                );
+
+        cronogramaValidation.validarHorarios(
+                requestDTO.horarioInicio(),
+                requestDTO.horarioFim()
+        );
+
+        cronogramaMapper.atualizarEntity(
+                cronograma,
+                requestDTO,
+                rota
+        );
+
+        Cronograma cronogramaAtualizado =
+                cronogramaRepository.save(cronograma);
+
+        return cronogramaMapper.toResponseDTO(
+                cronogramaAtualizado
+        );
+    }
+    @Override
+public CronogramaResponseDTO alterarStatus(
+        Long id,
+        boolean ativo
+) {
+    Cronograma cronograma =
+            cronogramaValidation
+                    .buscarCronogramaExistente(id);
+
+    cronograma.setAtivo(ativo);
+
+    Cronograma cronogramaAtualizado =
+            cronogramaRepository.save(cronograma);
+
+    return cronogramaMapper.toResponseDTO(
+            cronogramaAtualizado
+    );
 }
 }

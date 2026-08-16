@@ -29,4 +29,8 @@ public interface RotaService {
             Long id,
             RotaRequestDTO requestDTO
     );
+    RotaResponseDTO alterarStatus(
+        Long id,
+        boolean ativo
+);
 }

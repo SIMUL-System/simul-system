@@ -12,4 +12,13 @@ public interface CronogramaService {
     );
 
     List<CronogramaResponseDTO> listar();
+
+    CronogramaResponseDTO atualizar(
+            Long id,
+            CronogramaRequestDTO requestDTO
+    );
+    CronogramaResponseDTO alterarStatus(
+        Long id,
+        boolean ativo
+);
 }
