@@ -110,4 +110,34 @@ public class RotaServiceImpl implements RotaService {
                 cronogramas
         );
     }
+
+    @Override
+public List<RotaResponseDTO> listarRotas() {
+    return rotaRepository.findAll()
+            .stream()
+            .map(rotaMapper::toResponseDTO)
+            .toList();
+}
+
+@Override
+public RotaResponseDTO atualizarRota(
+        Long id,
+        RotaRequestDTO requestDTO
+) {
+
+    Rota rota =
+            rotaValidation.buscarRotaExistente(id);
+
+    rotaMapper.atualizarEntity(
+            rota,
+            requestDTO
+    );
+
+    Rota rotaAtualizada =
+            rotaRepository.save(rota);
+
+    return rotaMapper.toResponseDTO(
+            rotaAtualizada
+    );
+}
 }

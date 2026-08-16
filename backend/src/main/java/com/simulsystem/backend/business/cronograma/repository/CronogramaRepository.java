@@ -14,4 +14,6 @@ public interface CronogramaRepository extends JpaRepository<Cronograma, Long> {
             Long rotaId,
             DiaSemana diaSemana
     );
+
+    List<Cronograma> findAllByOrderByRotaIdAscDiaSemanaAsc();
 }

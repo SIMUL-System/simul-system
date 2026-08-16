@@ -57,4 +57,12 @@ public class RotaMapper {
             cronogramasResumo
     );
 }
+
+public void atualizarEntity(
+        Rota rota,
+        RotaRequestDTO requestDTO
+) {
+    rota.setNome(requestDTO.nome());
+    rota.setDescricao(requestDTO.descricao());
+}
 }

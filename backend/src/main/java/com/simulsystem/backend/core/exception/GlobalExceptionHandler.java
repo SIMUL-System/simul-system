@@ -9,67 +9,93 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(CredenciaisInvalidasException.class)
-public ProblemDetail handleCredenciaisInvalidas(
-        CredenciaisInvalidasException exception
-) {
-    ProblemDetail problem =
-            ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
+    public ProblemDetail handleCredenciaisInvalidas(
+            CredenciaisInvalidasException exception
+    ) {
+        ProblemDetail problem =
+                ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
 
-    problem.setTitle("Credenciais inválidas");
-    problem.setDetail(exception.getMessage());
+        problem.setTitle("Credenciais inválidas");
+        problem.setDetail(exception.getMessage());
 
-    return problem;
-}
+        return problem;
+    }
+
     @ExceptionHandler(UsuarioNaoEncontradoException.class)
-public ProblemDetail handleUsuarioNaoEncontrado(
-        UsuarioNaoEncontradoException exception
-) {
-    ProblemDetail problem =
-            ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+    public ProblemDetail handleUsuarioNaoEncontrado(
+            UsuarioNaoEncontradoException exception
+    ) {
+        ProblemDetail problem =
+                ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
 
-    problem.setTitle("Usuário não encontrado");
-    problem.setDetail(exception.getMessage());
+        problem.setTitle("Usuário não encontrado");
+        problem.setDetail(exception.getMessage());
 
-    return problem;
-}
+        return problem;
+    }
 
-@ExceptionHandler(AreaAtendidaNaoEncontradaException.class)
-public ProblemDetail handleAreaAtendidaNaoEncontrada(
-        AreaAtendidaNaoEncontradaException exception
-) {
-    ProblemDetail problem =
-            ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+    @ExceptionHandler(AreaAtendidaJaCadastradaException.class)
+    public ProblemDetail handleAreaAtendidaJaCadastrada(
+            AreaAtendidaJaCadastradaException exception
+    ) {
+        ProblemDetail problem =
+                ProblemDetail.forStatus(HttpStatus.CONFLICT);
 
-    problem.setTitle("Área atendida não encontrada");
-    problem.setDetail(exception.getMessage());
+        problem.setTitle("Área atendida já cadastrada");
+        problem.setDetail(exception.getMessage());
 
-    return problem;
-}
+        return problem;
+    }
 
-@ExceptionHandler(CronogramaJaCadastradoException.class)
-public ProblemDetail handleCronogramaJaCadastrado(
-        CronogramaJaCadastradoException exception
-) {
-    ProblemDetail problem =
-            ProblemDetail.forStatus(HttpStatus.CONFLICT);
+    @ExceptionHandler(AreaAtendidaNaoEncontradaException.class)
+    public ProblemDetail handleAreaAtendidaNaoEncontrada(
+            AreaAtendidaNaoEncontradaException exception
+    ) {
+        ProblemDetail problem =
+                ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
 
-    problem.setTitle("Cronograma já cadastrado");
-    problem.setDetail(exception.getMessage());
+        problem.setTitle("Área atendida não encontrada");
+        problem.setDetail(exception.getMessage());
 
-    return problem;
-}
+        return problem;
+    }
 
-@ExceptionHandler(HorarioCronogramaInvalidoException.class)
-public ProblemDetail handleHorarioCronogramaInvalido(
-        HorarioCronogramaInvalidoException exception
-) {
-    ProblemDetail problem =
-            ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+    @ExceptionHandler(RotaNaoEncontradaException.class)
+    public ProblemDetail handleRotaNaoEncontrada(
+            RotaNaoEncontradaException exception
+    ) {
+        ProblemDetail problem =
+                ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
 
-    problem.setTitle("Horário do cronograma inválido");
-    problem.setDetail(exception.getMessage());
+        problem.setTitle("Rota não encontrada");
+        problem.setDetail(exception.getMessage());
 
-    return problem;
-}
-    
+        return problem;
+    }
+
+    @ExceptionHandler(CronogramaJaCadastradoException.class)
+    public ProblemDetail handleCronogramaJaCadastrado(
+            CronogramaJaCadastradoException exception
+    ) {
+        ProblemDetail problem =
+                ProblemDetail.forStatus(HttpStatus.CONFLICT);
+
+        problem.setTitle("Cronograma já cadastrado");
+        problem.setDetail(exception.getMessage());
+
+        return problem;
+    }
+
+    @ExceptionHandler(HorarioCronogramaInvalidoException.class)
+    public ProblemDetail handleHorarioCronogramaInvalido(
+            HorarioCronogramaInvalidoException exception
+    ) {
+        ProblemDetail problem =
+                ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+
+        problem.setTitle("Horário do cronograma inválido");
+        problem.setDetail(exception.getMessage());
+
+        return problem;
+    }
 }

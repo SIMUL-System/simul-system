@@ -13,6 +13,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/rotas")
@@ -47,4 +52,26 @@ public class RotaController {
                 .status(HttpStatus.CREATED)
                 .body(area);
     }
+    @GetMapping
+public ResponseEntity<List<RotaResponseDTO>> listarRotas() {
+
+    List<RotaResponseDTO> rotas =
+            rotaService.listarRotas();
+
+    return ResponseEntity.ok(rotas);
+}
+@PutMapping("/{id}")
+public ResponseEntity<RotaResponseDTO> atualizarRota(
+        @PathVariable Long id,
+        @Valid @RequestBody RotaRequestDTO requestDTO
+) {
+
+    RotaResponseDTO rota =
+            rotaService.atualizarRota(
+                    id,
+                    requestDTO
+            );
+
+    return ResponseEntity.ok(rota);
+}
 }

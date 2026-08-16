@@ -10,6 +10,8 @@ import com.simulsystem.backend.business.rota.model.Rota;
 import com.simulsystem.backend.business.rota.validation.RotaValidation;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class CronogramaServiceImpl implements CronogramaService {
 
@@ -62,4 +64,12 @@ public class CronogramaServiceImpl implements CronogramaService {
                 cronogramaSalvo
         );
     }
+    @Override
+public List<CronogramaResponseDTO> listar() {
+    return cronogramaRepository
+            .findAllByOrderByRotaIdAscDiaSemanaAsc()
+            .stream()
+            .map(cronogramaMapper::toResponseDTO)
+            .toList();
+}
 }
