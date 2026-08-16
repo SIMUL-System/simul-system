@@ -110,4 +110,33 @@ public ProblemDetail handleCronogramaNaoEncontrado(
 
     return problem;
 }
+@ExceptionHandler(PreferenciaNotificacaoJaCadastradaException.class)
+public ProblemDetail handlePreferenciaNotificacaoJaCadastrada(
+        PreferenciaNotificacaoJaCadastradaException exception
+) {
+    ProblemDetail problem =
+            ProblemDetail.forStatus(HttpStatus.CONFLICT);
+
+    problem.setTitle(
+            "Preferência de notificação já cadastrada"
+    );
+    problem.setDetail(exception.getMessage());
+
+    return problem;
+}
+
+@ExceptionHandler(PreferenciaNotificacaoNaoEncontradaException.class)
+public ProblemDetail handlePreferenciaNotificacaoNaoEncontrada(
+        PreferenciaNotificacaoNaoEncontradaException exception
+) {
+    ProblemDetail problem =
+            ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+
+    problem.setTitle(
+            "Preferência de notificação não encontrada"
+    );
+    problem.setDetail(exception.getMessage());
+
+    return problem;
+}
 }

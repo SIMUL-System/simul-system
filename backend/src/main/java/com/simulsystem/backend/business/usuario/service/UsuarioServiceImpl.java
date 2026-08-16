@@ -84,16 +84,24 @@ public LoginResponseDTO autenticar(LoginRequestDTO requestDTO) {
     }
 }
 
-    @Override
-public UsuarioResponseDTO buscarUsuarioAutenticado(String email) {
+   @Override
+public UsuarioResponseDTO buscarUsuarioAutenticado(
+        String email
+) {
+    Usuario usuario =
+            buscarEntidadePorEmail(email);
 
-    Usuario usuario = usuarioRepository.findByEmail(email)
+    return usuarioMapper.toResponseDTO(usuario);
+}
+@Override
+public Usuario buscarEntidadePorEmail(
+        String email
+) {
+    return usuarioRepository.findByEmail(email)
             .orElseThrow(() ->
                     new UsuarioNaoEncontradoException(
                             "Usuário autenticado não foi encontrado."
                     )
             );
-
-    return usuarioMapper.toResponseDTO(usuario);
 }
 }
