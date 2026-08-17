@@ -5,9 +5,17 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface AreaAtendidaRepository extends JpaRepository<AreaAtendida, Long> {
+public interface AreaAtendidaRepository
+        extends JpaRepository<AreaAtendida, Long> {
 
-    Optional<AreaAtendida> findByCidadeIgnoreCaseAndBairroIgnoreCase(
+    Optional<AreaAtendida>
+    findByCidadeIgnoreCaseAndBairroIgnoreCase(
+            String cidade,
+            String bairro
+    );
+
+    Optional<AreaAtendida>
+    findByCidadeIgnoreCaseAndBairroIgnoreCaseAndRota_AtivoTrue(
             String cidade,
             String bairro
     );

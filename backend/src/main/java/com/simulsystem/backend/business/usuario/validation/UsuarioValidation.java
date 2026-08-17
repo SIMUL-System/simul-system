@@ -9,12 +9,20 @@ public class UsuarioValidation {
 
     private final UsuarioRepository usuarioRepository;
 
-    public UsuarioValidation(UsuarioRepository usuarioRepository) {
-        this.usuarioRepository = usuarioRepository;
+    public UsuarioValidation(
+            UsuarioRepository usuarioRepository
+    ) {
+        this.usuarioRepository =
+                usuarioRepository;
     }
 
-    public void validarEmailNaoCadastrado(String email) {
-        if (usuarioRepository.existsByEmail(email)) {
+    public void validarEmailNaoCadastrado(
+            String email
+    ) {
+        if (
+                usuarioRepository
+                        .existsByEmailIgnoreCase(email)
+        ) {
             throw new EmailJaCadastradoException(
                     "Já existe um usuário cadastrado com este e-mail."
             );

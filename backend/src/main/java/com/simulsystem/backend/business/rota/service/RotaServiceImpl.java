@@ -1,7 +1,7 @@
 package com.simulsystem.backend.business.rota.service;
 
 import com.simulsystem.backend.business.cronograma.model.Cronograma;
-import com.simulsystem.backend.business.cronograma.repository.CronogramaRepository;
+import com.simulsystem.backend.business.cronograma.service.CronogramaService;
 import com.simulsystem.backend.business.rota.dto.AreaAtendidaRequestDTO;
 import com.simulsystem.backend.business.rota.dto.AreaAtendidaResponseDTO;
 import com.simulsystem.backend.business.rota.dto.ConsultaColetaResponseDTO;
@@ -16,7 +16,6 @@ import com.simulsystem.backend.business.rota.repository.RotaRepository;
 import com.simulsystem.backend.business.rota.validation.AreaAtendidaValidation;
 import com.simulsystem.backend.business.rota.validation.RotaValidation;
 import org.springframework.stereotype.Service;
-import java.util.Comparator;
 
 import java.util.List;
 
@@ -25,7 +24,7 @@ public class RotaServiceImpl implements RotaService {
 
     private final RotaRepository rotaRepository;
     private final AreaAtendidaRepository areaAtendidaRepository;
-    private final CronogramaRepository cronogramaRepository;
+    private final CronogramaService cronogramaService;
 
     private final RotaMapper rotaMapper;
     private final AreaAtendidaMapper areaAtendidaMapper;
@@ -36,7 +35,7 @@ public class RotaServiceImpl implements RotaService {
     public RotaServiceImpl(
             RotaRepository rotaRepository,
             AreaAtendidaRepository areaAtendidaRepository,
-            CronogramaRepository cronogramaRepository,
+            CronogramaService cronogramaService,
             RotaMapper rotaMapper,
             AreaAtendidaMapper areaAtendidaMapper,
             RotaValidation rotaValidation,
@@ -44,7 +43,7 @@ public class RotaServiceImpl implements RotaService {
     ) {
         this.rotaRepository = rotaRepository;
         this.areaAtendidaRepository = areaAtendidaRepository;
-        this.cronogramaRepository = cronogramaRepository;
+        this.cronogramaService = cronogramaService;
         this.rotaMapper = rotaMapper;
         this.areaAtendidaMapper = areaAtendidaMapper;
         this.rotaValidation = rotaValidation;
@@ -55,27 +54,30 @@ public class RotaServiceImpl implements RotaService {
     public RotaResponseDTO cadastrarRota(
             RotaRequestDTO requestDTO
     ) {
+        Rota rota =
+                rotaMapper.toEntity(requestDTO);
 
-        Rota rota = rotaMapper.toEntity(requestDTO);
+        Rota rotaSalva =
+                rotaRepository.save(rota);
 
-        Rota rotaSalva = rotaRepository.save(rota);
-
-        return rotaMapper.toResponseDTO(rotaSalva);
+        return rotaMapper.toResponseDTO(
+                rotaSalva
+        );
     }
 
     @Override
     public AreaAtendidaResponseDTO cadastrarAreaAtendida(
             AreaAtendidaRequestDTO requestDTO
     ) {
-
         areaAtendidaValidation.validarAreaNaoCadastrada(
                 requestDTO.cidade(),
                 requestDTO.bairro()
         );
 
-        Rota rota = rotaValidation.buscarRotaExistente(
-                requestDTO.rotaId()
-        );
+        Rota rota =
+                rotaValidation.buscarRotaExistente(
+                        requestDTO.rotaId()
+                );
 
         AreaAtendida areaAtendida =
                 areaAtendidaMapper.toEntity(
@@ -84,9 +86,13 @@ public class RotaServiceImpl implements RotaService {
                 );
 
         AreaAtendida areaSalva =
-                areaAtendidaRepository.save(areaAtendida);
+                areaAtendidaRepository.save(
+                        areaAtendida
+                );
 
-        return areaAtendidaMapper.toResponseDTO(areaSalva);
+        return areaAtendidaMapper.toResponseDTO(
+                areaSalva
+        );
     }
 
     @Override
@@ -94,24 +100,19 @@ public class RotaServiceImpl implements RotaService {
             String cidade,
             String bairro
     ) {
-
         AreaAtendida areaAtendida =
-                areaAtendidaValidation.buscarAreaAtendidaExistente(
-                        cidade,
-                        bairro
-                );
+                areaAtendidaValidation
+                        .buscarAreaAtendidaComRotaAtiva(
+                                cidade,
+                                bairro
+                        );
 
         List<Cronograma> cronogramas =
-        cronogramaRepository.findByRotaIdAndAtivoTrue(
-                areaAtendida.getRota().getId()
-        );
-
-cronogramas.sort(
-        Comparator.comparingInt(
-                cronograma ->
-                        cronograma.getDiaSemana().ordinal()
-        )
-);
+                cronogramaService.buscarAtivosPorRota(
+                        areaAtendida
+                                .getRota()
+                                .getId()
+                );
 
         return rotaMapper.toConsultaColetaResponseDTO(
                 areaAtendida,
@@ -120,49 +121,49 @@ cronogramas.sort(
     }
 
     @Override
-public List<RotaResponseDTO> listarRotas() {
-    return rotaRepository.findAll()
-            .stream()
-            .map(rotaMapper::toResponseDTO)
-            .toList();
-}
+    public List<RotaResponseDTO> listarRotas() {
+        return rotaRepository.findAll()
+                .stream()
+                .map(rotaMapper::toResponseDTO)
+                .toList();
+    }
 
-@Override
-public RotaResponseDTO atualizarRota(
-        Long id,
-        RotaRequestDTO requestDTO
-) {
+    @Override
+    public RotaResponseDTO atualizarRota(
+            Long id,
+            RotaRequestDTO requestDTO
+    ) {
+        Rota rota =
+                rotaValidation.buscarRotaExistente(id);
 
-    Rota rota =
-            rotaValidation.buscarRotaExistente(id);
+        rotaMapper.atualizarEntity(
+                rota,
+                requestDTO
+        );
 
-    rotaMapper.atualizarEntity(
-            rota,
-            requestDTO
-    );
+        Rota rotaAtualizada =
+                rotaRepository.save(rota);
 
-    Rota rotaAtualizada =
-            rotaRepository.save(rota);
+        return rotaMapper.toResponseDTO(
+                rotaAtualizada
+        );
+    }
 
-    return rotaMapper.toResponseDTO(
-            rotaAtualizada
-    );
-}
-@Override
-public RotaResponseDTO alterarStatus(
-        Long id,
-        boolean ativo
-) {
-    Rota rota =
-            rotaValidation.buscarRotaExistente(id);
+    @Override
+    public RotaResponseDTO alterarStatus(
+            Long id,
+            boolean ativo
+    ) {
+        Rota rota =
+                rotaValidation.buscarRotaExistente(id);
 
-    rota.setAtivo(ativo);
+        rota.setAtivo(ativo);
 
-    Rota rotaAtualizada =
-            rotaRepository.save(rota);
+        Rota rotaAtualizada =
+                rotaRepository.save(rota);
 
-    return rotaMapper.toResponseDTO(
-            rotaAtualizada
-    );
-}
+        return rotaMapper.toResponseDTO(
+                rotaAtualizada
+        );
+    }
 }

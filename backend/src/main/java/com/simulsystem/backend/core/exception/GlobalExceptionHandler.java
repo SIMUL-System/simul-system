@@ -34,6 +34,19 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+    @ExceptionHandler(EmailJaCadastradoException.class)
+    public ProblemDetail handleEmailJaCadastrado(
+            EmailJaCadastradoException exception
+    ) {
+        ProblemDetail problem =
+                ProblemDetail.forStatus(HttpStatus.CONFLICT);
+
+        problem.setTitle("E-mail já cadastrado");
+        problem.setDetail(exception.getMessage());
+
+        return problem;
+    }
+
     @ExceptionHandler(AreaAtendidaJaCadastradaException.class)
     public ProblemDetail handleAreaAtendidaJaCadastrada(
             AreaAtendidaJaCadastradaException exception
@@ -98,45 +111,47 @@ public class GlobalExceptionHandler {
 
         return problem;
     }
+
     @ExceptionHandler(CronogramaNaoEncontradoException.class)
-public ProblemDetail handleCronogramaNaoEncontrado(
-        CronogramaNaoEncontradoException exception
-) {
-    ProblemDetail problem =
-            ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+    public ProblemDetail handleCronogramaNaoEncontrado(
+            CronogramaNaoEncontradoException exception
+    ) {
+        ProblemDetail problem =
+                ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
 
-    problem.setTitle("Cronograma não encontrado");
-    problem.setDetail(exception.getMessage());
+        problem.setTitle("Cronograma não encontrado");
+        problem.setDetail(exception.getMessage());
 
-    return problem;
-}
-@ExceptionHandler(PreferenciaNotificacaoJaCadastradaException.class)
-public ProblemDetail handlePreferenciaNotificacaoJaCadastrada(
-        PreferenciaNotificacaoJaCadastradaException exception
-) {
-    ProblemDetail problem =
-            ProblemDetail.forStatus(HttpStatus.CONFLICT);
+        return problem;
+    }
 
-    problem.setTitle(
-            "Preferência de notificação já cadastrada"
-    );
-    problem.setDetail(exception.getMessage());
+    @ExceptionHandler(PreferenciaNotificacaoJaCadastradaException.class)
+    public ProblemDetail handlePreferenciaNotificacaoJaCadastrada(
+            PreferenciaNotificacaoJaCadastradaException exception
+    ) {
+        ProblemDetail problem =
+                ProblemDetail.forStatus(HttpStatus.CONFLICT);
 
-    return problem;
-}
+        problem.setTitle(
+                "Preferência de notificação já cadastrada"
+        );
+        problem.setDetail(exception.getMessage());
 
-@ExceptionHandler(PreferenciaNotificacaoNaoEncontradaException.class)
-public ProblemDetail handlePreferenciaNotificacaoNaoEncontrada(
-        PreferenciaNotificacaoNaoEncontradaException exception
-) {
-    ProblemDetail problem =
-            ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        return problem;
+    }
 
-    problem.setTitle(
-            "Preferência de notificação não encontrada"
-    );
-    problem.setDetail(exception.getMessage());
+    @ExceptionHandler(PreferenciaNotificacaoNaoEncontradaException.class)
+    public ProblemDetail handlePreferenciaNotificacaoNaoEncontrada(
+            PreferenciaNotificacaoNaoEncontradaException exception
+    ) {
+        ProblemDetail problem =
+                ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
 
-    return problem;
-}
+        problem.setTitle(
+                "Preferência de notificação não encontrada"
+        );
+        problem.setDetail(exception.getMessage());
+
+        return problem;
+    }
 }

@@ -8,18 +8,21 @@ import com.simulsystem.backend.business.usuario.mapper.UsuarioMapper;
 import com.simulsystem.backend.business.usuario.model.Usuario;
 import com.simulsystem.backend.business.usuario.repository.UsuarioRepository;
 import com.simulsystem.backend.business.usuario.validation.UsuarioValidation;
+import com.simulsystem.backend.core.exception.CredenciaisInvalidasException;
 import com.simulsystem.backend.core.exception.UsuarioNaoEncontradoException;
 import com.simulsystem.backend.core.security.JwtService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import com.simulsystem.backend.core.exception.CredenciaisInvalidasException;
-import org.springframework.security.core.AuthenticationException;
+
+import java.util.Locale;
 
 @Service
-public class UsuarioServiceImpl implements UsuarioService {
+public class UsuarioServiceImpl
+        implements UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final UsuarioMapper usuarioMapper;
@@ -36,72 +39,143 @@ public class UsuarioServiceImpl implements UsuarioService {
             AuthenticationManager authenticationManager,
             JwtService jwtService
     ) {
-        this.usuarioRepository = usuarioRepository;
-        this.usuarioMapper = usuarioMapper;
-        this.usuarioValidation = usuarioValidation;
-        this.passwordEncoder = passwordEncoder;
-        this.authenticationManager = authenticationManager;
-        this.jwtService = jwtService;
+        this.usuarioRepository =
+                usuarioRepository;
+
+        this.usuarioMapper =
+                usuarioMapper;
+
+        this.usuarioValidation =
+                usuarioValidation;
+
+        this.passwordEncoder =
+                passwordEncoder;
+
+        this.authenticationManager =
+                authenticationManager;
+
+        this.jwtService =
+                jwtService;
     }
 
     @Override
-    public UsuarioResponseDTO cadastrar(UsuarioRequestDTO requestDTO) {
-
-        usuarioValidation.validarEmailNaoCadastrado(requestDTO.email());
-
-        Usuario usuario = usuarioMapper.toEntity(requestDTO);
-
-        usuario.setSenha(passwordEncoder.encode(requestDTO.senha()));
-
-        Usuario usuarioSalvo = usuarioRepository.save(usuario);
-
-        return usuarioMapper.toResponseDTO(usuarioSalvo);
-    }
-
-    @Override
-public LoginResponseDTO autenticar(LoginRequestDTO requestDTO) {
-
-    try {
-        Authentication authentication =
-                authenticationManager.authenticate(
-                        UsernamePasswordAuthenticationToken.unauthenticated(
-                                requestDTO.email(),
-                                requestDTO.senha()
-                        )
+    public UsuarioResponseDTO cadastrar(
+            UsuarioRequestDTO requestDTO
+    ) {
+        String emailNormalizado =
+                normalizarEmail(
+                        requestDTO.email()
                 );
 
-        String token = jwtService.gerarToken(authentication);
+        usuarioValidation
+                .validarEmailNaoCadastrado(
+                        emailNormalizado
+                );
 
-        return new LoginResponseDTO(
-                token,
-                "Bearer"
+        Usuario usuario =
+                usuarioMapper.toEntity(
+                        requestDTO
+                );
+
+        usuario.setEmail(
+                emailNormalizado
         );
 
-    } catch (AuthenticationException exception) {
-        throw new CredenciaisInvalidasException(
-                "E-mail ou senha inválidos."
+        usuario.setSenha(
+                passwordEncoder.encode(
+                        requestDTO.senha()
+                )
+        );
+
+        Usuario usuarioSalvo =
+                usuarioRepository.save(
+                        usuario
+                );
+
+        return usuarioMapper.toResponseDTO(
+                usuarioSalvo
         );
     }
-}
 
-   @Override
-public UsuarioResponseDTO buscarUsuarioAutenticado(
-        String email
-) {
-    Usuario usuario =
-            buscarEntidadePorEmail(email);
+    @Override
+    public LoginResponseDTO autenticar(
+            LoginRequestDTO requestDTO
+    ) {
+        String emailNormalizado =
+                normalizarEmail(
+                        requestDTO.email()
+                );
 
-    return usuarioMapper.toResponseDTO(usuario);
-}
-@Override
-public Usuario buscarEntidadePorEmail(
-        String email
-) {
-    return usuarioRepository.findByEmail(email)
-            .orElseThrow(() ->
-                    new UsuarioNaoEncontradoException(
-                            "Usuário autenticado não foi encontrado."
-                    )
+        try {
+            Authentication authentication =
+                    authenticationManager.authenticate(
+                            UsernamePasswordAuthenticationToken
+                                    .unauthenticated(
+                                            emailNormalizado,
+                                            requestDTO.senha()
+                                    )
+                    );
+
+            String token =
+                    jwtService.gerarToken(
+                            authentication
+                    );
+
+            return new LoginResponseDTO(
+                    token,
+                    "Bearer"
             );
-}
+
+        } catch (AuthenticationException exception) {
+            throw new CredenciaisInvalidasException(
+                    "E-mail ou senha inválidos."
+            );
+        }
+    }
+
+    @Override
+    public UsuarioResponseDTO buscarUsuarioAutenticado(
+            String email
+    ) {
+        Usuario usuario =
+                buscarEntidadePorEmail(
+                        email
+                );
+
+        return usuarioMapper.toResponseDTO(
+                usuario
+        );
+    }
+
+    @Override
+    public Usuario buscarEntidadePorEmail(
+            String email
+    ) {
+        String emailNormalizado =
+                normalizarEmail(email);
+
+        return usuarioRepository
+                .findByEmailIgnoreCase(
+                        emailNormalizado
+                )
+                .orElseThrow(() ->
+                        new UsuarioNaoEncontradoException(
+                                "Usuário autenticado não foi encontrado."
+                        )
+                );
+    }
+
+    private String normalizarEmail(
+            String email
+    ) {
+        if (email == null) {
+            return null;
+        }
+
+        return email
+                .trim()
+                .toLowerCase(
+                        Locale.ROOT
+                );
+    }
 }
