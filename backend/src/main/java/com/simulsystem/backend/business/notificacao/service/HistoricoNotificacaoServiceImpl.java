@@ -146,6 +146,37 @@ public class HistoricoNotificacaoServiceImpl
     }
 
     @Override
+    public void marcarComoCancelado(
+            Long historicoId
+    ) {
+        if (historicoId == null) {
+            throw new IllegalArgumentException(
+                    "O identificador do histórico é obrigatório."
+            );
+        }
+
+        HistoricoNotificacao historico =
+                buscarPorId(historicoId);
+
+        historico.setStatus(
+                StatusNotificacao.CANCELADO
+        );
+
+        historico.setProximaTentativa(null);
+        historico.setDataEnvio(null);
+        historico.setMensagemErro(null);
+
+        /*
+         * Não incrementamos numeroTentativas.
+         *
+         * CANCELADO representa mudança da configuração
+         * atual do usuário/rota, não uma tentativa de
+         * transporte.
+         */
+        repository.save(historico);
+    }
+
+    @Override
     public List<HistoricoNotificacao> buscarFalhasElegiveisParaRetry(
             LocalDateTime referencia
     ) {
@@ -162,7 +193,9 @@ public class HistoricoNotificacaoServiceImpl
         );
     }
 
-    private HistoricoNotificacao buscarPorId(Long historicoId) {
+    private HistoricoNotificacao buscarPorId(
+            Long historicoId
+    ) {
         return repository.findById(historicoId)
                 .orElseThrow(() ->
                         new IllegalArgumentException(
@@ -221,7 +254,9 @@ public class HistoricoNotificacaoServiceImpl
         }
     }
 
-    private String limitarMensagemErro(String mensagemErro) {
+    private String limitarMensagemErro(
+            String mensagemErro
+    ) {
         if (mensagemErro == null || mensagemErro.isBlank()) {
             return "Falha no envio da notificação.";
         }

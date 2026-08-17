@@ -27,16 +27,21 @@ public class ProcessamentoRetryNotificacaoServiceImpl
 
     private final HistoricoNotificacaoService historicoNotificacaoService;
     private final EnvioNotificacaoService envioNotificacaoService;
+    private final PreferenciaNotificacaoService preferenciaNotificacaoService;
 
     public ProcessamentoRetryNotificacaoServiceImpl(
             HistoricoNotificacaoService historicoNotificacaoService,
-            EnvioNotificacaoService envioNotificacaoService
+            EnvioNotificacaoService envioNotificacaoService,
+            PreferenciaNotificacaoService preferenciaNotificacaoService
     ) {
         this.historicoNotificacaoService =
                 historicoNotificacaoService;
 
         this.envioNotificacaoService =
                 envioNotificacaoService;
+
+        this.preferenciaNotificacaoService =
+                preferenciaNotificacaoService;
     }
 
     @Override
@@ -83,6 +88,28 @@ public class ProcessamentoRetryNotificacaoServiceImpl
                             + "historicoId={}, canal={}",
                     historico.getId(),
                     historico.getCanal()
+            );
+
+            return;
+        }
+
+        boolean podeReceberEmail =
+                preferenciaNotificacaoService
+                        .podeReceberEmail(
+                                historico.getUsuario().getId(),
+                                historico.getRota().getId()
+                        );
+
+        if (!podeReceberEmail) {
+            historicoNotificacaoService
+                    .marcarComoCancelado(
+                            historico.getId()
+                    );
+
+            LOGGER.info(
+                    "Retry cancelado porque a configuração atual "
+                            + "não permite envio. historicoId={}",
+                    historico.getId()
             );
 
             return;
@@ -148,9 +175,21 @@ public class ProcessamentoRetryNotificacaoServiceImpl
             );
         }
 
+        if (historico.getUsuario().getId() == null) {
+            throw new IllegalArgumentException(
+                    "O identificador do usuário é obrigatório."
+            );
+        }
+
         if (historico.getRota() == null) {
             throw new IllegalArgumentException(
                     "A rota do histórico é obrigatória."
+            );
+        }
+
+        if (historico.getRota().getId() == null) {
+            throw new IllegalArgumentException(
+                    "O identificador da rota é obrigatório."
             );
         }
 

@@ -29,6 +29,10 @@ public interface HistoricoNotificacaoService {
             LocalDateTime referencia
     );
 
+    void marcarComoCancelado(
+            Long historicoId
+    );
+
     List<HistoricoNotificacao> buscarFalhasElegiveisParaRetry(
             LocalDateTime referencia
     );

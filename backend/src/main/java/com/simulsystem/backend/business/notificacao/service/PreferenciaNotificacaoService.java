@@ -23,4 +23,9 @@ public interface PreferenciaNotificacaoService {
     );
 
     List<PreferenciaNotificacao> buscarElegiveisParaProcessamento();
+
+    boolean podeReceberEmail(
+            Long usuarioId,
+            Long rotaId
+    );
 }

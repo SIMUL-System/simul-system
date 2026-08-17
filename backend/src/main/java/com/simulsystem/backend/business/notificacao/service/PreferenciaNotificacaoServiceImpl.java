@@ -13,6 +13,7 @@ import com.simulsystem.backend.business.usuario.service.UsuarioService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class PreferenciaNotificacaoServiceImpl
@@ -128,5 +129,60 @@ public class PreferenciaNotificacaoServiceImpl
     @Override
     public List<PreferenciaNotificacao> buscarElegiveisParaProcessamento() {
         return repository.buscarElegiveisParaProcessamento();
+    }
+
+    @Override
+    public boolean podeReceberEmail(
+            Long usuarioId,
+            Long rotaId
+    ) {
+        if (usuarioId == null || rotaId == null) {
+            return false;
+        }
+
+        Optional<PreferenciaNotificacao> preferenciaOptional =
+                repository.findByUsuarioId(
+                        usuarioId
+                );
+
+        if (preferenciaOptional.isEmpty()) {
+            return false;
+        }
+
+        PreferenciaNotificacao preferencia =
+                preferenciaOptional.orElseThrow();
+
+        if (preferencia.getUsuario() == null
+                || preferencia.getRota() == null) {
+            return false;
+        }
+
+        if (!usuarioId.equals(
+                preferencia.getUsuario().getId()
+        )) {
+            return false;
+        }
+
+        if (!rotaId.equals(
+                preferencia.getRota().getId()
+        )) {
+            return false;
+        }
+
+        if (!Boolean.TRUE.equals(
+                preferencia.getUsuario().getAtivo()
+        )) {
+            return false;
+        }
+
+        if (!Boolean.TRUE.equals(
+                preferencia.getRota().getAtivo()
+        )) {
+            return false;
+        }
+
+        return Boolean.TRUE.equals(
+                preferencia.getEmailAtivo()
+        );
     }
 }

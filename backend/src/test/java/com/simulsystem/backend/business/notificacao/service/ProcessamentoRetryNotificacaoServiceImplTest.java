@@ -28,6 +28,9 @@ class ProcessamentoRetryNotificacaoServiceImplTest {
     @Mock
     private EnvioNotificacaoService envioNotificacaoService;
 
+    @Mock
+    private PreferenciaNotificacaoService preferenciaNotificacaoService;
+
     private ProcessamentoRetryNotificacaoServiceImpl service;
 
     private LocalDateTime referencia;
@@ -37,7 +40,8 @@ class ProcessamentoRetryNotificacaoServiceImplTest {
         service =
                 new ProcessamentoRetryNotificacaoServiceImpl(
                         historicoNotificacaoService,
-                        envioNotificacaoService
+                        envioNotificacaoService,
+                        preferenciaNotificacaoService
                 );
 
         referencia =
@@ -51,7 +55,7 @@ class ProcessamentoRetryNotificacaoServiceImplTest {
     }
 
     @Test
-    void deveReenviarEmailQuandoRetryEstiverElegivel() {
+    void deveReenviarEmailQuandoRetryContinuarElegivel() {
         HistoricoNotificacao historico =
                 criarHistoricoEmail(1L);
 
@@ -60,6 +64,13 @@ class ProcessamentoRetryNotificacaoServiceImplTest {
                         referencia
                 ))
                 .thenReturn(List.of(historico));
+
+        when(preferenciaNotificacaoService
+                .podeReceberEmail(
+                        3L,
+                        1L
+                ))
+                .thenReturn(true);
 
         service.processar(referencia);
 
@@ -75,6 +86,50 @@ class ProcessamentoRetryNotificacaoServiceImplTest {
                         1L,
                         referencia
                 );
+
+        verify(historicoNotificacaoService, never())
+                .marcarComoCancelado(anyLong());
+    }
+
+    @Test
+    void deveCancelarRetryQuandoConfiguracaoAtualNaoPermitirEmail() {
+        HistoricoNotificacao historico =
+                criarHistoricoEmail(1L);
+
+        when(historicoNotificacaoService
+                .buscarFalhasElegiveisParaRetry(
+                        referencia
+                ))
+                .thenReturn(List.of(historico));
+
+        when(preferenciaNotificacaoService
+                .podeReceberEmail(
+                        3L,
+                        1L
+                ))
+                .thenReturn(false);
+
+        service.processar(referencia);
+
+        verify(historicoNotificacaoService)
+                .marcarComoCancelado(1L);
+
+        verifyNoInteractions(
+                envioNotificacaoService
+        );
+
+        verify(historicoNotificacaoService, never())
+                .marcarComoEnviado(
+                        anyLong(),
+                        any(LocalDateTime.class)
+                );
+
+        verify(historicoNotificacaoService, never())
+                .marcarComoFalha(
+                        anyLong(),
+                        anyString(),
+                        any(LocalDateTime.class)
+                );
     }
 
     @Test
@@ -87,6 +142,13 @@ class ProcessamentoRetryNotificacaoServiceImplTest {
                         referencia
                 ))
                 .thenReturn(List.of(historico));
+
+        when(preferenciaNotificacaoService
+                .podeReceberEmail(
+                        3L,
+                        1L
+                ))
+                .thenReturn(true);
 
         doThrow(
                 new RuntimeException(
@@ -127,7 +189,8 @@ class ProcessamentoRetryNotificacaoServiceImplTest {
         service.processar(referencia);
 
         verifyNoInteractions(
-                envioNotificacaoService
+                envioNotificacaoService,
+                preferenciaNotificacaoService
         );
     }
 
@@ -135,6 +198,7 @@ class ProcessamentoRetryNotificacaoServiceImplTest {
     void deveContinuarProcessandoQuandoUmRetryGerarErroInesperado() {
         HistoricoNotificacao historicoInvalido =
                 new HistoricoNotificacao();
+
         historicoInvalido.setId(1L);
 
         HistoricoNotificacao historicoValido =
@@ -150,6 +214,13 @@ class ProcessamentoRetryNotificacaoServiceImplTest {
                                 historicoValido
                         )
                 );
+
+        when(preferenciaNotificacaoService
+                .podeReceberEmail(
+                        3L,
+                        1L
+                ))
+                .thenReturn(true);
 
         service.processar(referencia);
 
@@ -176,7 +247,8 @@ class ProcessamentoRetryNotificacaoServiceImplTest {
 
         verifyNoInteractions(
                 historicoNotificacaoService,
-                envioNotificacaoService
+                envioNotificacaoService,
+                preferenciaNotificacaoService
         );
     }
 
@@ -185,16 +257,20 @@ class ProcessamentoRetryNotificacaoServiceImplTest {
     ) {
         Usuario usuario = new Usuario();
         usuario.setId(3L);
-        usuario.setNome("Usuário Teste SIMUL");
+        usuario.setNome(
+                "Usuário Teste SIMUL"
+        );
         usuario.setEmail(
                 "usuario.teste@simul.local"
         );
+        usuario.setAtivo(true);
 
         Rota rota = new Rota();
         rota.setId(1L);
         rota.setNome(
                 "Rota Jardim Nova Goiânia"
         );
+        rota.setAtivo(true);
 
         HistoricoNotificacao historico =
                 new HistoricoNotificacao();
