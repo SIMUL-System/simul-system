@@ -168,3 +168,47 @@
     width: 100%;
   }
 }
+
+.rota-selecionada {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+}
+
+.rota-selecionada p {
+  margin: 0.4rem 0 0;
+}
+
+.campo-checkbox {
+  margin-bottom: 1rem;
+}
+
+.campo-checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.campo-checkbox input {
+  width: auto;
+}
+
+.campo small {
+  line-height: 1.4;
+}
+
+.botao-salvar {
+  width: 100%;
+  margin-top: 1.5rem;
+  padding: 0.9rem 1rem;
+  border: 0;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.botao-salvar:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
