@@ -1,0 +1,22 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.app__content {
+  width: 100%;
+  max-width: 720px;
+  text-align: center;
+}
+
+.app__content h1 {
+  margin-bottom: 0.5rem;
+  font-size: 3rem;
+}
+
+.app__content p {
+  margin: 0.5rem 0;
+}
