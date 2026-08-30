@@ -65,13 +65,9 @@ async function apiRequest(
 
   let data
 
-  if (
-    contentType?.includes(
-      'application/json',
-    )
-  ) {
-    data = await response.json()
-  } else {
+  if (contentType?.includes('json')) {
+  data = await response.json()
+} else {
     const text = await response.text()
 
     data = text || null

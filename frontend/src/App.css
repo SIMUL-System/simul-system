@@ -122,3 +122,49 @@
     flex-direction: column;
   }
 }
+
+.mensagem--sucesso {
+  border: 1px solid currentColor;
+}
+
+.navegacao-secundaria {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.navegacao-secundaria a {
+  color: inherit;
+  font-weight: 600;
+}
+
+.acoes-conta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.acoes-conta a {
+  color: inherit;
+  font-weight: 600;
+}
+
+.acoes-conta button {
+  padding: 0.75rem 1.25rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .acoes-conta {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .acoes-conta button {
+    width: 100%;
+  }
+}
