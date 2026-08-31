@@ -212,3 +212,163 @@
   cursor: wait;
   opacity: 0.7;
 }
+
+.campo textarea {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  resize: vertical;
+}
+
+.lista-rotas {
+  display: grid;
+  gap: 1rem;
+}
+
+.rota-admin {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+}
+
+.rota-admin h3 {
+  margin: 0 0 0.4rem;
+}
+
+.rota-admin p {
+  margin: 0;
+}
+
+.rota-admin span {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .rota-admin {
+    flex-direction: column;
+  }
+}
+
+.rota-admin__conteudo {
+  flex: 1;
+}
+
+.rota-admin__acoes {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.rota-admin__acoes button {
+  padding: 0.65rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rota-admin__acoes button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+@media (max-width: 600px) {
+  .rota-admin__acoes {
+    width: 100%;
+  }
+
+  .rota-admin__acoes button {
+    flex: 1;
+  }
+}
+
+.campo select {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background: #ffffff;
+}
+
+.admin-nav {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.admin-nav__link {
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.admin-nav__link--ativo {
+  border-color: currentColor;
+}
+
+.admin-conteudo {
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .admin-nav {
+    flex-direction: column;
+  }
+
+  .admin-nav__link {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+.admin-secao__cabecalho {
+  margin-bottom: 1.5rem;
+}
+
+.admin-secao__cabecalho h2 {
+  margin: 0 0 0.5rem;
+}
+
+.admin-secao__cabecalho p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.mapa-coleta__secao {
+  margin-top: 2rem;
+}
+
+.mapa-coleta__cabecalho {
+  margin-bottom: 1rem;
+}
+
+.mapa-coleta__cabecalho h2 {
+  margin-bottom: 0.5rem;
+}
+
+.mapa-coleta__cabecalho p {
+  margin: 0;
+}
+
+.mapa-coleta {
+  width: 100%;
+  height: 420px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .mapa-coleta {
+    height: 320px;
+  }
+}

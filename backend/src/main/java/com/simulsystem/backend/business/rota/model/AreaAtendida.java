@@ -30,6 +30,12 @@ public class AreaAtendida {
     @Column(nullable = false, length = 120)
     private String bairro;
 
+    @Column(
+            name = "geometria_geojson",
+            columnDefinition = "TEXT"
+    )
+    private String geometriaGeoJson;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "rota_id", nullable = false)
     private Rota rota;

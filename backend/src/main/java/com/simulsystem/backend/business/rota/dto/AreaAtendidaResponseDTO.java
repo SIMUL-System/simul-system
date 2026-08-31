@@ -5,6 +5,7 @@ public record AreaAtendidaResponseDTO(
         String cidade,
         String bairro,
         Long rotaId,
-        String nomeRota
+        String nomeRota,
+        boolean possuiGeometria
 ) {
 }

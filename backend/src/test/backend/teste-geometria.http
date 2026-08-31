@@ -1,0 +1,7 @@
+PUT http://localhost:8080/api/admin/rotas/areas/56/geometria
+Authorization: Bearer eyJraWQiOiJpVkVDWHVFUmFTdnJfcGdzWDNQQ1NRQ196eWtlWXJPZWpLTWhPR1AtbTBzIiwidHlwIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiJ0YWxzdmlld0BnbWFpbC5jb20iLCJleHAiOjE3ODgxNDc5NzYsImlhdCI6MTc4ODE0NDM3Niwicm9sZXMiOlsiQURNSU4iXX0.TRw28f-oPGh1tXvUYDb8-BkmQcQ1RrSOPK47TfKRmNU
+Content-Type: application/json
+
+{
+  "geometriaGeoJson": "{\"type\":\"Polygon\",\"coordinates\":[[[-49.10,-16.70],[-49.09,-16.70],[-49.09,-16.71],[-49.10,-16.70]]]}"
+}

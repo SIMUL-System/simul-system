@@ -1,9 +1,17 @@
 package com.simulsystem.backend.business.rota.service;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.simulsystem.backend.business.cronograma.model.Cronograma;
 import com.simulsystem.backend.business.cronograma.service.CronogramaService;
 import com.simulsystem.backend.business.rota.dto.AreaAtendidaRequestDTO;
 import com.simulsystem.backend.business.rota.dto.AreaAtendidaResponseDTO;
+import com.simulsystem.backend.business.rota.dto.AreaDisponivelResponseDTO;
+import com.simulsystem.backend.business.rota.dto.AreaGeometriaRequestDTO;
+import com.simulsystem.backend.business.rota.dto.AreaGeometriaResponseDTO;
 import com.simulsystem.backend.business.rota.dto.ConsultaColetaResponseDTO;
 import com.simulsystem.backend.business.rota.dto.RotaRequestDTO;
 import com.simulsystem.backend.business.rota.dto.RotaResponseDTO;
@@ -15,9 +23,6 @@ import com.simulsystem.backend.business.rota.repository.AreaAtendidaRepository;
 import com.simulsystem.backend.business.rota.repository.RotaRepository;
 import com.simulsystem.backend.business.rota.validation.AreaAtendidaValidation;
 import com.simulsystem.backend.business.rota.validation.RotaValidation;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class RotaServiceImpl implements RotaService {
@@ -55,10 +60,14 @@ public class RotaServiceImpl implements RotaService {
             RotaRequestDTO requestDTO
     ) {
         Rota rota =
-                rotaMapper.toEntity(requestDTO);
+                rotaMapper.toEntity(
+                        requestDTO
+                );
 
         Rota rotaSalva =
-                rotaRepository.save(rota);
+                rotaRepository.save(
+                        rota
+                );
 
         return rotaMapper.toResponseDTO(
                 rotaSalva
@@ -96,6 +105,95 @@ public class RotaServiceImpl implements RotaService {
     }
 
     @Override
+    public List<AreaAtendidaResponseDTO> listarAreasAtendidas() {
+        return areaAtendidaRepository
+                .findAll()
+                .stream()
+                .map(
+                        areaAtendidaMapper::toResponseDTO
+                )
+                .toList();
+    }
+
+    @Override
+    public AreaAtendidaResponseDTO atualizarAreaAtendida(
+            Long id,
+            AreaAtendidaRequestDTO requestDTO
+    ) {
+        AreaAtendida areaAtendida =
+                areaAtendidaValidation.buscarPorId(
+                        id
+                );
+
+        areaAtendidaValidation
+                .validarAreaNaoCadastradaParaOutroRegistro(
+                        id,
+                        requestDTO.cidade(),
+                        requestDTO.bairro()
+                );
+
+        Rota rota =
+                rotaValidation.buscarRotaExistente(
+                        requestDTO.rotaId()
+                );
+
+        areaAtendidaMapper.updateEntity(
+                areaAtendida,
+                requestDTO,
+                rota
+        );
+
+        AreaAtendida areaAtualizada =
+                areaAtendidaRepository.save(
+                        areaAtendida
+                );
+
+        return areaAtendidaMapper.toResponseDTO(
+                areaAtualizada
+        );
+    }
+
+    @Override
+    @Transactional
+    public AreaGeometriaResponseDTO atualizarGeometriaArea(
+            Long id,
+            AreaGeometriaRequestDTO requestDTO
+    ) {
+        AreaAtendida areaAtendida =
+                areaAtendidaValidation.buscarPorId(
+                        id
+                );
+
+        areaAtendidaValidation.validarGeometriaGeoJson(
+                requestDTO.geometriaGeoJson()
+        );
+
+        areaAtendida.setGeometriaGeoJson(
+                requestDTO.geometriaGeoJson()
+        );
+
+        AreaAtendida areaAtualizada =
+                areaAtendidaRepository.save(
+                        areaAtendida
+                );
+
+        return areaAtendidaMapper.toGeometriaResponseDTO(
+                areaAtualizada
+        );
+    }
+
+    @Override
+    public List<AreaDisponivelResponseDTO> listarAreasDisponiveis() {
+        return areaAtendidaRepository
+                .findAllByRota_AtivoTrueOrderByCidadeAscBairroAsc()
+                .stream()
+                .map(
+                        areaAtendidaMapper::toAreaDisponivelResponseDTO
+                )
+                .toList();
+    }
+
+    @Override
     public ConsultaColetaResponseDTO consultarPorCidadeEBairro(
             String cidade,
             String bairro
@@ -122,9 +220,12 @@ public class RotaServiceImpl implements RotaService {
 
     @Override
     public List<RotaResponseDTO> listarRotas() {
-        return rotaRepository.findAll()
+        return rotaRepository
+                .findAll()
                 .stream()
-                .map(rotaMapper::toResponseDTO)
+                .map(
+                        rotaMapper::toResponseDTO
+                )
                 .toList();
     }
 
@@ -134,7 +235,9 @@ public class RotaServiceImpl implements RotaService {
             RotaRequestDTO requestDTO
     ) {
         Rota rota =
-                rotaValidation.buscarRotaExistente(id);
+                rotaValidation.buscarRotaExistente(
+                        id
+                );
 
         rotaMapper.atualizarEntity(
                 rota,
@@ -142,7 +245,9 @@ public class RotaServiceImpl implements RotaService {
         );
 
         Rota rotaAtualizada =
-                rotaRepository.save(rota);
+                rotaRepository.save(
+                        rota
+                );
 
         return rotaMapper.toResponseDTO(
                 rotaAtualizada
@@ -155,12 +260,18 @@ public class RotaServiceImpl implements RotaService {
             boolean ativo
     ) {
         Rota rota =
-                rotaValidation.buscarRotaExistente(id);
+                rotaValidation.buscarRotaExistente(
+                        id
+                );
 
-        rota.setAtivo(ativo);
+        rota.setAtivo(
+                ativo
+        );
 
         Rota rotaAtualizada =
-                rotaRepository.save(rota);
+                rotaRepository.save(
+                        rota
+                );
 
         return rotaMapper.toResponseDTO(
                 rotaAtualizada

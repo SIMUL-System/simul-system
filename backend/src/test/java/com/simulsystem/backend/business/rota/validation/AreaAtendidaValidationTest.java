@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.Optional;
 
@@ -23,12 +24,17 @@ class AreaAtendidaValidationTest {
     private AreaAtendidaRepository areaAtendidaRepository;
 
     private AreaAtendidaValidation areaAtendidaValidation;
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
+        objectMapper =
+                new ObjectMapper();
+
         areaAtendidaValidation =
                 new AreaAtendidaValidation(
-                        areaAtendidaRepository
+                        areaAtendidaRepository,
+                        objectMapper
                 );
     }
 

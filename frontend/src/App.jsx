@@ -4,12 +4,19 @@ import {
   Routes,
 } from 'react-router-dom'
 
+import RotaAdmin from './components/RotaAdmin'
 import RotaProtegida from './components/RotaProtegida'
+
+import AdminPage from './pages/AdminPage'
 import CadastroPage from './pages/CadastroPage'
 import ConsultaPage from './pages/ConsultaPage'
 import LoginPage from './pages/LoginPage'
 import PerfilPage from './pages/PerfilPage'
 import PreferenciasPage from './pages/PreferenciasPage'
+
+import AreasAdminPage from './pages/admin/AreasAdminPage'
+import CronogramasAdminPage from './pages/admin/CronogramasAdminPage'
+import RotasAdminPage from './pages/admin/RotasAdminPage'
 
 function App() {
   return (
@@ -39,6 +46,38 @@ function App() {
           path="/preferencias"
           element={<PreferenciasPage />}
         />
+
+        <Route element={<RotaAdmin />}>
+          <Route
+            path="/admin"
+            element={<AdminPage />}
+          >
+            <Route
+              index
+              element={
+                <Navigate
+                  to="rotas"
+                  replace
+                />
+              }
+            />
+
+            <Route
+              path="rotas"
+              element={<RotasAdminPage />}
+            />
+
+            <Route
+              path="areas"
+              element={<AreasAdminPage />}
+            />
+
+            <Route
+              path="cronogramas"
+              element={<CronogramasAdminPage />}
+            />
+          </Route>
+        </Route>
       </Route>
 
       <Route

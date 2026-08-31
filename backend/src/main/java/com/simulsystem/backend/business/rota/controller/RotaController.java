@@ -1,25 +1,29 @@
 package com.simulsystem.backend.business.rota.controller;
 
-import com.simulsystem.backend.business.rota.dto.AreaAtendidaRequestDTO;
-import com.simulsystem.backend.business.rota.dto.AreaAtendidaResponseDTO;
-import com.simulsystem.backend.business.rota.dto.RotaRequestDTO;
-import com.simulsystem.backend.business.rota.dto.RotaResponseDTO;
-import com.simulsystem.backend.business.rota.service.RotaService;
-import jakarta.validation.Valid;
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 
-import java.util.List;
+import com.simulsystem.backend.business.rota.dto.AreaAtendidaRequestDTO;
+import com.simulsystem.backend.business.rota.dto.AreaAtendidaResponseDTO;
+import com.simulsystem.backend.business.rota.dto.AreaGeometriaRequestDTO;
+import com.simulsystem.backend.business.rota.dto.AreaGeometriaResponseDTO;
+import com.simulsystem.backend.business.rota.dto.RotaRequestDTO;
+import com.simulsystem.backend.business.rota.dto.RotaResponseDTO;
+import com.simulsystem.backend.business.rota.service.RotaService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/admin/rotas")
@@ -28,7 +32,9 @@ public class RotaController {
 
     private final RotaService rotaService;
 
-    public RotaController(RotaService rotaService) {
+    public RotaController(
+            RotaService rotaService
+    ) {
         this.rotaService = rotaService;
     }
 
@@ -36,11 +42,56 @@ public class RotaController {
     public ResponseEntity<RotaResponseDTO> cadastrarRota(
             @Valid @RequestBody RotaRequestDTO requestDTO
     ) {
-        RotaResponseDTO rota = rotaService.cadastrarRota(requestDTO);
+        RotaResponseDTO rota =
+                rotaService.cadastrarRota(
+                        requestDTO
+                );
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(rota);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<RotaResponseDTO>> listarRotas() {
+        List<RotaResponseDTO> rotas =
+                rotaService.listarRotas();
+
+        return ResponseEntity.ok(
+                rotas
+        );
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<RotaResponseDTO> atualizarRota(
+            @PathVariable Long id,
+            @Valid @RequestBody RotaRequestDTO requestDTO
+    ) {
+        RotaResponseDTO rota =
+                rotaService.atualizarRota(
+                        id,
+                        requestDTO
+                );
+
+        return ResponseEntity.ok(
+                rota
+        );
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<RotaResponseDTO> alterarStatus(
+            @PathVariable Long id,
+            @RequestParam boolean ativo
+    ) {
+        RotaResponseDTO rota =
+                rotaService.alterarStatus(
+                        id,
+                        ativo
+                );
+
+        return ResponseEntity.ok(
+                rota
+        );
     }
 
     @PostMapping("/areas")
@@ -48,42 +99,54 @@ public class RotaController {
             @Valid @RequestBody AreaAtendidaRequestDTO requestDTO
     ) {
         AreaAtendidaResponseDTO area =
-                rotaService.cadastrarAreaAtendida(requestDTO);
+                rotaService.cadastrarAreaAtendida(
+                        requestDTO
+                );
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(area);
     }
-    @GetMapping
-public ResponseEntity<List<RotaResponseDTO>> listarRotas() {
 
-    List<RotaResponseDTO> rotas =
-            rotaService.listarRotas();
+    @GetMapping("/areas")
+    public ResponseEntity<List<AreaAtendidaResponseDTO>> listarAreasAtendidas() {
+        List<AreaAtendidaResponseDTO> areas =
+                rotaService.listarAreasAtendidas();
 
-    return ResponseEntity.ok(rotas);
-}
-@PutMapping("/{id}")
-public ResponseEntity<RotaResponseDTO> atualizarRota(
-        @PathVariable Long id,
-        @Valid @RequestBody RotaRequestDTO requestDTO
-) {
+        return ResponseEntity.ok(
+                areas
+        );
+    }
 
-    RotaResponseDTO rota =
-            rotaService.atualizarRota(
-                    id,
-                    requestDTO
-            );
+    @PutMapping("/areas/{id}")
+    public ResponseEntity<AreaAtendidaResponseDTO> atualizarAreaAtendida(
+            @PathVariable Long id,
+            @Valid @RequestBody AreaAtendidaRequestDTO requestDTO
+    ) {
+        AreaAtendidaResponseDTO area =
+                rotaService.atualizarAreaAtendida(
+                        id,
+                        requestDTO
+                );
 
-    return ResponseEntity.ok(rota);
-}
-@PatchMapping("/{id}/status")
-public ResponseEntity<RotaResponseDTO> alterarStatus(
-        @PathVariable Long id,
-        @RequestParam boolean ativo
-) {
-    RotaResponseDTO rota =
-            rotaService.alterarStatus(id, ativo);
+        return ResponseEntity.ok(
+                area
+        );
+    }
 
-    return ResponseEntity.ok(rota);
-}
+    @PutMapping("/areas/{id}/geometria")
+    public ResponseEntity<AreaGeometriaResponseDTO> atualizarGeometriaArea(
+            @PathVariable Long id,
+            @Valid @RequestBody AreaGeometriaRequestDTO requestDTO
+    ) {
+        AreaGeometriaResponseDTO area =
+                rotaService.atualizarGeometriaArea(
+                        id,
+                        requestDTO
+                );
+
+        return ResponseEntity.ok(
+                area
+        );
+    }
 }

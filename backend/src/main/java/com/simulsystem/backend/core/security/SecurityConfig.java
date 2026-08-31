@@ -12,69 +12,73 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
-public SecurityFilterChain securityFilterChain(
-        HttpSecurity http,
-        JwtAuthenticationConverter jwtAuthenticationConverter,
-        JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
-        JwtAccessDeniedHandler jwtAccessDeniedHandler
-) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            JwtAuthenticationConverter jwtAuthenticationConverter,
+            JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
+            JwtAccessDeniedHandler jwtAccessDeniedHandler
+    ) throws Exception {
 
-    http
-            .csrf(csrf -> csrf.disable())
-            .cors(Customizer.withDefaults())
-            .sessionManagement(session ->
-                    session.sessionCreationPolicy(
-                            SessionCreationPolicy.STATELESS
-                    )
-            )
-            .authorizeHttpRequests(auth -> auth
-        .requestMatchers(
-                HttpMethod.POST,
-                "/api/usuarios"
-        ).permitAll()
-        .requestMatchers(
-                HttpMethod.POST,
-                "/api/auth/login"
-        ).permitAll()
-        .requestMatchers(
-                HttpMethod.GET,
-                "/api/rotas/consulta"
-        ).permitAll()
-        .anyRequest().authenticated()
-)
-            .exceptionHandling(exception -> exception
-                    .authenticationEntryPoint(
-                            jwtAuthenticationEntryPoint
-                    )
-                    .accessDeniedHandler(
-                            jwtAccessDeniedHandler
-                    )
-            )
-            .oauth2ResourceServer(oauth2 -> oauth2
-                    .authenticationEntryPoint(
-                            jwtAuthenticationEntryPoint
-                    )
-                    .accessDeniedHandler(
-                            jwtAccessDeniedHandler
-                    )
-                    .jwt(jwt -> jwt
-                            .jwtAuthenticationConverter(
-                                    jwtAuthenticationConverter
-                            )
-                    )
-            );
+        http
+                .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults())
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
+                )
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/usuarios"
+                        ).permitAll()
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/auth/login"
+                        ).permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/rotas/consulta"
+                        ).permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/rotas/areas"
+                        ).permitAll()
+                        .anyRequest().authenticated()
+                )
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(
+                                jwtAuthenticationEntryPoint
+                        )
+                        .accessDeniedHandler(
+                                jwtAccessDeniedHandler
+                        )
+                )
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .authenticationEntryPoint(
+                                jwtAuthenticationEntryPoint
+                        )
+                        .accessDeniedHandler(
+                                jwtAccessDeniedHandler
+                        )
+                        .jwt(jwt -> jwt
+                                .jwtAuthenticationConverter(
+                                        jwtAuthenticationConverter
+                                )
+                        )
+                );
 
-    return http.build();
-}
+        return http.build();
+    }
 
     @Bean
     public AuthenticationManager authenticationManager(
@@ -88,8 +92,9 @@ public SecurityFilterChain securityFilterChain(
 
         return new ProviderManager(authenticationProvider);
     }
+
     @Bean
-        public JwtAuthenticationConverter jwtAuthenticationConverter() {
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
 
         JwtGrantedAuthoritiesConverter authoritiesConverter =
                 new JwtGrantedAuthoritiesConverter();
@@ -105,6 +110,5 @@ public SecurityFilterChain securityFilterChain(
         );
 
         return authenticationConverter;
-}
-
+    }
 }

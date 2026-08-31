@@ -3,6 +3,7 @@ package com.simulsystem.backend.business.rota.repository;
 import com.simulsystem.backend.business.rota.model.AreaAtendida;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface AreaAtendidaRepository
@@ -24,4 +25,13 @@ public interface AreaAtendidaRepository
             String cidade,
             String bairro
     );
+
+    boolean existsByCidadeIgnoreCaseAndBairroIgnoreCaseAndIdNot(
+            String cidade,
+            String bairro,
+            Long id
+    );
+
+    List<AreaAtendida>
+    findAllByRota_AtivoTrueOrderByCidadeAscBairroAsc();
 }
