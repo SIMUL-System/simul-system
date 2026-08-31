@@ -47,7 +47,8 @@ async function buscarCoordenadasArea(
     )
   }
 
-  const dados = await resposta.json()
+  const dados =
+    await resposta.json()
 
   if (
     !Array.isArray(dados) ||
@@ -59,16 +60,26 @@ async function buscarCoordenadasArea(
   const resultado = dados[0]
 
   const boundingBox =
-    Array.isArray(resultado.boundingbox) &&
+    Array.isArray(
+      resultado.boundingbox,
+    ) &&
     resultado.boundingbox.length === 4
       ? [
           [
-            Number(resultado.boundingbox[0]),
-            Number(resultado.boundingbox[2]),
+            Number(
+              resultado.boundingbox[0],
+            ),
+            Number(
+              resultado.boundingbox[2],
+            ),
           ],
           [
-            Number(resultado.boundingbox[1]),
-            Number(resultado.boundingbox[3]),
+            Number(
+              resultado.boundingbox[1],
+            ),
+            Number(
+              resultado.boundingbox[3],
+            ),
           ],
         ]
       : null
@@ -77,7 +88,8 @@ async function buscarCoordenadasArea(
     latitude: Number(resultado.lat),
     longitude: Number(resultado.lon),
     nome: resultado.display_name,
-    geometria: resultado.geojson ?? null,
+    geometria:
+      resultado.geojson ?? null,
     boundingBox,
   }
 

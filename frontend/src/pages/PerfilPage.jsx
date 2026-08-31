@@ -1,20 +1,33 @@
-import { useEffect, useState } from 'react'
+import {
+  useEffect,
+  useState,
+} from 'react'
+
 import {
   Link,
-  useNavigate,
 } from 'react-router-dom'
 
-import { logout } from '../services/authService'
-import { obterUsuarioAtual } from '../services/usuarioService'
+import {
+  obterUsuarioAtual,
+} from '../services/usuarioService'
+
 import '../App.css'
 
 function PerfilPage() {
-  const navigate = useNavigate()
+  const [
+    usuario,
+    setUsuario,
+  ] = useState(null)
 
-  const [usuario, setUsuario] = useState(null)
-  const [erro, setErro] = useState('')
-  const [carregando, setCarregando] =
-    useState(true)
+  const [
+    erro,
+    setErro,
+  ] = useState('')
+
+  const [
+    carregando,
+    setCarregando,
+  ] = useState(true)
 
   useEffect(() => {
     async function carregarUsuario() {
@@ -36,31 +49,30 @@ function PerfilPage() {
     carregarUsuario()
   }, [])
 
-  function handleLogout() {
-    logout()
-
-    navigate('/login', {
-      replace: true,
-    })
-  }
-
   return (
     <main className="app">
       <section className="consulta">
         <header className="consulta__cabecalho">
           <span className="consulta__marca">
-            SIMUL
+            CONTA
           </span>
 
           <h1>Minha conta</h1>
 
           <p>
-            Dados do usuário autenticado.
+            Consulte seus dados e acesse
+            rapidamente as configurações
+            do SIMUL.
           </p>
         </header>
 
         {carregando && (
-          <p>Carregando usuário...</p>
+          <div
+            className="mensagem"
+            role="status"
+          >
+            Carregando usuário...
+          </div>
         )}
 
         {erro && (
@@ -73,36 +85,109 @@ function PerfilPage() {
         )}
 
         {usuario && (
-          <section className="resultado">
-            <p>
-              <strong>Nome:</strong>{' '}
-              {usuario.nome}
-            </p>
+          <>
+            <section className="conta-resumo">
+              <div className="conta-resumo__avatar">
+                {usuario.nome
+                  ?.charAt(0)
+                  ?.toUpperCase() ||
+                  'U'}
+              </div>
 
-            <p>
-              <strong>E-mail:</strong>{' '}
-              {usuario.email}
-            </p>
+              <div>
+                <h2>
+                  {usuario.nome}
+                </h2>
 
-            <p>
-              <strong>Perfil:</strong>{' '}
-              {usuario.perfil}
-            </p>
-          </section>
+                <p>
+                  {usuario.email}
+                </p>
+
+                <span className="conta-resumo__perfil">
+                  {usuario.perfil}
+                </span>
+              </div>
+            </section>
+
+            <section className="conta-atalhos">
+              <Link
+                to="/"
+                className="conta-atalho"
+              >
+                <span className="conta-atalho__icone">
+                  ♻
+                </span>
+
+                <div>
+                  <strong>
+                    Consultar coleta
+                  </strong>
+
+                  <p>
+                    Veja os dias e
+                    horários da coleta
+                    na sua região.
+                  </p>
+                </div>
+
+                <span aria-hidden="true">
+                  →
+                </span>
+              </Link>
+
+              <Link
+                to="/preferencias"
+                className="conta-atalho"
+              >
+                <span className="conta-atalho__icone">
+                  🔔
+                </span>
+
+                <div>
+                  <strong>
+                    Notificações
+                  </strong>
+
+                  <p>
+                    Configure seus
+                    lembretes de coleta.
+                  </p>
+                </div>
+
+                <span aria-hidden="true">
+                  →
+                </span>
+              </Link>
+
+              {usuario.perfil ===
+                'ADMIN' && (
+                <Link
+                  to="/admin"
+                  className="conta-atalho"
+                >
+                  <span className="conta-atalho__icone">
+                    ⚙
+                  </span>
+
+                  <div>
+                    <strong>
+                      Painel administrativo
+                    </strong>
+
+                    <p>
+                      Gerencie rotas,
+                      áreas e cronogramas.
+                    </p>
+                  </div>
+
+                  <span aria-hidden="true">
+                    →
+                  </span>
+                </Link>
+              )}
+            </section>
+          </>
         )}
-
-        <div className="acoes-conta">
-          <Link to="/">
-            Voltar para consulta
-          </Link>
-
-          <button
-            type="button"
-            onClick={handleLogout}
-          >
-            Sair
-          </button>
-        </div>
       </section>
     </main>
   )

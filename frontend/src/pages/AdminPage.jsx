@@ -1,8 +1,19 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import {
+  NavLink,
+  Outlet,
+} from 'react-router-dom'
 
 import '../App.css'
 
 function AdminPage() {
+  function obterClasseLink({
+    isActive,
+  }) {
+    return isActive
+      ? 'admin-nav__link admin-nav__link--ativo'
+      : 'admin-nav__link'
+  }
+
   return (
     <main className="app">
       <section className="consulta">
@@ -11,7 +22,9 @@ function AdminPage() {
             SIMUL
           </span>
 
-          <h1>Painel administrativo</h1>
+          <h1>
+            Painel administrativo
+          </h1>
 
           <p>
             Gerencie rotas, áreas atendidas
@@ -21,11 +34,19 @@ function AdminPage() {
 
         <nav className="admin-nav">
           <NavLink
+            to="/admin"
+            end
+            className={
+              obterClasseLink
+            }
+          >
+            Visão geral
+          </NavLink>
+
+          <NavLink
             to="/admin/rotas"
-            className={({ isActive }) =>
-              isActive
-                ? 'admin-nav__link admin-nav__link--ativo'
-                : 'admin-nav__link'
+            className={
+              obterClasseLink
             }
           >
             Rotas
@@ -33,10 +54,8 @@ function AdminPage() {
 
           <NavLink
             to="/admin/areas"
-            className={({ isActive }) =>
-              isActive
-                ? 'admin-nav__link admin-nav__link--ativo'
-                : 'admin-nav__link'
+            className={
+              obterClasseLink
             }
           >
             Áreas atendidas
@@ -44,10 +63,8 @@ function AdminPage() {
 
           <NavLink
             to="/admin/cronogramas"
-            className={({ isActive }) =>
-              isActive
-                ? 'admin-nav__link admin-nav__link--ativo'
-                : 'admin-nav__link'
+            className={
+              obterClasseLink
             }
           >
             Cronogramas

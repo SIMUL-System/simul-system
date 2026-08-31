@@ -88,6 +88,15 @@ function ConsultaPage() {
   ] = useState(null)
 
   const [
+    statusLocalizacaoUsuario,
+    setStatusLocalizacaoUsuario,
+  ] = useState(() =>
+    navigator.geolocation
+      ? 'buscando'
+      : 'indisponivel',
+  )
+
+  const [
     erroLocalizacaoUsuario,
     setErroLocalizacaoUsuario,
   ] = useState(() =>
@@ -96,7 +105,11 @@ function ConsultaPage() {
       : 'Seu navegador não oferece suporte à localização. Você ainda pode selecionar a cidade e o bairro manualmente.',
   )
 
-  const ultimaSelecaoRef = useRef(0)
+  const ultimaSelecaoRef =
+    useRef(0)
+
+  const melhorPrecisaoRef =
+    useRef(null)
 
   useEffect(() => {
     let componenteAtivo = true
@@ -143,74 +156,150 @@ function ConsultaPage() {
       }
     }
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        if (!componenteAtivo) {
-          return
-        }
+    function atualizarLocalizacao(
+      position,
+    ) {
+      if (!componenteAtivo) {
+        return
+      }
 
-        setLatitudeUsuario(
-          position.coords.latitude,
+      const {
+        latitude,
+        longitude,
+        accuracy,
+      } = position.coords
+
+      if (
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude) ||
+        !Number.isFinite(accuracy)
+      ) {
+        return
+      }
+
+      const melhorPrecisao =
+        melhorPrecisaoRef.current
+
+      const primeiraLeitura =
+        melhorPrecisao == null
+
+      const leituraMelhor =
+        primeiraLeitura ||
+        accuracy < melhorPrecisao
+
+      if (!leituraMelhor) {
+        return
+      }
+
+      melhorPrecisaoRef.current =
+        accuracy
+
+      setLatitudeUsuario(
+        latitude,
+      )
+
+      setLongitudeUsuario(
+        longitude,
+      )
+
+      setPrecisaoUsuario(
+        accuracy,
+      )
+
+      setErroLocalizacaoUsuario('')
+
+      if (accuracy <= 100) {
+        setStatusLocalizacaoUsuario(
+          'precisa',
         )
-
-        setLongitudeUsuario(
-          position.coords.longitude,
+      } else if (accuracy <= 500) {
+        setStatusLocalizacaoUsuario(
+          'aproximada',
         )
-
-        setPrecisaoUsuario(
-          position.coords.accuracy,
+      } else {
+        setStatusLocalizacaoUsuario(
+          'imprecisa',
         )
+      }
+    }
 
-        setErroLocalizacaoUsuario('')
-      },
-      (error) => {
-        if (!componenteAtivo) {
-          return
-        }
+    function tratarErroLocalizacao(
+      error,
+    ) {
+      if (!componenteAtivo) {
+        return
+      }
 
-        if (error.code === 1) {
-          setErroLocalizacaoUsuario(
-            'A localização não foi autorizada. Você ainda pode selecionar a cidade e o bairro manualmente.',
-          )
-
-          return
-        }
-
-        if (error.code === 2) {
-          setErroLocalizacaoUsuario(
-            'Sua localização não está disponível no momento. Você ainda pode selecionar a cidade e o bairro manualmente.',
-          )
-
-          return
-        }
-
-        if (error.code === 3) {
-          setErroLocalizacaoUsuario(
-            'A localização demorou muito para responder. Você ainda pode selecionar a cidade e o bairro manualmente.',
-          )
-
-          return
-        }
+      if (error.code === 1) {
+        setStatusLocalizacaoUsuario(
+          'negada',
+        )
 
         setErroLocalizacaoUsuario(
-          'Não foi possível obter sua localização. Você ainda pode selecionar a cidade e o bairro manualmente.',
+          'A localização não foi autorizada. Você ainda pode selecionar a cidade e o bairro manualmente.',
         )
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 60000,
-      },
-    )
+
+        return
+      }
+
+      if (error.code === 2) {
+        setStatusLocalizacaoUsuario(
+          'indisponivel',
+        )
+
+        setErroLocalizacaoUsuario(
+          'Sua localização não está disponível no momento. Você ainda pode selecionar a cidade e o bairro manualmente.',
+        )
+
+        return
+      }
+
+      if (error.code === 3) {
+        setStatusLocalizacaoUsuario(
+          'timeout',
+        )
+
+        setErroLocalizacaoUsuario(
+          'Não foi possível obter uma localização precisa a tempo. Você ainda pode selecionar a cidade e o bairro manualmente.',
+        )
+
+        return
+      }
+
+      setStatusLocalizacaoUsuario(
+        'indisponivel',
+      )
+
+      setErroLocalizacaoUsuario(
+        'Não foi possível obter sua localização. Você ainda pode selecionar a cidade e o bairro manualmente.',
+      )
+    }
+
+    const watchId =
+      navigator.geolocation.watchPosition(
+        atualizarLocalizacao,
+        tratarErroLocalizacao,
+        {
+          enableHighAccuracy: true,
+          timeout: 30000,
+          maximumAge: 0,
+        },
+      )
 
     return () => {
       componenteAtivo = false
+
+      navigator.geolocation.clearWatch(
+        watchId,
+      )
     }
   }, [])
 
   const cidades = [
     ...new Set(
-      areas.map((area) => area.cidade),
+      areas.map(
+        (area) => area.cidade,
+      ),
     ),
   ]
 
@@ -220,7 +309,9 @@ function ConsultaPage() {
           (area) =>
             area.cidade === cidade,
         )
-        .map((area) => area.bairro)
+        .map(
+          (area) => area.bairro,
+        )
     : []
 
   function limparAreaMapa() {
@@ -337,44 +428,20 @@ function ConsultaPage() {
     }
   }
 
-  function handleCidadeChange(event) {
-    const novaCidade =
-      event.target.value
-
-    ultimaSelecaoRef.current += 1
-
-    setCidade(novaCidade)
-    setBairro('')
-
-    setResultado(null)
-
-    setErro('')
-    setAvisoMapa('')
-
-    limparAreaMapa()
-
-    setCarregando(false)
-    setCarregandoLocalizacaoMapa(false)
-  }
-
-  async function handleBairroChange(
-    event,
+  async function executarConsultaArea(
+    cidadeSelecionada,
+    bairroSelecionado,
   ) {
-    const novoBairro =
-      event.target.value
-
-    setBairro(novoBairro)
-
-    setResultado(null)
-
-    setErro('')
-    setAvisoMapa('')
-
-    if (!cidade || !novoBairro) {
-      limparAreaMapa()
-
+    if (
+      !cidadeSelecionada ||
+      !bairroSelecionado
+    ) {
       return
     }
+
+    setResultado(null)
+    setErro('')
+    setAvisoMapa('')
 
     const idSelecao =
       ultimaSelecaoRef.current + 1
@@ -383,13 +450,16 @@ function ConsultaPage() {
       idSelecao
 
     setCarregando(true)
-    setCarregandoLocalizacaoMapa(true)
+
+    setCarregandoLocalizacaoMapa(
+      true,
+    )
 
     try {
       const dadosColeta =
         await consultarColeta(
-          cidade,
-          novoBairro,
+          cidadeSelecionada,
+          bairroSelecionado,
         )
 
       if (
@@ -411,7 +481,7 @@ function ConsultaPage() {
 
       if (geometriaSimul) {
         setNomeAreaMapa(
-          `${novoBairro}, ${cidade}`,
+          `${bairroSelecionado}, ${cidadeSelecionada}`,
         )
 
         setGeometriaArea(
@@ -438,8 +508,8 @@ function ConsultaPage() {
       }
 
       await carregarLocalizacaoFallback(
-        cidade,
-        novoBairro,
+        cidadeSelecionada,
+        bairroSelecionado,
         idSelecao,
       )
     } catch (error) {
@@ -462,102 +532,200 @@ function ConsultaPage() {
         ultimaSelecaoRef.current
       ) {
         setCarregando(false)
-        setCarregandoLocalizacaoMapa(false)
+
+        setCarregandoLocalizacaoMapa(
+          false,
+        )
       }
     }
   }
 
+  function handleCidadeChange(
+    event,
+  ) {
+    const novaCidade =
+      event.target.value
+
+    ultimaSelecaoRef.current += 1
+
+    setCidade(novaCidade)
+    setBairro('')
+
+    setResultado(null)
+
+    setErro('')
+    setAvisoMapa('')
+
+    limparAreaMapa()
+
+    setCarregando(false)
+
+    setCarregandoLocalizacaoMapa(
+      false,
+    )
+  }
+
+  async function handleBairroChange(
+    event,
+  ) {
+    const novoBairro =
+      event.target.value
+
+    setBairro(
+      novoBairro,
+    )
+
+    setErro('')
+    setAvisoMapa('')
+
+    if (
+      !cidade ||
+      !novoBairro
+    ) {
+      setResultado(null)
+
+      limparAreaMapa()
+
+      return
+    }
+
+    await executarConsultaArea(
+      cidade,
+      novoBairro,
+    )
+  }
+
   return (
-    <main className="app">
-      <section className="consulta">
-        <header className="consulta__cabecalho">
-          <span className="consulta__marca">
-            SIMUL
-          </span>
+    <main className="app app--publica">
+      <section className="consulta consulta--publica">
+        <header className="consulta-publica__hero">
+          <div className="consulta-publica__marca">
+            <span className="consulta-publica__simbolo">
+              ♻
+            </span>
 
-          <h1>
-            Consulte a coleta seletiva da sua região
-          </h1>
+            <div>
+              <strong>SIMUL</strong>
 
-          <p>
-            Selecione sua cidade e bairro para
-            visualizar a região e consultar
-            automaticamente os dias e horários
-            programados.
-          </p>
+              <span>
+                Sistema Integrado de
+                Monitoramento Urbano de
+                Limpeza
+              </span>
+            </div>
+          </div>
+
+          <div className="consulta-publica__hero-conteudo">
+            <span className="consulta-publica__destaque">
+              COLETA SELETIVA
+            </span>
+
+            <h1>
+              Saiba quando a coleta passa
+              na sua região
+            </h1>
+
+            <p>
+              Selecione sua cidade e seu
+              bairro para consultar os
+              dias, horários e a área
+              atendida pela coleta
+              seletiva.
+            </p>
+          </div>
         </header>
 
-        <div className="consulta__formulario">
-          <div className="campo">
-            <label htmlFor="cidade">
-              Cidade
-            </label>
+        <section className="consulta-publica__painel">
+          <div className="consulta-publica__painel-cabecalho">
+            <div>
+              <span className="consulta-publica__etapa">
+                CONSULTA
+              </span>
 
-            <select
-              id="cidade"
-              value={cidade}
-              onChange={
-                handleCidadeChange
-              }
-              disabled={
-                carregandoAreas ||
-                cidades.length === 0
-              }
-            >
-              <option value="">
-                {carregandoAreas
-                  ? 'Carregando cidades...'
-                  : 'Selecione uma cidade'}
-              </option>
+              <h2>
+                Encontre sua região
+              </h2>
+            </div>
 
-              {cidades.map(
-                (nomeCidade) => (
-                  <option
-                    key={nomeCidade}
-                    value={nomeCidade}
-                  >
-                    {nomeCidade}
-                  </option>
-                ),
-              )}
-            </select>
+            <p>
+              O cronograma é carregado
+              automaticamente após a
+              seleção do bairro.
+            </p>
           </div>
 
-          <div className="campo">
-            <label htmlFor="bairro">
-              Bairro
-            </label>
+          <div className="consulta__formulario consulta-publica__filtros">
+            <div className="campo">
+              <label htmlFor="cidade">
+                Cidade
+              </label>
 
-            <select
-              id="bairro"
-              value={bairro}
-              onChange={
-                handleBairroChange
-              }
-              disabled={
-                !cidade ||
-                bairros.length === 0
-              }
-            >
-              <option value="">
-                {!cidade
-                  ? 'Selecione primeiro a cidade'
-                  : 'Selecione um bairro'}
-              </option>
+              <select
+                id="cidade"
+                value={cidade}
+                onChange={
+                  handleCidadeChange
+                }
+                disabled={
+                  carregandoAreas ||
+                  cidades.length === 0
+                }
+              >
+                <option value="">
+                  {carregandoAreas
+                    ? 'Carregando cidades...'
+                    : 'Selecione uma cidade'}
+                </option>
 
-              {bairros.map(
-                (nomeBairro) => (
-                  <option
-                    key={nomeBairro}
-                    value={nomeBairro}
-                  >
-                    {nomeBairro}
-                  </option>
-                ),
-              )}
-            </select>
+                {cidades.map(
+                  (nomeCidade) => (
+                    <option
+                      key={nomeCidade}
+                      value={nomeCidade}
+                    >
+                      {nomeCidade}
+                    </option>
+                  ),
+                )}
+              </select>
+            </div>
+
+            <div className="campo">
+              <label htmlFor="bairro">
+                Bairro
+              </label>
+
+              <select
+                id="bairro"
+                value={bairro}
+                onChange={
+                  handleBairroChange
+                }
+                disabled={
+                  !cidade ||
+                  bairros.length === 0
+                }
+              >
+                <option value="">
+                  {!cidade
+                    ? 'Selecione primeiro a cidade'
+                    : 'Selecione um bairro'}
+                </option>
+
+                {bairros.map(
+                  (nomeBairro) => (
+                    <option
+                      key={nomeBairro}
+                      value={nomeBairro}
+                    >
+                      {nomeBairro}
+                    </option>
+                  ),
+                )}
+              </select>
+            </div>
           </div>
-        </div>
+        </section>
 
         <MapaColeta
           latitude={latitudeMapa}
@@ -581,11 +749,14 @@ function ConsultaPage() {
           precisaoUsuario={
             precisaoUsuario
           }
+          statusLocalizacaoUsuario={
+            statusLocalizacaoUsuario
+          }
         />
 
         {erroLocalizacaoUsuario && (
           <div
-            className="mensagem"
+            className="mensagem consulta-publica__mensagem"
             role="status"
           >
             {
@@ -596,7 +767,7 @@ function ConsultaPage() {
 
         {carregando && (
           <div
-            className="mensagem"
+            className="mensagem consulta-publica__mensagem"
             role="status"
           >
             Carregando horários da coleta...
@@ -605,7 +776,7 @@ function ConsultaPage() {
 
         {erro && (
           <div
-            className="mensagem mensagem--erro"
+            className="mensagem mensagem--erro consulta-publica__mensagem"
             role="alert"
           >
             {erro}
@@ -614,7 +785,7 @@ function ConsultaPage() {
 
         {avisoMapa && (
           <div
-            className="mensagem"
+            className="mensagem consulta-publica__mensagem"
             role="status"
           >
             {avisoMapa}
@@ -622,34 +793,55 @@ function ConsultaPage() {
         )}
 
         {resultado && (
-          <section className="resultado">
-            <h2>
-              Coleta em {
-                resultado.bairro
-              }
-            </h2>
+          <section className="consulta-publica__resultado">
+            <div className="consulta-publica__resultado-cabecalho">
+              <div>
+                <span className="consulta-publica__etapa">
+                  CRONOGRAMA
+                </span>
 
-            <div className="resultado__informacoes">
-              <p>
-                <strong>
-                  Cidade:
-                </strong>{' '}
-                {
-                  resultado.cidade
-                }
-              </p>
+                <h2>
+                  Coleta em{' '}
+                  {
+                    resultado.bairro
+                  }
+                </h2>
+              </div>
 
-              <p>
-                <strong>
-                  Bairro:
-                </strong>{' '}
-                {
-                  resultado.bairro
-                }
-              </p>
+              <span className="consulta-publica__status">
+                Coleta cadastrada
+              </span>
             </div>
 
-            <h3>Cronograma</h3>
+            <div className="consulta-publica__local">
+              <div>
+                <span>
+                  Cidade
+                </span>
+
+                <strong>
+                  {
+                    resultado.cidade
+                  }
+                </strong>
+              </div>
+
+              <div>
+                <span>
+                  Bairro
+                </span>
+
+                <strong>
+                  {
+                    resultado.bairro
+                  }
+                </strong>
+              </div>
+            </div>
+
+            <h3>
+              Dias e horários
+            </h3>
 
             {resultado.cronogramas
               ?.length > 0 ? (
@@ -660,25 +852,30 @@ function ConsultaPage() {
                     index,
                   ) => (
                     <article
-                      className="cronograma"
+                      className="cronograma consulta-publica__cronograma"
                       key={`${cronograma.diaSemana}-${index}`}
                     >
-                      <strong>
-                        {
-                          cronograma
-                            .diaSemana
-                        }
-                      </strong>
+                      <div>
+                        <span className="consulta-publica__icone-dia">
+                          ♻
+                        </span>
 
-                      <span>
+                        <strong>
+                          {
+                            cronograma.diaSemana
+                          }
+                        </strong>
+                      </div>
+
+                      <span className="consulta-publica__horario">
                         {
-                          cronograma
-                            .horarioInicio
+                          cronograma.horarioInicio
                         }
+
                         {' — '}
+
                         {
-                          cronograma
-                            .horarioFim
+                          cronograma.horarioFim
                         }
                       </span>
                     </article>
