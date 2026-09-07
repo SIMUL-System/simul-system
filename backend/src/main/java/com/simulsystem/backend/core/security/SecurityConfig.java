@@ -53,6 +53,10 @@ public class SecurityConfig {
                                 HttpMethod.GET,
                                 "/api/rotas/areas"
                         ).permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/notificacoes/push/public-key"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception

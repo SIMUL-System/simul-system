@@ -1,5 +1,6 @@
 package com.simulsystem.backend.business.notificacao.strategy;
 
 public enum TipoNotificacao {
-    EMAIL
+    EMAIL,
+    WEB_PUSH
 }

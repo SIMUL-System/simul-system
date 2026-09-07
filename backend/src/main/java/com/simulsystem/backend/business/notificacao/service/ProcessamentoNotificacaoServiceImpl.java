@@ -29,10 +29,17 @@ public class ProcessamentoNotificacaoServiceImpl
             HistoricoNotificacaoService historicoNotificacaoService,
             EnvioNotificacaoService envioNotificacaoService
     ) {
-        this.decisaoNotificacaoService = decisaoNotificacaoService;
-        this.cronogramaService = cronogramaService;
-        this.historicoNotificacaoService = historicoNotificacaoService;
-        this.envioNotificacaoService = envioNotificacaoService;
+        this.decisaoNotificacaoService =
+                decisaoNotificacaoService;
+
+        this.cronogramaService =
+                cronogramaService;
+
+        this.historicoNotificacaoService =
+                historicoNotificacaoService;
+
+        this.envioNotificacaoService =
+                envioNotificacaoService;
     }
 
     @Override
@@ -40,10 +47,16 @@ public class ProcessamentoNotificacaoServiceImpl
             PreferenciaNotificacao preferencia,
             LocalDateTime referencia
     ) {
-        validarDados(preferencia, referencia);
+        validarDados(
+                preferencia,
+                referencia
+        );
 
         if (!decisaoNotificacaoService
-                .estaNoHorarioDoLembrete(preferencia, referencia)) {
+                .estaNoHorarioDoLembrete(
+                        preferencia,
+                        referencia
+                )) {
             return;
         }
 
@@ -57,34 +70,47 @@ public class ProcessamentoNotificacaoServiceImpl
             return;
         }
 
-        if (Boolean.TRUE.equals(preferencia.getEmailAtivo())) {
-            processarEmail(
+        LocalDateTime dataHoraColeta =
+                proximaColeta.orElseThrow();
+
+        if (Boolean.TRUE.equals(
+                preferencia.getEmailAtivo()
+        )) {
+            processarCanal(
                     preferencia,
-                    proximaColeta.orElseThrow(),
-                    referencia
+                    dataHoraColeta,
+                    referencia,
+                    CanalNotificacao.EMAIL,
+                    TipoNotificacao.EMAIL
             );
         }
 
-        /*
-         * Web Push será conectado aqui quando existir
-         * WebPushNotificacaoStrategy.
-         *
-         * Não registramos envio WEB_PUSH enquanto não houver
-         * transporte real implementado.
-         */
+        if (Boolean.TRUE.equals(
+                preferencia.getWebPushAtivo()
+        )) {
+            processarCanal(
+                    preferencia,
+                    dataHoraColeta,
+                    referencia,
+                    CanalNotificacao.WEB_PUSH,
+                    TipoNotificacao.WEB_PUSH
+            );
+        }
     }
 
-    private void processarEmail(
+    private void processarCanal(
             PreferenciaNotificacao preferencia,
             LocalDateTime dataHoraColeta,
-            LocalDateTime referencia
+            LocalDateTime referencia,
+            CanalNotificacao canalHistorico,
+            TipoNotificacao tipoNotificacao
     ) {
         Optional<HistoricoNotificacao> reserva =
                 historicoNotificacaoService.reservarEnvio(
                         preferencia.getUsuario(),
                         preferencia.getRota(),
                         dataHoraColeta,
-                        CanalNotificacao.EMAIL
+                        canalHistorico
                 );
 
         if (reserva.isEmpty()) {
@@ -96,7 +122,7 @@ public class ProcessamentoNotificacaoServiceImpl
 
         try {
             envioNotificacaoService.enviar(
-                    TipoNotificacao.EMAIL,
+                    tipoNotificacao,
                     preferencia.getUsuario().getEmail(),
                     criarAssunto(),
                     criarMensagem(
@@ -112,10 +138,10 @@ public class ProcessamentoNotificacaoServiceImpl
 
         } catch (RuntimeException exception) {
             historicoNotificacaoService.marcarComoFalha(
-        historico.getId(),
-        exception.getMessage(),
-        referencia
-);
+                    historico.getId(),
+                    obterMensagemErro(exception),
+                    referencia
+            );
         }
     }
 
@@ -134,6 +160,21 @@ public class ProcessamentoNotificacaoServiceImpl
                 + " está prevista para "
                 + dataHoraColeta.format(FORMATADOR)
                 + ".";
+    }
+
+    private String obterMensagemErro(
+            RuntimeException exception
+    ) {
+        if (
+                exception.getMessage() != null
+                && !exception.getMessage().isBlank()
+        ) {
+            return exception.getMessage();
+        }
+
+        return exception
+                .getClass()
+                .getSimpleName();
     }
 
     private void validarDados(

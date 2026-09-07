@@ -2,11 +2,20 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { consultarColeta } from '../services/rotaService'
+
 import {
   atualizarPreferencia,
   criarPreferencia,
   obterPreferencia,
 } from '../services/notificacaoService'
+
+import {
+  ativarWebPush,
+  desativarWebPush,
+  obterSubscriptionAtual,
+  webPushSuportado,
+} from '../services/webPushService'
+
 import '../App.css'
 
 function PreferenciasPage() {
@@ -21,6 +30,24 @@ function PreferenciasPage() {
 
   const [emailAtivo, setEmailAtivo] =
     useState(true)
+
+  const [webPushAtivo, setWebPushAtivo] =
+    useState(false)
+
+  const [
+    navegadorInscrito,
+    setNavegadorInscrito,
+  ] = useState(false)
+
+  const [
+    alterandoWebPush,
+    setAlterandoWebPush,
+  ] = useState(false)
+
+  const [
+    webPushDisponivel,
+    setWebPushDisponivel,
+  ] = useState(true)
 
   const [
     antecedenciaHoras,
@@ -45,6 +72,22 @@ function PreferenciasPage() {
   useEffect(() => {
     async function carregarPreferencia() {
       try {
+        const suportado =
+          webPushSuportado()
+
+        setWebPushDisponivel(
+          suportado,
+        )
+
+        if (suportado) {
+          const subscription =
+            await obterSubscriptionAtual()
+
+          setNavegadorInscrito(
+            Boolean(subscription),
+          )
+        }
+
         const dados =
           await obterPreferencia()
 
@@ -57,6 +100,10 @@ function PreferenciasPage() {
 
         setEmailAtivo(
           dados.emailAtivo ?? true,
+        )
+
+        setWebPushAtivo(
+          dados.webPushAtivo ?? false,
         )
 
         setAntecedenciaHoras(
@@ -93,10 +140,11 @@ function PreferenciasPage() {
     try {
       setConsultandoRota(true)
 
-      const dados = await consultarColeta(
-        cidade,
-        bairro,
-      )
+      const dados =
+        await consultarColeta(
+          cidade,
+          bairro,
+        )
 
       setRotaSelecionada({
         rotaId: dados.rotaId,
@@ -113,6 +161,63 @@ function PreferenciasPage() {
       )
     } finally {
       setConsultandoRota(false)
+    }
+  }
+
+  async function handleAtivarWebPush() {
+    setErro('')
+    setSucesso('')
+
+    if (!webPushDisponivel) {
+      setErro(
+        'Este navegador não oferece suporte a Web Push.',
+      )
+      return
+    }
+
+    try {
+      setAlterandoWebPush(true)
+
+      await ativarWebPush()
+
+      setNavegadorInscrito(true)
+      setWebPushAtivo(true)
+
+      setSucesso(
+        'Web Push ativado neste navegador. Salve as preferências para concluir a configuração.',
+      )
+    } catch (error) {
+      setErro(
+        error.message ||
+          'Não foi possível ativar o Web Push.',
+      )
+    } finally {
+      setAlterandoWebPush(false)
+    }
+  }
+
+  async function handleDesativarWebPush() {
+    setErro('')
+    setSucesso('')
+
+    try {
+      setAlterandoWebPush(true)
+
+      await desativarWebPush()
+
+      setNavegadorInscrito(false)
+      setWebPushAtivo(false)
+
+      setSucesso(
+        'Web Push desativado neste navegador. Salve as preferências para atualizar a configuração.',
+      )
+    } catch (error) {
+      setErro(
+        error.message ||
+          'Não foi possível desativar o Web Push.',
+      )
+    } finally {
+      setAlterandoWebPush(false)
     }
   }
 
@@ -141,19 +246,34 @@ function PreferenciasPage() {
       return
     }
 
+    if (
+      webPushAtivo &&
+      !navegadorInscrito
+    ) {
+      setErro(
+        'Ative o Web Push neste navegador antes de salvar essa opção.',
+      )
+      return
+    }
+
     const dados = {
       rotaId: rotaSelecionada.rotaId,
       emailAtivo,
-      webPushAtivo: false,
+      webPushAtivo,
       antecedenciaHoras: antecedencia,
     }
 
     try {
       setSalvando(true)
 
-      const resposta = preferencia
-        ? await atualizarPreferencia(dados)
-        : await criarPreferencia(dados)
+      const resposta =
+        preferencia
+          ? await atualizarPreferencia(
+              dados,
+            )
+          : await criarPreferencia(
+              dados,
+            )
 
       setPreferencia(
         resposta || {
@@ -203,9 +323,11 @@ function PreferenciasPage() {
           </h1>
 
           <p>
-            Escolha a rota que deseja acompanhar
-            e com quanto tempo de antecedência
-            deseja receber o lembrete por e-mail.
+            Escolha a rota que deseja
+            acompanhar, os canais de
+            notificação e com quanto tempo
+            de antecedência deseja receber
+            o lembrete.
           </p>
         </header>
 
@@ -318,7 +440,7 @@ function PreferenciasPage() {
 
         <section className="resultado">
           <h2>
-            2. Configure o lembrete
+            2. Configure os canais
           </h2>
 
           <div className="campo campo-checkbox">
@@ -335,6 +457,94 @@ function PreferenciasPage() {
 
               Receber lembretes por e-mail
             </label>
+          </div>
+
+          <div className="web-push-config">
+            <div className="web-push-config__cabecalho">
+              <div>
+                <strong>
+                  Web Push
+                </strong>
+
+                <p>
+                  Receba lembretes diretamente
+                  neste navegador.
+                </p>
+              </div>
+
+              <span
+                className={
+                  navegadorInscrito
+                    ? 'web-push-status web-push-status--ativo'
+                    : 'web-push-status'
+                }
+              >
+                {navegadorInscrito
+                  ? 'Ativado'
+                  : 'Desativado'}
+              </span>
+            </div>
+
+            {!webPushDisponivel && (
+              <p className="web-push-config__aviso">
+                Este navegador não oferece
+                suporte a Web Push.
+              </p>
+            )}
+
+            {webPushDisponivel &&
+              !navegadorInscrito && (
+                <button
+                  type="button"
+                  className="web-push-config__botao"
+                  onClick={
+                    handleAtivarWebPush
+                  }
+                  disabled={
+                    alterandoWebPush
+                  }
+                >
+                  {alterandoWebPush
+                    ? 'Ativando...'
+                    : 'Ativar neste navegador'}
+                </button>
+              )}
+
+            {webPushDisponivel &&
+              navegadorInscrito && (
+                <>
+                  <div className="campo campo-checkbox">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={webPushAtivo}
+                        onChange={(event) =>
+                          setWebPushAtivo(
+                            event.target.checked,
+                          )
+                        }
+                      />
+
+                      Receber lembretes por Web Push
+                    </label>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="web-push-config__botao web-push-config__botao--secundario"
+                    onClick={
+                      handleDesativarWebPush
+                    }
+                    disabled={
+                      alterandoWebPush
+                    }
+                  >
+                    {alterandoWebPush
+                      ? 'Desativando...'
+                      : 'Desativar neste navegador'}
+                  </button>
+                </>
+              )}
           </div>
 
           <div className="campo">
