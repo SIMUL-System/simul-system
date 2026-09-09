@@ -1,10 +1,10 @@
 import {
+  lazy,
+  Suspense,
   useEffect,
   useMemo,
   useState,
 } from 'react'
-
-import MapaEdicaoArea from '../../components/MapaEdicaoArea'
 
 import {
   atualizarAreaAtendida,
@@ -25,24 +25,68 @@ import {
   consultarColeta,
 } from '../../services/rotaService'
 
+const MapaEdicaoArea = lazy(
+  () =>
+    import(
+      '../../components/MapaEdicaoArea'
+    ),
+)
+
+function ordenarTexto(
+  a,
+  b,
+) {
+  return a.localeCompare(
+    b,
+    'pt-BR',
+    {
+      sensitivity:
+        'base',
+    },
+  )
+}
+
+function normalizarTexto(
+  valor,
+) {
+  return valor
+    .trim()
+    .replace(
+      /\s+/g,
+      ' ',
+    )
+}
+
 function AreasAdminPage() {
-  const [rotas, setRotas] =
-    useState([])
+  const [
+    rotas,
+    setRotas,
+  ] = useState([])
 
-  const [areas, setAreas] =
-    useState([])
+  const [
+    areas,
+    setAreas,
+  ] = useState([])
 
-  const [busca, setBusca] =
-    useState('')
+  const [
+    busca,
+    setBusca,
+  ] = useState('')
 
-  const [cidade, setCidade] =
-    useState('')
+  const [
+    cidade,
+    setCidade,
+  ] = useState('')
 
-  const [bairro, setBairro] =
-    useState('')
+  const [
+    bairro,
+    setBairro,
+  ] = useState('')
 
-  const [rotaId, setRotaId] =
-    useState('')
+  const [
+    rotaId,
+    setRotaId,
+  ] = useState('')
 
   const [
     areaEmEdicao,
@@ -74,11 +118,15 @@ function AreasAdminPage() {
     setLongitudeMapa,
   ] = useState(null)
 
-  const [erro, setErro] =
-    useState('')
+  const [
+    erro,
+    setErro,
+  ] = useState('')
 
-  const [sucesso, setSucesso] =
-    useState('')
+  const [
+    sucesso,
+    setSucesso,
+  ] = useState('')
 
   const [
     carregando,
@@ -101,7 +149,8 @@ function AreasAdminPage() {
   ] = useState(false)
 
   useEffect(() => {
-    let componenteAtivo = true
+    let componenteAtivo =
+      true
 
     Promise.all([
       listarRotas(),
@@ -112,7 +161,9 @@ function AreasAdminPage() {
           dadosRotas,
           dadosAreas,
         ]) => {
-          if (!componenteAtivo) {
+          if (
+            !componenteAtivo
+          ) {
             return
           }
 
@@ -134,7 +185,9 @@ function AreasAdminPage() {
         },
       )
       .catch((error) => {
-        if (!componenteAtivo) {
+        if (
+          !componenteAtivo
+        ) {
           return
         }
 
@@ -144,61 +197,132 @@ function AreasAdminPage() {
         )
       })
       .finally(() => {
-        if (componenteAtivo) {
-          setCarregando(false)
+        if (
+          componenteAtivo
+        ) {
+          setCarregando(
+            false,
+          )
         }
       })
 
     return () => {
-      componenteAtivo = false
+      componenteAtivo =
+        false
     }
   }, [])
 
-  const areasFiltradas = useMemo(
-    () => {
-      const termo =
-        busca
-          .trim()
-          .toLocaleLowerCase(
-            'pt-BR',
-          )
+  const cidadesDisponiveis =
+    useMemo(
+      () =>
+        [
+          ...new Set(
+            areas
+              .map(
+                (area) =>
+                  area.cidade
+                    ?.trim(),
+              )
+              .filter(
+                Boolean,
+              ),
+          ),
+        ].sort(
+          ordenarTexto,
+        ),
+      [areas],
+    )
 
-      if (!termo) {
-        return areas
-      }
+  const bairrosDisponiveis =
+    useMemo(
+      () => {
+        const cidadeNormalizada =
+          cidade.trim()
 
-      return areas.filter(
-        (area) => {
-          const cidadeArea =
-            (
-              area.cidade ?? ''
-            ).toLocaleLowerCase(
+        const bairrosFiltrados =
+          cidadeNormalizada
+            ? areas
+                .filter(
+                  (area) =>
+                    area.cidade
+                      ?.trim() ===
+                    cidadeNormalizada,
+                )
+                .map(
+                  (area) =>
+                    area.bairro
+                      ?.trim(),
+                )
+            : areas.map(
+                (area) =>
+                  area.bairro
+                    ?.trim(),
+              )
+
+        return [
+          ...new Set(
+            bairrosFiltrados.filter(
+              Boolean,
+            ),
+          ),
+        ].sort(
+          ordenarTexto,
+        )
+      },
+      [
+        areas,
+        cidade,
+      ],
+    )
+
+  const areasFiltradas =
+    useMemo(
+      () => {
+        const termo =
+          busca
+            .trim()
+            .toLocaleLowerCase(
               'pt-BR',
             )
 
-          const bairroArea =
-            (
-              area.bairro ?? ''
-            ).toLocaleLowerCase(
-              'pt-BR',
-            )
+        if (!termo) {
+          return areas
+        }
 
-          return (
-            cidadeArea.includes(
-              termo,
-            ) ||
-            bairroArea.includes(
-              termo,
+        return areas.filter(
+          (area) => {
+            const cidadeArea =
+              (
+                area.cidade ??
+                ''
+              ).toLocaleLowerCase(
+                'pt-BR',
+              )
+
+            const bairroArea =
+              (
+                area.bairro ??
+                ''
+              ).toLocaleLowerCase(
+                'pt-BR',
+              )
+
+            return (
+              cidadeArea.includes(
+                termo,
+              ) ||
+              bairroArea.includes(
+                termo,
+              )
             )
-          )
-        },
-      )
-    },
-    [
-      areas,
-      busca,
-    ],
-  )
+          },
+        )
+      },
+      [
+        areas,
+        busca,
+      ],
+    )
 
   const totalComGeometria =
     useMemo(
@@ -214,15 +338,27 @@ function AreasAdminPage() {
     areas.length -
     totalComGeometria
 
+  const operacaoEmAndamento =
+    salvando ||
+    carregandoMapa ||
+    salvandoGeometria
+
   async function recarregarAreas() {
     const dados =
       await listarAreasAtendidas()
 
     setAreas(
-      Array.isArray(dados)
+      Array.isArray(
+        dados,
+      )
         ? dados
         : [],
     )
+  }
+
+  function limparMensagens() {
+    setErro('')
+    setSucesso('')
   }
 
   function limparFormulario() {
@@ -233,20 +369,31 @@ function AreasAdminPage() {
   }
 
   function fecharEditorGeometria() {
-    setAreaGeometria(null)
+    setAreaGeometria(
+      null,
+    )
 
-    setGeometriaInicial(null)
-    setGeometriaAtual(null)
+    setGeometriaInicial(
+      null,
+    )
 
-    setLatitudeMapa(null)
-    setLongitudeMapa(null)
+    setGeometriaAtual(
+      null,
+    )
+
+    setLatitudeMapa(
+      null,
+    )
+
+    setLongitudeMapa(
+      null,
+    )
   }
 
   function iniciarEdicao(
     area,
   ) {
-    setErro('')
-    setSucesso('')
+    limparMensagens()
 
     fecharEditorGeometria()
 
@@ -255,30 +402,33 @@ function AreasAdminPage() {
     )
 
     setCidade(
-      area.cidade ?? '',
+      area.cidade ??
+        '',
     )
 
     setBairro(
-      area.bairro ?? '',
+      area.bairro ??
+        '',
     )
 
     setRotaId(
       String(
-        area.rotaId ?? '',
+        area.rotaId ??
+          '',
       ),
     )
 
     window.scrollTo({
       top: 0,
-      behavior: 'smooth',
+      behavior:
+        'smooth',
     })
   }
 
   function cancelarEdicao() {
     limparFormulario()
 
-    setErro('')
-    setSucesso('')
+    limparMensagens()
   }
 
   function validarGeometria(
@@ -317,7 +467,9 @@ function AreasAdminPage() {
   function converterGeoJson(
     geometriaGeoJson,
   ) {
-    if (!geometriaGeoJson) {
+    if (
+      !geometriaGeoJson
+    ) {
       return null
     }
 
@@ -338,17 +490,23 @@ function AreasAdminPage() {
   async function iniciarEdicaoGeometria(
     area,
   ) {
-    setErro('')
-    setSucesso('')
+    limparMensagens()
 
-    setCarregandoMapa(true)
+    setCarregandoMapa(
+      true,
+    )
 
     setAreaGeometria(
       area,
     )
 
-    setGeometriaInicial(null)
-    setGeometriaAtual(null)
+    setGeometriaInicial(
+      null,
+    )
+
+    setGeometriaAtual(
+      null,
+    )
 
     try {
       const [
@@ -360,13 +518,16 @@ function AreasAdminPage() {
             area.cidade,
             area.bairro,
           ),
+
           consultarColeta(
             area.cidade,
             area.bairro,
           ),
         ])
 
-      if (localizacao) {
+      if (
+        localizacao
+      ) {
         setLatitudeMapa(
           localizacao.latitude,
         )
@@ -382,7 +543,9 @@ function AreasAdminPage() {
             ?.geometriaGeoJson,
         )
 
-      if (geometriaSimul) {
+      if (
+        geometriaSimul
+      ) {
         setGeometriaInicial(
           geometriaSimul,
         )
@@ -400,7 +563,9 @@ function AreasAdminPage() {
             ?.geometria,
         )
 
-      if (geometriaNominatim) {
+      if (
+        geometriaNominatim
+      ) {
         setGeometriaInicial(
           geometriaNominatim,
         )
@@ -412,15 +577,22 @@ function AreasAdminPage() {
         return
       }
 
-      setGeometriaInicial(null)
-      setGeometriaAtual(null)
+      setGeometriaInicial(
+        null,
+      )
+
+      setGeometriaAtual(
+        null,
+      )
     } catch (error) {
       setErro(
         error.message ||
           'Não foi possível preparar o mapa da área.',
       )
     } finally {
-      setCarregandoMapa(false)
+      setCarregandoMapa(
+        false,
+      )
     }
   }
 
@@ -433,14 +605,17 @@ function AreasAdminPage() {
   }
 
   async function salvarGeometria() {
-    if (!areaGeometria) {
+    if (
+      !areaGeometria
+    ) {
       return
     }
 
-    setErro('')
-    setSucesso('')
+    limparMensagens()
 
-    if (!geometriaAtual) {
+    if (
+      !geometriaAtual
+    ) {
       setErro(
         'Desenhe uma área no mapa antes de salvar.',
       )
@@ -514,12 +689,21 @@ function AreasAdminPage() {
   ) {
     event.preventDefault()
 
-    setErro('')
-    setSucesso('')
+    limparMensagens()
+
+    const cidadeNormalizada =
+      normalizarTexto(
+        cidade,
+      )
+
+    const bairroNormalizado =
+      normalizarTexto(
+        bairro,
+      )
 
     if (
-      !cidade.trim() ||
-      !bairro.trim() ||
+      !cidadeNormalizada ||
+      !bairroNormalizado ||
       !rotaId
     ) {
       setErro(
@@ -530,7 +714,9 @@ function AreasAdminPage() {
     }
 
     const rotaSelecionadaId =
-      Number(rotaId)
+      Number(
+        rotaId,
+      )
 
     if (
       !Number.isInteger(
@@ -544,21 +730,60 @@ function AreasAdminPage() {
       return
     }
 
+    const areaDuplicada =
+      areas.find(
+        (area) =>
+          area.id !==
+            areaEmEdicao?.id &&
+          area.cidade
+            ?.trim()
+            .toLocaleLowerCase(
+              'pt-BR',
+            ) ===
+            cidadeNormalizada
+              .toLocaleLowerCase(
+                'pt-BR',
+              ) &&
+          area.bairro
+            ?.trim()
+            .toLocaleLowerCase(
+              'pt-BR',
+            ) ===
+            bairroNormalizado
+              .toLocaleLowerCase(
+                'pt-BR',
+              ),
+      )
+
+    if (
+      areaDuplicada
+    ) {
+      setErro(
+        `Já existe uma área cadastrada para ${bairroNormalizado}, ${cidadeNormalizada}.`,
+      )
+
+      return
+    }
+
     const dados = {
       cidade:
-        cidade.trim(),
+        cidadeNormalizada,
 
       bairro:
-        bairro.trim(),
+        bairroNormalizado,
 
       rotaId:
         rotaSelecionadaId,
     }
 
     try {
-      setSalvando(true)
+      setSalvando(
+        true,
+      )
 
-      if (areaEmEdicao) {
+      if (
+        areaEmEdicao
+      ) {
         await atualizarAreaAtendida(
           areaEmEdicao.id,
           dados,
@@ -586,14 +811,19 @@ function AreasAdminPage() {
           'Não foi possível salvar a área atendida.',
       )
     } finally {
-      setSalvando(false)
+      setSalvando(
+        false,
+      )
     }
   }
 
   return (
     <>
-      <header className="admin-secao__cabecalho">
-        <h2>
+      <header
+        className="admin-secao__cabecalho"
+        aria-labelledby="titulo-areas-admin"
+      >
+        <h2 id="titulo-areas-admin">
           Áreas atendidas
         </h2>
 
@@ -608,6 +838,7 @@ function AreasAdminPage() {
         <div
           className="mensagem mensagem--erro"
           role="alert"
+          aria-live="assertive"
         >
           {erro}
         </div>
@@ -617,13 +848,20 @@ function AreasAdminPage() {
         <div
           className="mensagem mensagem--sucesso"
           role="status"
+          aria-live="polite"
         >
           {sucesso}
         </div>
       )}
 
-      <section className="resultado">
-        <h3>
+      <section
+        className="resultado"
+        aria-labelledby="titulo-formulario-area"
+        aria-busy={
+          salvando
+        }
+      >
+        <h3 id="titulo-formulario-area">
           {areaEmEdicao
             ? 'Editar área atendida'
             : 'Cadastrar bairro atendido'}
@@ -634,76 +872,141 @@ function AreasAdminPage() {
           onSubmit={
             handleSubmit
           }
+          noValidate
         >
           <div className="campo">
-            <label
-              htmlFor="cidadeArea"
-            >
+            <label htmlFor="cidadeArea">
               Cidade
             </label>
 
             <input
               id="cidadeArea"
               type="text"
-              value={cidade}
+              list="cidadesArea"
+              value={
+                cidade
+              }
               onChange={(
                 event,
-              ) =>
+              ) => {
                 setCidade(
                   event.target
                     .value,
                 )
-              }
-              placeholder="Ex.: Senador Canedo"
+
+                limparMensagens()
+              }}
+              placeholder="Selecione ou digite uma cidade"
               autoComplete="address-level2"
+              aria-describedby="ajuda-cidade-area"
+              disabled={
+                operacaoEmAndamento
+              }
             />
+
+            <datalist id="cidadesArea">
+              {cidadesDisponiveis.map(
+                (
+                  nomeCidade,
+                ) => (
+                  <option
+                    key={
+                      nomeCidade
+                    }
+                    value={
+                      nomeCidade
+                    }
+                  />
+                ),
+              )}
+            </datalist>
+
+            <small id="ajuda-cidade-area">
+              Selecione uma cidade já
+              cadastrada ou digite o
+              nome de uma nova cidade.
+            </small>
           </div>
 
           <div className="campo">
-            <label
-              htmlFor="bairroArea"
-            >
+            <label htmlFor="bairroArea">
               Bairro
             </label>
 
             <input
               id="bairroArea"
               type="text"
-              value={bairro}
+              list="bairrosArea"
+              value={
+                bairro
+              }
               onChange={(
                 event,
-              ) =>
+              ) => {
                 setBairro(
                   event.target
                     .value,
                 )
-              }
-              placeholder="Ex.: Jardim Nova Goiânia"
+
+                limparMensagens()
+              }}
+              placeholder="Selecione ou digite um bairro"
               autoComplete="address-level3"
+              aria-describedby="ajuda-bairro-area"
+              disabled={
+                operacaoEmAndamento
+              }
             />
+
+            <datalist id="bairrosArea">
+              {bairrosDisponiveis.map(
+                (
+                  nomeBairro,
+                ) => (
+                  <option
+                    key={
+                      nomeBairro
+                    }
+                    value={
+                      nomeBairro
+                    }
+                  />
+                ),
+              )}
+            </datalist>
+
+            <small id="ajuda-bairro-area">
+              {cidade.trim()
+                ? 'Os bairros já cadastrados nessa cidade aparecem como sugestões. Você também pode informar um novo bairro.'
+                : 'Informe primeiro a cidade para receber sugestões de bairros dessa região.'}
+            </small>
           </div>
 
           <div className="campo">
-            <label
-              htmlFor="rotaArea"
-            >
+            <label htmlFor="rotaArea">
               Rota associada
             </label>
 
             <select
               id="rotaArea"
-              value={rotaId}
+              value={
+                rotaId
+              }
               onChange={(
                 event,
-              ) =>
+              ) => {
                 setRotaId(
                   event.target
                     .value,
                 )
-              }
+
+                limparMensagens()
+              }}
               disabled={
-                carregando
+                carregando ||
+                operacaoEmAndamento
               }
+              aria-describedby="ajuda-rota-area"
             >
               <option value="">
                 Selecione uma rota
@@ -712,13 +1015,18 @@ function AreasAdminPage() {
               {rotas.map(
                 (rota) => (
                   <option
-                    key={rota.id}
-                    value={rota.id}
+                    key={
+                      rota.id
+                    }
+                    value={
+                      rota.id
+                    }
                     disabled={
                       !rota.ativo &&
                       Number(
                         rotaId,
-                      ) !== rota.id
+                      ) !==
+                        rota.id
                     }
                   >
                     {rota.nome}
@@ -730,11 +1038,19 @@ function AreasAdminPage() {
                 ),
               )}
             </select>
+
+            <small id="ajuda-rota-area">
+              Escolha a rota responsável
+              pelo atendimento dessa
+              região.
+            </small>
           </div>
 
           <button
             type="submit"
-            disabled={salvando}
+            disabled={
+              operacaoEmAndamento
+            }
           >
             {salvando
               ? 'Salvando...'
@@ -749,7 +1065,9 @@ function AreasAdminPage() {
               onClick={
                 cancelarEdicao
               }
-              disabled={salvando}
+              disabled={
+                operacaoEmAndamento
+              }
             >
               Cancelar edição
             </button>
@@ -758,8 +1076,15 @@ function AreasAdminPage() {
       </section>
 
       {areaGeometria && (
-        <section className="resultado">
-          <h3>
+        <section
+          className="resultado"
+          aria-labelledby="titulo-editor-geometria"
+          aria-busy={
+            carregandoMapa ||
+            salvandoGeometria
+          }
+        >
+          <h3 id="titulo-editor-geometria">
             Editor da área —{' '}
             {
               areaGeometria.bairro
@@ -767,52 +1092,65 @@ function AreasAdminPage() {
           </h3>
 
           <p>
-            Use as ferramentas no canto
-            superior esquerdo do mapa para
-            desenhar ou ajustar o contorno.
+            Ajuste o contorno da região
+            atendida no mapa.
           </p>
 
-          <p>
-            <strong>
-              Desenho:
-            </strong>{' '}
-            crie o polígono seguindo o
-            limite da área.
-            {' '}
-            <strong>
-              Edição:
-            </strong>{' '}
-            mova os vértices para corrigir
-            o contorno.
-            {' '}
-            <strong>
-              Arrastar:
-            </strong>{' '}
-            move a geometria inteira.
+          <p id="instrucoes-editor-geometria">
+            Use as ferramentas do mapa
+            para desenhar o polígono,
+            mover seus vértices ou
+            ajustar o contorno da área.
           </p>
 
           {carregandoMapa ? (
-            <p>
+            <p
+              role="status"
+              aria-live="polite"
+            >
               Preparando mapa...
             </p>
           ) : (
             <>
-              <MapaEdicaoArea
-                latitude={
-                  latitudeMapa
-                }
-                longitude={
-                  longitudeMapa
-                }
-                geometriaInicial={
-                  geometriaInicial
-                }
-                aoAlterarGeometria={
-                  handleGeometriaAlterada
-                }
-              />
+              <div
+                aria-describedby="instrucoes-editor-geometria"
+              >
+                <Suspense
+                  fallback={
+                    <div
+                      className="mensagem"
+                      role="status"
+                      aria-live="polite"
+                      aria-busy="true"
+                    >
+                      Carregando editor
+                      do mapa...
+                    </div>
+                  }
+                >
+                  <MapaEdicaoArea
+                    latitude={
+                      latitudeMapa
+                    }
+                    longitude={
+                      longitudeMapa
+                    }
+                    geometriaInicial={
+                      geometriaInicial
+                    }
+                    aoAlterarGeometria={
+                      handleGeometriaAlterada
+                    }
+                  />
+                </Suspense>
+              </div>
 
-              <div className="rota-admin__acoes">
+              <div
+                className="rota-admin__acoes"
+                aria-label={
+                  `Ações da geometria de ${areaGeometria.bairro}`
+                }
+              >
                 <button
                   type="button"
                   onClick={
@@ -845,23 +1183,29 @@ function AreasAdminPage() {
         </section>
       )}
 
-      <section className="resultado">
-        <h3>
+      <section
+        className="resultado"
+        aria-labelledby="titulo-lista-areas"
+        aria-busy={
+          carregando
+        }
+      >
+        <h3 id="titulo-lista-areas">
           Áreas cadastradas
         </h3>
 
         <div className="consulta__formulario">
           <div className="campo">
-            <label
-              htmlFor="buscaArea"
-            >
+            <label htmlFor="buscaArea">
               Buscar área
             </label>
 
             <input
               id="buscaArea"
               type="search"
-              value={busca}
+              value={
+                busca
+              }
               onChange={(
                 event,
               ) =>
@@ -871,7 +1215,30 @@ function AreasAdminPage() {
                 )
               }
               placeholder="Digite o bairro ou a cidade"
+              aria-describedby="ajuda-busca-area resultado-busca-area"
             />
+
+            <small id="ajuda-busca-area">
+              A pesquisa considera o
+              nome da cidade e do
+              bairro.
+            </small>
+
+            {!carregando && (
+              <small
+                id="resultado-busca-area"
+                role="status"
+                aria-live="polite"
+              >
+                {
+                  areasFiltradas.length
+                }{' '}
+                {areasFiltradas.length ===
+                1
+                  ? 'área encontrada.'
+                  : 'áreas encontradas.'}
+              </small>
+            )}
           </div>
         </div>
 
@@ -881,27 +1248,36 @@ function AreasAdminPage() {
               <strong>
                 Total:
               </strong>{' '}
-              {areas.length}
+              {
+                areas.length
+              }
             </p>
 
             <p>
               <strong>
                 Com geometria:
               </strong>{' '}
-              {totalComGeometria}
+              {
+                totalComGeometria
+              }
             </p>
 
             <p>
               <strong>
                 Sem geometria:
               </strong>{' '}
-              {totalSemGeometria}
+              {
+                totalSemGeometria
+              }
             </p>
           </div>
         )}
 
         {carregando ? (
-          <p>
+          <p
+            role="status"
+            aria-live="polite"
+          >
             Carregando áreas
             atendidas...
           </p>
@@ -916,11 +1292,22 @@ function AreasAdminPage() {
               (area) => (
                 <article
                   className="rota-admin"
-                  key={area.id}
+                  key={
+                    area.id
+                  }
+                  aria-labelledby={
+                    `area-${area.id}`
+                  }
                 >
                   <div className="rota-admin__conteudo">
-                    <h3>
-                      {area.bairro}
+                    <h3
+                      id={
+                        `area-${area.id}`
+                      }
+                    >
+                      {
+                        area.bairro
+                      }
                     </h3>
 
                     <p>
@@ -945,19 +1332,39 @@ function AreasAdminPage() {
                       <strong>
                         Geometria:
                       </strong>{' '}
-                      {area.possuiGeometria
-                        ? '✅ Cadastrada'
-                        : '⚠️ Não cadastrada'}
+
+                      <span
+                        className={
+                          area.possuiGeometria
+                            ? 'status-admin status-admin--ativo'
+                            : 'status-admin status-admin--inativo'
+                        }
+                      >
+                        {area.possuiGeometria
+                          ? 'Cadastrada'
+                          : 'Não cadastrada'}
+                      </span>
                     </p>
                   </div>
 
-                  <div className="rota-admin__acoes">
+                  <div
+                    className="rota-admin__acoes"
+                    aria-label={
+                      `Ações da área ${area.bairro}, ${area.cidade}`
+                    }
+                  >
                     <button
                       type="button"
                       onClick={() =>
                         iniciarEdicao(
                           area,
                         )
+                      }
+                      disabled={
+                        operacaoEmAndamento
+                      }
+                      aria-label={
+                        `Editar área ${area.bairro}, ${area.cidade}`
                       }
                     >
                       Editar
@@ -969,6 +1376,14 @@ function AreasAdminPage() {
                         iniciarEdicaoGeometria(
                           area,
                         )
+                      }
+                      disabled={
+                        operacaoEmAndamento
+                      }
+                      aria-label={
+                        area.possuiGeometria
+                          ? `Editar geometria de ${area.bairro}, ${area.cidade}`
+                          : `Desenhar geometria de ${area.bairro}, ${area.cidade}`
                       }
                     >
                       {area.possuiGeometria

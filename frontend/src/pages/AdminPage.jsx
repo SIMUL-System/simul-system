@@ -16,23 +16,33 @@ function AdminPage() {
 
   return (
     <main className="app">
-      <section className="consulta">
+      <section
+        className="consulta"
+        aria-labelledby="titulo-painel-administrativo"
+      >
         <header className="consulta__cabecalho">
-          <span className="consulta__marca">
+          <span
+            className="consulta__marca"
+            aria-hidden="true"
+          >
             SIMUL
           </span>
 
-          <h1>
+          <h1 id="titulo-painel-administrativo">
             Painel administrativo
           </h1>
 
           <p>
-            Gerencie rotas, áreas atendidas
-            e cronogramas da coleta seletiva.
+            Gerencie rotas, áreas
+            atendidas e cronogramas da
+            coleta seletiva.
           </p>
         </header>
 
-        <nav className="admin-nav">
+        <nav
+          className="admin-nav"
+          aria-label="Seções do painel administrativo"
+        >
           <NavLink
             to="/admin"
             end
@@ -71,7 +81,10 @@ function AdminPage() {
           </NavLink>
         </nav>
 
-        <section className="admin-conteudo">
+        <section
+          className="admin-conteudo"
+          aria-label="Conteúdo da seção administrativa"
+        >
           <Outlet />
         </section>
       </section>

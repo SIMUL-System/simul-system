@@ -1,5 +1,6 @@
 package com.simulsystem.backend.business.usuario.validation;
 
+import com.simulsystem.backend.business.usuario.model.Usuario;
 import com.simulsystem.backend.business.usuario.repository.UsuarioRepository;
 import com.simulsystem.backend.core.exception.EmailJaCadastradoException;
 import org.springframework.stereotype.Component;
@@ -27,5 +28,29 @@ public class UsuarioValidation {
                     "Já existe um usuário cadastrado com este e-mail."
             );
         }
+    }
+
+    public boolean emailJaVerificado(
+            Usuario usuario
+    ) {
+        return Boolean.TRUE.equals(
+                usuario.getEmailVerificado()
+        );
+    }
+
+    public boolean senhasCoincidem(
+            String senha,
+            String confirmacaoSenha
+    ) {
+        if (
+                senha == null ||
+                confirmacaoSenha == null
+        ) {
+            return false;
+        }
+
+        return senha.equals(
+                confirmacaoSenha
+        );
     }
 }

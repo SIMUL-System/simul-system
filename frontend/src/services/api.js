@@ -20,6 +20,53 @@ class ApiError extends Error {
   }
 }
 
+function obterMensagemErro(
+  data,
+  status,
+) {
+  if (
+    data &&
+    typeof data === 'object'
+  ) {
+    if (
+      typeof data.detail === 'string' &&
+      data.detail.trim()
+    ) {
+      return data.detail
+    }
+
+    if (
+      typeof data.mensagem === 'string' &&
+      data.mensagem.trim()
+    ) {
+      return data.mensagem
+    }
+
+    if (
+      typeof data.message === 'string' &&
+      data.message.trim()
+    ) {
+      return data.message
+    }
+
+    if (
+      typeof data.title === 'string' &&
+      data.title.trim()
+    ) {
+      return data.title
+    }
+  }
+
+  if (
+    typeof data === 'string' &&
+    data.trim()
+  ) {
+    return data
+  }
+
+  return `Erro HTTP ${status}`
+}
+
 async function apiRequest(
   path,
   {
@@ -61,23 +108,34 @@ async function apiRequest(
   }
 
   const contentType =
-    response.headers.get('content-type')
+    response.headers.get(
+      'content-type',
+    )
 
   let data
 
-  if (contentType?.includes('json')) {
-  data = await response.json()
-} else {
-    const text = await response.text()
+  if (
+    contentType?.includes(
+      'application/json',
+    ) ||
+    contentType?.includes(
+      'application/problem+json',
+    )
+  ) {
+    data = await response.json()
+  } else {
+    const text =
+      await response.text()
 
     data = text || null
   }
 
   if (!response.ok) {
     const message =
-      data?.detail ||
-      data?.message ||
-      `Erro HTTP ${response.status}`
+      obterMensagemErro(
+        data,
+        response.status,
+      )
 
     throw new ApiError(
       message,

@@ -1,7 +1,13 @@
-import { useEffect, useState } from 'react'
+import {
+  useEffect,
+  useState,
+} from 'react'
 import { Link } from 'react-router-dom'
 
-import { consultarColeta } from '../services/rotaService'
+import {
+  consultarColeta,
+  listarAreasDisponiveis,
+} from '../services/rotaService'
 
 import {
   atualizarPreferencia,
@@ -18,21 +24,45 @@ import {
 
 import '../App.css'
 
+function ordenarTexto(a, b) {
+  return a.localeCompare(
+    b,
+    'pt-BR',
+    {
+      sensitivity: 'base',
+    },
+  )
+}
+
 function PreferenciasPage() {
-  const [preferencia, setPreferencia] =
-    useState(null)
+  const [
+    preferencia,
+    setPreferencia,
+  ] = useState(null)
 
-  const [cidade, setCidade] = useState('')
-  const [bairro, setBairro] = useState('')
+  const [areas, setAreas] =
+    useState([])
 
-  const [rotaSelecionada, setRotaSelecionada] =
-    useState(null)
+  const [cidade, setCidade] =
+    useState('')
 
-  const [emailAtivo, setEmailAtivo] =
-    useState(true)
+  const [bairro, setBairro] =
+    useState('')
 
-  const [webPushAtivo, setWebPushAtivo] =
-    useState(false)
+  const [
+    rotaSelecionada,
+    setRotaSelecionada,
+  ] = useState(null)
+
+  const [
+    emailAtivo,
+    setEmailAtivo,
+  ] = useState(true)
+
+  const [
+    webPushAtivo,
+    setWebPushAtivo,
+  ] = useState(false)
 
   const [
     navegadorInscrito,
@@ -54,24 +84,71 @@ function PreferenciasPage() {
     setAntecedenciaHoras,
   ] = useState(3)
 
-  const [carregando, setCarregando] =
-    useState(true)
+  const [
+    mostrarErroAntecedencia,
+    setMostrarErroAntecedencia,
+  ] = useState(false)
+
+  const [
+    carregando,
+    setCarregando,
+  ] = useState(true)
+
+  const [
+    carregandoAreas,
+    setCarregandoAreas,
+  ] = useState(true)
 
   const [
     consultandoRota,
     setConsultandoRota,
   ] = useState(false)
 
-  const [salvando, setSalvando] =
-    useState(false)
+  const [
+    salvando,
+    setSalvando,
+  ] = useState(false)
 
-  const [erro, setErro] = useState('')
+  const [erro, setErro] =
+    useState('')
+
   const [sucesso, setSucesso] =
     useState('')
 
   useEffect(() => {
-    async function carregarPreferencia() {
+    let componenteAtivo = true
+
+    async function carregarDados() {
       try {
+        const [
+          dadosAreas,
+          dadosPreferencia,
+        ] = await Promise.all([
+          listarAreasDisponiveis(),
+
+          obterPreferencia().catch(
+            (error) => {
+              if (
+                error.status === 404
+              ) {
+                return null
+              }
+
+              throw error
+            },
+          ),
+        ])
+
+        if (!componenteAtivo) {
+          return
+        }
+
+        setAreas(
+          Array.isArray(dadosAreas)
+            ? dadosAreas
+            : [],
+        )
+
         const suportado =
           webPushSuportado()
 
@@ -83,57 +160,169 @@ function PreferenciasPage() {
           const subscription =
             await obterSubscriptionAtual()
 
+          if (!componenteAtivo) {
+            return
+          }
+
           setNavegadorInscrito(
             Boolean(subscription),
           )
         }
 
-        const dados =
-          await obterPreferencia()
+        if (dadosPreferencia) {
+          setPreferencia(
+            dadosPreferencia,
+          )
 
-        setPreferencia(dados)
+          setRotaSelecionada({
+            rotaId:
+              dadosPreferencia.rotaId,
+            nomeRota:
+              dadosPreferencia.nomeRota,
+          })
 
-        setRotaSelecionada({
-          rotaId: dados.rotaId,
-          nomeRota: dados.nomeRota,
-        })
+          setEmailAtivo(
+            dadosPreferencia
+              .emailAtivo ?? true,
+          )
 
-        setEmailAtivo(
-          dados.emailAtivo ?? true,
-        )
+          setWebPushAtivo(
+            dadosPreferencia
+              .webPushAtivo ?? false,
+          )
 
-        setWebPushAtivo(
-          dados.webPushAtivo ?? false,
-        )
-
-        setAntecedenciaHoras(
-          dados.antecedenciaHoras ?? 3,
-        )
-      } catch (error) {
-        if (error.status !== 404) {
-          setErro(
-            error.message ||
-              'Não foi possível carregar a preferência.',
+          setAntecedenciaHoras(
+            dadosPreferencia
+              .antecedenciaHoras ?? 3,
           )
         }
+      } catch (error) {
+        if (!componenteAtivo) {
+          return
+        }
+
+        setErro(
+          error.message ||
+            'Não foi possível carregar suas preferências.',
+        )
       } finally {
-        setCarregando(false)
+        if (componenteAtivo) {
+          setCarregando(false)
+          setCarregandoAreas(false)
+        }
       }
     }
 
-    carregarPreferencia()
+    carregarDados()
+
+    return () => {
+      componenteAtivo = false
+    }
   }, [])
 
-  async function handleConsultarRota(event) {
-    event.preventDefault()
+  const cidades = [
+    ...new Set(
+      areas
+        .map(
+          (area) =>
+            area.cidade?.trim(),
+        )
+        .filter(Boolean),
+    ),
+  ].sort(ordenarTexto)
 
+  const bairros = cidade
+    ? [
+        ...new Set(
+          areas
+            .filter(
+              (area) =>
+                area.cidade?.trim() ===
+                cidade,
+            )
+            .map(
+              (area) =>
+                area.bairro?.trim(),
+            )
+            .filter(Boolean),
+        ),
+      ].sort(ordenarTexto)
+    : []
+
+  const antecedencia =
+    Number(antecedenciaHoras)
+
+  const antecedenciaValida =
+    String(
+      antecedenciaHoras,
+    ).trim() !== '' &&
+    Number.isInteger(
+      antecedencia,
+    ) &&
+    antecedencia >= 0 &&
+    antecedencia <= 72
+
+  const operacaoEmAndamento =
+    salvando ||
+    consultandoRota ||
+    alterandoWebPush
+
+  function limparMensagens() {
     setErro('')
     setSucesso('')
+  }
 
-    if (!cidade.trim() || !bairro.trim()) {
+  function handleCidadeChange(
+    event,
+  ) {
+    const novaCidade =
+      event.target.value
+
+    setCidade(novaCidade)
+    setBairro('')
+    setRotaSelecionada(null)
+
+    limparMensagens()
+  }
+
+  function handleBairroChange(
+    event,
+  ) {
+    const novoBairro =
+      event.target.value
+
+    setBairro(novoBairro)
+    setRotaSelecionada(null)
+
+    limparMensagens()
+  }
+
+  function handleAntecedenciaChange(
+    event,
+  ) {
+    setAntecedenciaHoras(
+      event.target.value,
+    )
+
+    setMostrarErroAntecedencia(
+      false,
+    )
+
+    limparMensagens()
+  }
+
+  async function handleConsultarRota(
+    event,
+  ) {
+    event.preventDefault()
+
+    limparMensagens()
+
+    if (!cidade || !bairro) {
       setErro(
-        'Informe a cidade e o bairro.',
+        'Selecione a cidade e o bairro.',
       )
+
       return
     }
 
@@ -148,10 +337,15 @@ function PreferenciasPage() {
 
       setRotaSelecionada({
         rotaId: dados.rotaId,
-        nomeRota: dados.nomeRota,
+        nomeRota:
+          dados.nomeRota,
         cidade: dados.cidade,
         bairro: dados.bairro,
       })
+
+      setSucesso(
+        'Região selecionada com sucesso.',
+      )
     } catch (error) {
       setRotaSelecionada(null)
 
@@ -165,13 +359,13 @@ function PreferenciasPage() {
   }
 
   async function handleAtivarWebPush() {
-    setErro('')
-    setSucesso('')
+    limparMensagens()
 
     if (!webPushDisponivel) {
       setErro(
         'Este navegador não oferece suporte a Web Push.',
       )
+
       return
     }
 
@@ -197,8 +391,7 @@ function PreferenciasPage() {
   }
 
   async function handleDesativarWebPush() {
-    setErro('')
-    setSucesso('')
+    limparMensagens()
 
     try {
       setAlterandoWebPush(true)
@@ -222,27 +415,25 @@ function PreferenciasPage() {
   }
 
   async function handleSalvar() {
-    setErro('')
-    setSucesso('')
+    limparMensagens()
 
     if (!rotaSelecionada?.rotaId) {
       setErro(
-        'Localize e selecione uma rota antes de salvar.',
+        'Selecione uma região antes de salvar.',
       )
+
       return
     }
 
-    const antecedencia =
-      Number(antecedenciaHoras)
-
-    if (
-      !Number.isInteger(antecedencia) ||
-      antecedencia < 0 ||
-      antecedencia > 72
-    ) {
-      setErro(
-        'A antecedência deve ser um número inteiro entre 0 e 72 horas.',
+    if (!antecedenciaValida) {
+      setMostrarErroAntecedencia(
+        true,
       )
+
+      setErro(
+        'Revise a antecedência do lembrete antes de salvar.',
+      )
+
       return
     }
 
@@ -253,21 +444,27 @@ function PreferenciasPage() {
       setErro(
         'Ative o Web Push neste navegador antes de salvar essa opção.',
       )
+
       return
     }
 
     const dados = {
-      rotaId: rotaSelecionada.rotaId,
+      rotaId:
+        rotaSelecionada.rotaId,
       emailAtivo,
       webPushAtivo,
-      antecedenciaHoras: antecedencia,
+      antecedenciaHoras:
+        antecedencia,
     }
 
     try {
       setSalvando(true)
 
+      const jaPossuiaPreferencia =
+        Boolean(preferencia)
+
       const resposta =
-        preferencia
+        jaPossuiaPreferencia
           ? await atualizarPreferencia(
               dados,
             )
@@ -283,8 +480,12 @@ function PreferenciasPage() {
         },
       )
 
+      setMostrarErroAntecedencia(
+        false,
+      )
+
       setSucesso(
-        preferencia
+        jaPossuiaPreferencia
           ? 'Preferências atualizadas com sucesso.'
           : 'Preferências cadastradas com sucesso.',
       )
@@ -301,10 +502,25 @@ function PreferenciasPage() {
   if (carregando) {
     return (
       <main className="app">
-        <section className="consulta">
-          <p>
+        <section
+          className="consulta"
+          aria-labelledby="titulo-carregando-preferencias"
+          aria-busy="true"
+        >
+          <h1
+            id="titulo-carregando-preferencias"
+            className="visualmente-oculto"
+          >
+            Preferências de notificação
+          </h1>
+
+          <div
+            className="mensagem"
+            role="status"
+            aria-live="polite"
+          >
             Carregando preferências...
-          </p>
+          </div>
         </section>
       </main>
     )
@@ -312,35 +528,52 @@ function PreferenciasPage() {
 
   return (
     <main className="app">
-      <section className="consulta">
+      <section
+        className="consulta"
+        aria-labelledby="titulo-preferencias"
+        aria-busy={
+          operacaoEmAndamento
+        }
+      >
         <header className="consulta__cabecalho">
-          <span className="consulta__marca">
-            SIMUL
+          <span
+            className="consulta__marca"
+            aria-hidden="true"
+          >
+            NOTIFICAÇÕES
           </span>
 
-          <h1>
+          <h1 id="titulo-preferencias">
             Preferências de notificação
           </h1>
 
           <p>
-            Escolha a rota que deseja
+            Escolha a região que deseja
             acompanhar, os canais de
-            notificação e com quanto tempo
-            de antecedência deseja receber
-            o lembrete.
+            notificação e com quanto
+            tempo de antecedência deseja
+            receber o lembrete.
           </p>
         </header>
 
         {preferencia ? (
-          <div className="mensagem">
-            Você já possui uma preferência
-            configurada. As alterações serão
-            salvas sobre a configuração atual.
+          <div
+            className="mensagem"
+            role="status"
+          >
+            Você já possui uma
+            preferência configurada.
+            As alterações serão salvas
+            sobre a configuração atual.
           </div>
         ) : (
-          <div className="mensagem">
-            Você ainda não possui uma preferência
-            de notificação configurada.
+          <div
+            className="mensagem"
+            role="status"
+          >
+            Você ainda não possui uma
+            preferência de notificação
+            configurada.
           </div>
         )}
 
@@ -348,6 +581,7 @@ function PreferenciasPage() {
           <div
             className="mensagem mensagem--erro"
             role="alert"
+            aria-live="assertive"
           >
             {erro}
           </div>
@@ -357,35 +591,76 @@ function PreferenciasPage() {
           <div
             className="mensagem mensagem--sucesso"
             role="status"
+            aria-live="polite"
           >
             {sucesso}
           </div>
         )}
 
-        <section className="resultado">
-          <h2>1. Localize sua rota</h2>
+        <section
+          className="resultado"
+          aria-labelledby="titulo-localizar-rota"
+        >
+          <h2 id="titulo-localizar-rota">
+            1. Escolha sua região
+          </h2>
 
           <form
             className="consulta__formulario"
-            onSubmit={handleConsultarRota}
+            onSubmit={
+              handleConsultarRota
+            }
+            aria-busy={
+              consultandoRota
+            }
           >
             <div className="campo">
               <label htmlFor="cidade">
                 Cidade
               </label>
 
-              <input
+              <select
                 id="cidade"
-                type="text"
                 value={cidade}
-                onChange={(event) =>
-                  setCidade(
-                    event.target.value,
-                  )
+                onChange={
+                  handleCidadeChange
                 }
-                placeholder="Ex.: Senador Canedo"
-                autoComplete="address-level2"
-              />
+                disabled={
+                  carregandoAreas ||
+                  cidades.length === 0 ||
+                  operacaoEmAndamento
+                }
+                aria-describedby="ajuda-cidade-preferencia"
+              >
+                <option value="">
+                  {carregandoAreas
+                    ? 'Carregando cidades...'
+                    : cidades.length === 0
+                      ? 'Nenhuma cidade disponível'
+                      : 'Selecione uma cidade'}
+                </option>
+
+                {cidades.map(
+                  (nomeCidade) => (
+                    <option
+                      key={
+                        nomeCidade
+                      }
+                      value={
+                        nomeCidade
+                      }
+                    >
+                      {nomeCidade}
+                    </option>
+                  ),
+                )}
+              </select>
+
+              <small id="ajuda-cidade-preferencia">
+                Selecione a cidade onde
+                deseja receber os
+                lembretes da coleta.
+              </small>
             </div>
 
             <div className="campo">
@@ -393,142 +668,209 @@ function PreferenciasPage() {
                 Bairro
               </label>
 
-              <input
+              <select
                 id="bairro"
-                type="text"
                 value={bairro}
-                onChange={(event) =>
-                  setBairro(
-                    event.target.value,
-                  )
+                onChange={
+                  handleBairroChange
                 }
-                placeholder="Ex.: Jardim Nova Goiânia"
-                autoComplete="address-level3"
-              />
+                disabled={
+                  !cidade ||
+                  bairros.length === 0 ||
+                  operacaoEmAndamento
+                }
+                aria-describedby="ajuda-bairro-preferencia"
+              >
+                <option value="">
+                  {!cidade
+                    ? 'Selecione primeiro a cidade'
+                    : bairros.length === 0
+                      ? 'Nenhum bairro disponível'
+                      : 'Selecione um bairro'}
+                </option>
+
+                {bairros.map(
+                  (nomeBairro) => (
+                    <option
+                      key={
+                        nomeBairro
+                      }
+                      value={
+                        nomeBairro
+                      }
+                    >
+                      {nomeBairro}
+                    </option>
+                  ),
+                )}
+              </select>
+
+              <small id="ajuda-bairro-preferencia">
+                {!cidade
+                  ? 'Selecione uma cidade para liberar os bairros disponíveis.'
+                  : 'Selecione o bairro que deseja acompanhar.'}
+              </small>
             </div>
 
             <button
               type="submit"
-              disabled={consultandoRota}
+              disabled={
+                consultandoRota ||
+                salvando ||
+                alterandoWebPush ||
+                !cidade ||
+                !bairro
+              }
             >
               {consultandoRota
-                ? 'Localizando...'
-                : 'Localizar rota'}
+                ? 'Selecionando...'
+                : 'Selecionar região'}
             </button>
           </form>
 
           {rotaSelecionada && (
-            <div className="rota-selecionada">
+            <div
+              className="rota-selecionada"
+              role="status"
+              aria-live="polite"
+            >
               <strong>
-                Rota selecionada:
+                Região selecionada
               </strong>
 
-              <p>
-                {rotaSelecionada.nomeRota}
-              </p>
+              {rotaSelecionada.bairro &&
+                rotaSelecionada.cidade && (
+                  <p>
+                    {
+                      rotaSelecionada.bairro
+                    }
 
-              {rotaSelecionada.cidade && (
-                <p>
-                  {rotaSelecionada.bairro}
-                  {' — '}
-                  {rotaSelecionada.cidade}
-                </p>
-              )}
+                    {' — '}
+
+                    {
+                      rotaSelecionada.cidade
+                    }
+                  </p>
+                )}
+
+              <p>
+                <strong>
+                  Rota responsável:
+                </strong>{' '}
+                {
+                  rotaSelecionada.nomeRota
+                }
+              </p>
             </div>
           )}
         </section>
 
-        <section className="resultado">
-          <h2>
-            2. Configure os canais
+        <section
+          className="resultado"
+          aria-labelledby="titulo-canais-notificacao"
+        >
+          <h2 id="titulo-canais-notificacao">
+            2. Configure os lembretes
           </h2>
 
-          <div className="campo campo-checkbox">
-            <label>
-              <input
-                type="checkbox"
-                checked={emailAtivo}
-                onChange={(event) =>
-                  setEmailAtivo(
-                    event.target.checked,
-                  )
-                }
-              />
+          <fieldset className="grupo-preferencias">
+            <legend>
+              Canais de notificação
+            </legend>
 
-              Receber lembretes por e-mail
-            </label>
-          </div>
+            <div className="campo campo-checkbox">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={emailAtivo}
+                  onChange={(event) => {
+                    setEmailAtivo(
+                      event.target.checked,
+                    )
 
-          <div className="web-push-config">
-            <div className="web-push-config__cabecalho">
-              <div>
-                <strong>
-                  Web Push
-                </strong>
-
-                <p>
-                  Receba lembretes diretamente
-                  neste navegador.
-                </p>
-              </div>
-
-              <span
-                className={
-                  navegadorInscrito
-                    ? 'web-push-status web-push-status--ativo'
-                    : 'web-push-status'
-                }
-              >
-                {navegadorInscrito
-                  ? 'Ativado'
-                  : 'Desativado'}
-              </span>
-            </div>
-
-            {!webPushDisponivel && (
-              <p className="web-push-config__aviso">
-                Este navegador não oferece
-                suporte a Web Push.
-              </p>
-            )}
-
-            {webPushDisponivel &&
-              !navegadorInscrito && (
-                <button
-                  type="button"
-                  className="web-push-config__botao"
-                  onClick={
-                    handleAtivarWebPush
-                  }
+                    limparMensagens()
+                  }}
                   disabled={
+                    salvando ||
                     alterandoWebPush
                   }
+                />
+
+                <span>
+                  Receber lembretes por
+                  e-mail
+                </span>
+              </label>
+            </div>
+
+            <div
+              className="web-push-config"
+              aria-busy={
+                alterandoWebPush
+              }
+            >
+              <div className="web-push-config__cabecalho">
+                <div>
+                  <strong>
+                    Web Push
+                  </strong>
+
+                  <p>
+                    Receba notificações
+                    diretamente neste
+                    navegador.
+                  </p>
+                </div>
+
+                <span
+                  className={
+                    navegadorInscrito
+                      ? 'web-push-status web-push-status--ativo'
+                      : 'web-push-status'
+                  }
+                  role="status"
+                  aria-live="polite"
                 >
                   {alterandoWebPush
-                    ? 'Ativando...'
-                    : 'Ativar neste navegador'}
-                </button>
+                    ? 'Atualizando...'
+                    : navegadorInscrito
+                      ? 'Ativo'
+                      : 'Inativo'}
+                </span>
+              </div>
+
+              {!webPushDisponivel && (
+                <p
+                  className="web-push-config__aviso"
+                  role="status"
+                >
+                  Este navegador não
+                  oferece suporte a Web
+                  Push.
+                </p>
               )}
 
-            {webPushDisponivel &&
-              navegadorInscrito && (
-                <>
-                  <div className="campo campo-checkbox">
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={webPushAtivo}
-                        onChange={(event) =>
-                          setWebPushAtivo(
-                            event.target.checked,
-                          )
-                        }
-                      />
+              {webPushDisponivel &&
+                !navegadorInscrito && (
+                  <button
+                    type="button"
+                    className="web-push-config__botao"
+                    onClick={
+                      handleAtivarWebPush
+                    }
+                    disabled={
+                      alterandoWebPush ||
+                      salvando
+                    }
+                  >
+                    {alterandoWebPush
+                      ? 'Ativando...'
+                      : 'Ativar Web Push'}
+                  </button>
+                )}
 
-                      Receber lembretes por Web Push
-                    </label>
-                  </div>
-
+              {webPushDisponivel &&
+                navegadorInscrito && (
                   <button
                     type="button"
                     className="web-push-config__botao web-push-config__botao--secundario"
@@ -536,53 +878,86 @@ function PreferenciasPage() {
                       handleDesativarWebPush
                     }
                     disabled={
-                      alterandoWebPush
+                      alterandoWebPush ||
+                      salvando
                     }
                   >
                     {alterandoWebPush
                       ? 'Desativando...'
-                      : 'Desativar neste navegador'}
+                      : 'Desativar Web Push'}
                   </button>
-                </>
-              )}
-          </div>
+                )}
+            </div>
+          </fieldset>
 
           <div className="campo">
-            <label htmlFor="antecedencia">
-              Antecedência em horas
+            <label htmlFor="antecedenciaHoras">
+              Antecedência do lembrete
             </label>
 
             <input
-              id="antecedencia"
+              id="antecedenciaHoras"
               type="number"
               min="0"
               max="72"
               step="1"
-              value={antecedenciaHoras}
-              onChange={(event) =>
-                setAntecedenciaHoras(
-                  event.target.value,
-                )
+              value={
+                antecedenciaHoras
+              }
+              onChange={
+                handleAntecedenciaChange
+              }
+              inputMode="numeric"
+              disabled={salvando}
+              aria-invalid={
+                mostrarErroAntecedencia &&
+                !antecedenciaValida
+              }
+              aria-describedby={
+                mostrarErroAntecedencia &&
+                !antecedenciaValida
+                  ? 'ajuda-antecedencia erro-antecedencia'
+                  : 'ajuda-antecedencia'
               }
             />
 
-            <small>
-              Informe um valor inteiro entre
-              0 e 72 horas.
+            <small id="ajuda-antecedencia">
+              Informe quantas horas antes
+              da coleta deseja receber o
+              lembrete. Valor permitido:
+              de 0 a 72 horas.
             </small>
-          </div>
 
-          <button
-            className="botao-salvar"
-            type="button"
-            onClick={handleSalvar}
-            disabled={salvando}
-          >
-            {salvando
-              ? 'Salvando...'
-              : 'Salvar preferências'}
-          </button>
+            {mostrarErroAntecedencia &&
+              !antecedenciaValida && (
+                <p
+                  id="erro-antecedencia"
+                  className="campo__erro"
+                  role="alert"
+                >
+                  Informe um número
+                  inteiro entre 0 e 72
+                  horas.
+                </p>
+              )}
+          </div>
         </section>
+
+        <button
+          type="button"
+          className="botao-salvar"
+          onClick={handleSalvar}
+          disabled={
+            salvando ||
+            consultandoRota ||
+            alterandoWebPush ||
+            !rotaSelecionada?.rotaId
+          }
+        >
+          {salvando
+            ? 'Salvando preferências...'
+            : 'Salvar preferências'}
+        </button>
 
         <p className="navegacao-secundaria">
           <Link to="/minha-conta">

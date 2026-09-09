@@ -1,11 +1,12 @@
 import {
+  lazy,
+  Suspense,
   useEffect,
   useRef,
   useState,
 } from 'react'
-import '../App.css'
 
-import MapaColeta from '../components/MapaColeta'
+import '../App.css'
 
 import {
   buscarCoordenadasArea,
@@ -16,16 +17,86 @@ import {
   listarAreasDisponiveis,
 } from '../services/rotaService'
 
+const MapaColeta = lazy(
+  () =>
+    import(
+      '../components/MapaColeta'
+    ),
+)
+
+const ROTULOS_DIAS = {
+  SEGUNDA:
+    'Segunda-feira',
+
+  TERCA:
+    'Terça-feira',
+
+  QUARTA:
+    'Quarta-feira',
+
+  QUINTA:
+    'Quinta-feira',
+
+  SEXTA:
+    'Sexta-feira',
+
+  SABADO:
+    'Sábado',
+
+  DOMINGO:
+    'Domingo',
+}
+
+function ordenarTexto(
+  a,
+  b,
+) {
+  return a.localeCompare(
+    b,
+    'pt-BR',
+    {
+      sensitivity:
+        'base',
+    },
+  )
+}
+
+function obterRotuloDia(
+  diaSemana,
+) {
+  return (
+    ROTULOS_DIAS[
+      diaSemana
+    ] ||
+    diaSemana
+  )
+}
+
 function ConsultaPage() {
-  const [areas, setAreas] = useState([])
+  const [
+    areas,
+    setAreas,
+  ] = useState([])
 
-  const [cidade, setCidade] = useState('')
-  const [bairro, setBairro] = useState('')
+  const [
+    cidade,
+    setCidade,
+  ] = useState('')
 
-  const [resultado, setResultado] =
-    useState(null)
+  const [
+    bairro,
+    setBairro,
+  ] = useState('')
 
-  const [erro, setErro] = useState('')
+  const [
+    resultado,
+    setResultado,
+  ] = useState(null)
+
+  const [
+    erro,
+    setErro,
+  ] = useState('')
 
   const [
     avisoMapa,
@@ -90,19 +161,21 @@ function ConsultaPage() {
   const [
     statusLocalizacaoUsuario,
     setStatusLocalizacaoUsuario,
-  ] = useState(() =>
-    navigator.geolocation
-      ? 'buscando'
-      : 'indisponivel',
+  ] = useState(
+    () =>
+      navigator.geolocation
+        ? 'buscando'
+        : 'indisponivel',
   )
 
   const [
     erroLocalizacaoUsuario,
     setErroLocalizacaoUsuario,
-  ] = useState(() =>
-    navigator.geolocation
-      ? ''
-      : 'Seu navegador não oferece suporte à localização. Você ainda pode selecionar a cidade e o bairro manualmente.',
+  ] = useState(
+    () =>
+      navigator.geolocation
+        ? ''
+        : 'Seu navegador não oferece suporte à localização. Você ainda pode selecionar a cidade e o bairro manualmente.',
   )
 
   const ultimaSelecaoRef =
@@ -111,23 +184,33 @@ function ConsultaPage() {
   const melhorPrecisaoRef =
     useRef(null)
 
+  const tituloResultadoRef =
+    useRef(null)
+
   useEffect(() => {
-    let componenteAtivo = true
+    let componenteAtivo =
+      true
 
     listarAreasDisponiveis()
       .then((dados) => {
-        if (!componenteAtivo) {
+        if (
+          !componenteAtivo
+        ) {
           return
         }
 
         setAreas(
-          Array.isArray(dados)
+          Array.isArray(
+            dados,
+          )
             ? dados
             : [],
         )
       })
       .catch((error) => {
-        if (!componenteAtivo) {
+        if (
+          !componenteAtivo
+        ) {
           return
         }
 
@@ -137,29 +220,40 @@ function ConsultaPage() {
         )
       })
       .finally(() => {
-        if (componenteAtivo) {
-          setCarregandoAreas(false)
+        if (
+          componenteAtivo
+        ) {
+          setCarregandoAreas(
+            false,
+          )
         }
       })
 
     return () => {
-      componenteAtivo = false
+      componenteAtivo =
+        false
     }
   }, [])
 
   useEffect(() => {
-    let componenteAtivo = true
+    let componenteAtivo =
+      true
 
-    if (!navigator.geolocation) {
+    if (
+      !navigator.geolocation
+    ) {
       return () => {
-        componenteAtivo = false
+        componenteAtivo =
+          false
       }
     }
 
     function atualizarLocalizacao(
       position,
     ) {
-      if (!componenteAtivo) {
+      if (
+        !componenteAtivo
+      ) {
         return
       }
 
@@ -167,12 +261,19 @@ function ConsultaPage() {
         latitude,
         longitude,
         accuracy,
-      } = position.coords
+      } =
+        position.coords
 
       if (
-        !Number.isFinite(latitude) ||
-        !Number.isFinite(longitude) ||
-        !Number.isFinite(accuracy)
+        !Number.isFinite(
+          latitude,
+        ) ||
+        !Number.isFinite(
+          longitude,
+        ) ||
+        !Number.isFinite(
+          accuracy,
+        )
       ) {
         return
       }
@@ -181,13 +282,17 @@ function ConsultaPage() {
         melhorPrecisaoRef.current
 
       const primeiraLeitura =
-        melhorPrecisao == null
+        melhorPrecisao ==
+        null
 
       const leituraMelhor =
         primeiraLeitura ||
-        accuracy < melhorPrecisao
+        accuracy <
+          melhorPrecisao
 
-      if (!leituraMelhor) {
+      if (
+        !leituraMelhor
+      ) {
         return
       }
 
@@ -206,13 +311,19 @@ function ConsultaPage() {
         accuracy,
       )
 
-      setErroLocalizacaoUsuario('')
+      setErroLocalizacaoUsuario(
+        '',
+      )
 
-      if (accuracy <= 100) {
+      if (
+        accuracy <= 100
+      ) {
         setStatusLocalizacaoUsuario(
           'precisa',
         )
-      } else if (accuracy <= 500) {
+      } else if (
+        accuracy <= 500
+      ) {
         setStatusLocalizacaoUsuario(
           'aproximada',
         )
@@ -226,11 +337,15 @@ function ConsultaPage() {
     function tratarErroLocalizacao(
       error,
     ) {
-      if (!componenteAtivo) {
+      if (
+        !componenteAtivo
+      ) {
         return
       }
 
-      if (error.code === 1) {
+      if (
+        error.code === 1
+      ) {
         setStatusLocalizacaoUsuario(
           'negada',
         )
@@ -242,7 +357,9 @@ function ConsultaPage() {
         return
       }
 
-      if (error.code === 2) {
+      if (
+        error.code === 2
+      ) {
         setStatusLocalizacaoUsuario(
           'indisponivel',
         )
@@ -254,7 +371,9 @@ function ConsultaPage() {
         return
       }
 
-      if (error.code === 3) {
+      if (
+        error.code === 3
+      ) {
         setStatusLocalizacaoUsuario(
           'timeout',
         )
@@ -276,56 +395,110 @@ function ConsultaPage() {
     }
 
     const watchId =
-      navigator.geolocation.watchPosition(
-        atualizarLocalizacao,
-        tratarErroLocalizacao,
-        {
-          enableHighAccuracy: true,
-          timeout: 30000,
-          maximumAge: 0,
-        },
-      )
+      navigator.geolocation
+        .watchPosition(
+          atualizarLocalizacao,
+          tratarErroLocalizacao,
+          {
+            enableHighAccuracy:
+              true,
+
+            timeout:
+              30000,
+
+            maximumAge:
+              0,
+          },
+        )
 
     return () => {
-      componenteAtivo = false
+      componenteAtivo =
+        false
 
-      navigator.geolocation.clearWatch(
-        watchId,
-      )
+      navigator.geolocation
+        .clearWatch(
+          watchId,
+        )
     }
   }, [])
 
+  useEffect(() => {
+    if (!resultado) {
+      return
+    }
+
+    tituloResultadoRef
+      .current
+      ?.focus()
+  }, [resultado])
+
   const cidades = [
     ...new Set(
-      areas.map(
-        (area) => area.cidade,
-      ),
-    ),
-  ]
-
-  const bairros = cidade
-    ? areas
-        .filter(
-          (area) =>
-            area.cidade === cidade,
-        )
+      areas
         .map(
-          (area) => area.bairro,
+          (area) =>
+            area.cidade
+              ?.trim(),
         )
-    : []
+        .filter(Boolean),
+    ),
+  ].sort(
+    ordenarTexto,
+  )
+
+  const bairros =
+    cidade
+      ? [
+          ...new Set(
+            areas
+              .filter(
+                (area) =>
+                  area.cidade
+                    ?.trim() ===
+                  cidade,
+              )
+              .map(
+                (area) =>
+                  area.bairro
+                    ?.trim(),
+              )
+              .filter(
+                Boolean,
+              ),
+          ),
+        ].sort(
+          ordenarTexto,
+        )
+      : []
 
   function limparAreaMapa() {
-    setLatitudeMapa(null)
-    setLongitudeMapa(null)
-    setNomeAreaMapa('')
-    setGeometriaArea(null)
-    setLimitesArea(null)
+    setLatitudeMapa(
+      null,
+    )
+
+    setLongitudeMapa(
+      null,
+    )
+
+    setNomeAreaMapa(
+      '',
+    )
+
+    setGeometriaArea(
+      null,
+    )
+
+    setLimitesArea(
+      null,
+    )
   }
 
   function converterGeoJson(
     geometriaGeoJson,
   ) {
-    if (!geometriaGeoJson) {
+    if (
+      !geometriaGeoJson
+    ) {
       return null
     }
 
@@ -337,14 +510,17 @@ function ConsultaPage() {
 
       if (
         !geometria ||
-        typeof geometria !== 'object'
+        typeof geometria !==
+          'object'
       ) {
         return null
       }
 
       if (
-        geometria.type !== 'Polygon' &&
-        geometria.type !== 'MultiPolygon'
+        geometria.type !==
+          'Polygon' &&
+        geometria.type !==
+          'MultiPolygon'
       ) {
         return null
       }
@@ -353,7 +529,8 @@ function ConsultaPage() {
         !Array.isArray(
           geometria.coordinates,
         ) ||
-        geometria.coordinates.length === 0
+        geometria.coordinates
+          .length === 0
       ) {
         return null
       }
@@ -383,7 +560,9 @@ function ConsultaPage() {
         return
       }
 
-      if (!localizacao) {
+      if (
+        !localizacao
+      ) {
         limparAreaMapa()
 
         setAvisoMapa(
@@ -440,16 +619,21 @@ function ConsultaPage() {
     }
 
     setResultado(null)
+
     setErro('')
+
     setAvisoMapa('')
 
     const idSelecao =
-      ultimaSelecaoRef.current + 1
+      ultimaSelecaoRef.current +
+      1
 
     ultimaSelecaoRef.current =
       idSelecao
 
-    setCarregando(true)
+    setCarregando(
+      true,
+    )
 
     setCarregandoLocalizacaoMapa(
       true,
@@ -479,7 +663,9 @@ function ConsultaPage() {
             ?.geometriaGeoJson,
         )
 
-      if (geometriaSimul) {
+      if (
+        geometriaSimul
+      ) {
         setNomeAreaMapa(
           `${bairroSelecionado}, ${cidadeSelecionada}`,
         )
@@ -488,12 +674,21 @@ function ConsultaPage() {
           geometriaSimul,
         )
 
-        setLimitesArea(null)
+        setLimitesArea(
+          null,
+        )
 
-        setLatitudeMapa(null)
-        setLongitudeMapa(null)
+        setLatitudeMapa(
+          null,
+        )
 
-        setAvisoMapa('')
+        setLongitudeMapa(
+          null,
+        )
+
+        setAvisoMapa(
+          '',
+        )
 
         return
       }
@@ -531,7 +726,9 @@ function ConsultaPage() {
         idSelecao ===
         ultimaSelecaoRef.current
       ) {
-        setCarregando(false)
+        setCarregando(
+          false,
+        )
 
         setCarregandoLocalizacaoMapa(
           false,
@@ -546,19 +743,28 @@ function ConsultaPage() {
     const novaCidade =
       event.target.value
 
-    ultimaSelecaoRef.current += 1
+    ultimaSelecaoRef.current +=
+      1
 
-    setCidade(novaCidade)
+    setCidade(
+      novaCidade,
+    )
+
     setBairro('')
 
-    setResultado(null)
+    setResultado(
+      null,
+    )
 
     setErro('')
+
     setAvisoMapa('')
 
     limparAreaMapa()
 
-    setCarregando(false)
+    setCarregando(
+      false,
+    )
 
     setCarregandoLocalizacaoMapa(
       false,
@@ -576,13 +782,16 @@ function ConsultaPage() {
     )
 
     setErro('')
+
     setAvisoMapa('')
 
     if (
       !cidade ||
       !novoBairro
     ) {
-      setResultado(null)
+      setResultado(
+        null,
+      )
 
       limparAreaMapa()
 
@@ -595,17 +804,34 @@ function ConsultaPage() {
     )
   }
 
+  const paginaCarregando =
+    carregandoAreas ||
+    carregando
+
   return (
-    <main className="app app--publica">
-      <section className="consulta consulta--publica">
+    <main
+      className="app app--publica"
+      aria-busy={
+        paginaCarregando
+      }
+    >
+      <section
+        className="consulta consulta--publica"
+        aria-labelledby="titulo-consulta-publica"
+      >
         <header className="consulta-publica__hero">
           <div className="consulta-publica__marca">
-            <span className="consulta-publica__simbolo">
+            <span
+              className="consulta-publica__simbolo"
+              aria-hidden="true"
+            >
               ♻
             </span>
 
             <div>
-              <strong>SIMUL</strong>
+              <strong>
+                SIMUL
+              </strong>
 
               <span>
                 Sistema Integrado de
@@ -616,11 +842,14 @@ function ConsultaPage() {
           </div>
 
           <div className="consulta-publica__hero-conteudo">
-            <span className="consulta-publica__destaque">
+            <span
+              className="consulta-publica__destaque"
+              aria-hidden="true"
+            >
               COLETA SELETIVA
             </span>
 
-            <h1>
+            <h1 id="titulo-consulta-publica">
               Saiba quando a coleta passa
               na sua região
             </h1>
@@ -635,14 +864,23 @@ function ConsultaPage() {
           </div>
         </header>
 
-        <section className="consulta-publica__painel">
+        <section
+          className="consulta-publica__painel"
+          aria-labelledby="titulo-consulta-regiao"
+          aria-busy={
+            carregandoAreas
+          }
+        >
           <div className="consulta-publica__painel-cabecalho">
             <div>
-              <span className="consulta-publica__etapa">
+              <span
+                className="consulta-publica__etapa"
+                aria-hidden="true"
+              >
                 CONSULTA
               </span>
 
-              <h2>
+              <h2 id="titulo-consulta-regiao">
                 Encontre sua região
               </h2>
             </div>
@@ -668,26 +906,51 @@ function ConsultaPage() {
                 }
                 disabled={
                   carregandoAreas ||
-                  cidades.length === 0
+                  cidades.length ===
+                    0
+                }
+                aria-describedby="ajuda-cidade"
+                aria-busy={
+                  carregandoAreas
                 }
               >
                 <option value="">
                   {carregandoAreas
                     ? 'Carregando cidades...'
-                    : 'Selecione uma cidade'}
+                    : cidades.length ===
+                        0
+                      ? 'Nenhuma cidade disponível'
+                      : 'Selecione uma cidade'}
                 </option>
 
                 {cidades.map(
-                  (nomeCidade) => (
+                  (
+                    nomeCidade,
+                  ) => (
                     <option
-                      key={nomeCidade}
-                      value={nomeCidade}
+                      key={
+                        nomeCidade
+                      }
+                      value={
+                        nomeCidade
+                      }
                     >
-                      {nomeCidade}
+                      {
+                        nomeCidade
+                      }
                     </option>
                   ),
                 )}
               </select>
+
+              <small id="ajuda-cidade">
+                {carregandoAreas
+                  ? 'Aguarde enquanto as cidades atendidas são carregadas.'
+                  : cidades.length >
+                      0
+                    ? 'Selecione a cidade onde deseja consultar a coleta seletiva.'
+                    : 'Nenhuma cidade atendida foi encontrada.'}
+              </small>
             </div>
 
             <div className="campo">
@@ -703,61 +966,113 @@ function ConsultaPage() {
                 }
                 disabled={
                   !cidade ||
-                  bairros.length === 0
+                  bairros.length ===
+                    0 ||
+                  carregando
+                }
+                aria-describedby="ajuda-bairro"
+                aria-busy={
+                  carregando
                 }
               >
                 <option value="">
                   {!cidade
                     ? 'Selecione primeiro a cidade'
-                    : 'Selecione um bairro'}
+                    : bairros.length ===
+                        0
+                      ? 'Nenhum bairro disponível'
+                      : carregando
+                        ? 'Consultando bairro...'
+                        : 'Selecione um bairro'}
                 </option>
 
                 {bairros.map(
-                  (nomeBairro) => (
+                  (
+                    nomeBairro,
+                  ) => (
                     <option
-                      key={nomeBairro}
-                      value={nomeBairro}
+                      key={
+                        nomeBairro
+                      }
+                      value={
+                        nomeBairro
+                      }
                     >
-                      {nomeBairro}
+                      {
+                        nomeBairro
+                      }
                     </option>
                   ),
                 )}
               </select>
+
+              <small id="ajuda-bairro">
+                {!cidade
+                  ? 'Selecione uma cidade para liberar a lista de bairros.'
+                  : bairros.length ===
+                      0
+                    ? 'Nenhum bairro atendido foi encontrado para esta cidade.'
+                    : 'Ao selecionar o bairro, o cronograma será consultado automaticamente.'}
+              </small>
             </div>
           </div>
         </section>
 
-        <MapaColeta
-          latitude={latitudeMapa}
-          longitude={longitudeMapa}
-          nomeArea={nomeAreaMapa}
-          carregandoLocalizacao={
-            carregandoLocalizacaoMapa
-          }
-          geometriaArea={
-            geometriaArea
-          }
-          limitesArea={
-            limitesArea
-          }
-          latitudeUsuario={
-            latitudeUsuario
-          }
-          longitudeUsuario={
-            longitudeUsuario
-          }
-          precisaoUsuario={
-            precisaoUsuario
-          }
-          statusLocalizacaoUsuario={
-            statusLocalizacaoUsuario
-          }
-        />
+        <section
+          aria-label="Mapa da área de coleta"
+        >
+          <Suspense
+            fallback={
+              <div
+                className="mapa-coleta__card"
+                role="status"
+                aria-live="polite"
+                aria-busy="true"
+              >
+                Carregando mapa...
+              </div>
+            }
+          >
+            <MapaColeta
+              latitude={
+                latitudeMapa
+              }
+              longitude={
+                longitudeMapa
+              }
+              nomeArea={
+                nomeAreaMapa
+              }
+              carregandoLocalizacao={
+                carregandoLocalizacaoMapa
+              }
+              geometriaArea={
+                geometriaArea
+              }
+              limitesArea={
+                limitesArea
+              }
+              latitudeUsuario={
+                latitudeUsuario
+              }
+              longitudeUsuario={
+                longitudeUsuario
+              }
+              precisaoUsuario={
+                precisaoUsuario
+              }
+              statusLocalizacaoUsuario={
+                statusLocalizacaoUsuario
+              }
+            />
+          </Suspense>
+        </section>
 
         {erroLocalizacaoUsuario && (
           <div
             className="mensagem consulta-publica__mensagem"
             role="status"
+            aria-live="polite"
           >
             {
               erroLocalizacaoUsuario
@@ -769,8 +1084,10 @@ function ConsultaPage() {
           <div
             className="mensagem consulta-publica__mensagem"
             role="status"
+            aria-live="polite"
           >
-            Carregando horários da coleta...
+            Carregando horários da
+            coleta...
           </div>
         )}
 
@@ -778,6 +1095,7 @@ function ConsultaPage() {
           <div
             className="mensagem mensagem--erro consulta-publica__mensagem"
             role="alert"
+            aria-live="assertive"
           >
             {erro}
           </div>
@@ -787,20 +1105,33 @@ function ConsultaPage() {
           <div
             className="mensagem consulta-publica__mensagem"
             role="status"
+            aria-live="polite"
           >
             {avisoMapa}
           </div>
         )}
 
         {resultado && (
-          <section className="consulta-publica__resultado">
+          <section
+            className="consulta-publica__resultado"
+            aria-labelledby="titulo-resultado-consulta"
+          >
             <div className="consulta-publica__resultado-cabecalho">
               <div>
-                <span className="consulta-publica__etapa">
+                <span
+                  className="consulta-publica__etapa"
+                  aria-hidden="true"
+                >
                   CRONOGRAMA
                 </span>
 
-                <h2>
+                <h2
+                  id="titulo-resultado-consulta"
+                  ref={
+                    tituloResultadoRef
+                  }
+                  tabIndex="-1"
+                >
                   Coleta em{' '}
                   {
                     resultado.bairro
@@ -845,41 +1176,53 @@ function ConsultaPage() {
 
             {resultado.cronogramas
               ?.length > 0 ? (
-              <div className="cronogramas">
+              <div
+                className="cronogramas"
+                aria-label="Cronogramas disponíveis"
+              >
                 {resultado.cronogramas.map(
                   (
                     cronograma,
                     index,
-                  ) => (
-                    <article
-                      className="cronograma consulta-publica__cronograma"
-                      key={`${cronograma.diaSemana}-${index}`}
-                    >
-                      <div>
-                        <span className="consulta-publica__icone-dia">
-                          ♻
-                        </span>
+                  ) => {
+                    const dia =
+                      obterRotuloDia(
+                        cronograma.diaSemana,
+                      )
 
-                        <strong>
+                    return (
+                      <article
+                        className="cronograma consulta-publica__cronograma"
+                        key={`${cronograma.diaSemana}-${cronograma.horarioInicio}-${cronograma.horarioFim}-${index}`}
+                        aria-label={`${dia}, das ${cronograma.horarioInicio} às ${cronograma.horarioFim}`}
+                      >
+                        <div>
+                          <span
+                            className="consulta-publica__icone-dia"
+                            aria-hidden="true"
+                          >
+                            ♻
+                          </span>
+
+                          <strong>
+                            {dia}
+                          </strong>
+                        </div>
+
+                        <span className="consulta-publica__horario">
                           {
-                            cronograma.diaSemana
+                            cronograma.horarioInicio
                           }
-                        </strong>
-                      </div>
 
-                      <span className="consulta-publica__horario">
-                        {
-                          cronograma.horarioInicio
-                        }
+                          {' — '}
 
-                        {' — '}
-
-                        {
-                          cronograma.horarioFim
-                        }
-                      </span>
-                    </article>
-                  ),
+                          {
+                            cronograma.horarioFim
+                          }
+                        </span>
+                      </article>
+                    )
+                  },
                 )}
               </div>
             ) : (

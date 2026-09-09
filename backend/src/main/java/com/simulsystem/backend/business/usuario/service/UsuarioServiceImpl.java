@@ -9,6 +9,7 @@ import com.simulsystem.backend.business.usuario.model.Usuario;
 import com.simulsystem.backend.business.usuario.repository.UsuarioRepository;
 import com.simulsystem.backend.business.usuario.validation.UsuarioValidation;
 import com.simulsystem.backend.core.exception.CredenciaisInvalidasException;
+import com.simulsystem.backend.core.exception.EmailNaoVerificadoException;
 import com.simulsystem.backend.core.exception.UsuarioNaoEncontradoException;
 import com.simulsystem.backend.core.security.JwtService;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,6 +31,7 @@ public class UsuarioServiceImpl
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final VerificacaoEmailService verificacaoEmailService;
 
     public UsuarioServiceImpl(
             UsuarioRepository usuarioRepository,
@@ -37,7 +39,8 @@ public class UsuarioServiceImpl
             UsuarioValidation usuarioValidation,
             PasswordEncoder passwordEncoder,
             AuthenticationManager authenticationManager,
-            JwtService jwtService
+            JwtService jwtService,
+            VerificacaoEmailService verificacaoEmailService
     ) {
         this.usuarioRepository =
                 usuarioRepository;
@@ -56,6 +59,9 @@ public class UsuarioServiceImpl
 
         this.jwtService =
                 jwtService;
+
+        this.verificacaoEmailService =
+                verificacaoEmailService;
     }
 
     @Override
@@ -87,14 +93,24 @@ public class UsuarioServiceImpl
                 )
         );
 
+        usuario.setEmailVerificado(
+                false
+        );
+
         Usuario usuarioSalvo =
                 usuarioRepository.save(
                         usuario
                 );
 
-        return usuarioMapper.toResponseDTO(
-                usuarioSalvo
-        );
+        verificacaoEmailService
+                .enviarVerificacao(
+                        usuarioSalvo
+                );
+
+        return usuarioMapper
+                .toResponseDTO(
+                        usuarioSalvo
+                );
     }
 
     @Override
@@ -108,13 +124,35 @@ public class UsuarioServiceImpl
 
         try {
             Authentication authentication =
-                    authenticationManager.authenticate(
-                            UsernamePasswordAuthenticationToken
-                                    .unauthenticated(
-                                            emailNormalizado,
-                                            requestDTO.senha()
+                    authenticationManager
+                            .authenticate(
+                                    UsernamePasswordAuthenticationToken
+                                            .unauthenticated(
+                                                    emailNormalizado,
+                                                    requestDTO.senha()
+                                            )
+                            );
+
+            Usuario usuario =
+                    usuarioRepository
+                            .findByEmailIgnoreCase(
+                                    emailNormalizado
+                            )
+                            .orElseThrow(() ->
+                                    new CredenciaisInvalidasException(
+                                            "E-mail ou senha inválidos."
                                     )
-                    );
+                            );
+
+            if (
+                    !Boolean.TRUE.equals(
+                            usuario.getEmailVerificado()
+                    )
+            ) {
+                throw new EmailNaoVerificadoException(
+                        "Confirme seu e-mail antes de entrar."
+                );
+            }
 
             String token =
                     jwtService.gerarToken(
@@ -142,9 +180,10 @@ public class UsuarioServiceImpl
                         email
                 );
 
-        return usuarioMapper.toResponseDTO(
-                usuario
-        );
+        return usuarioMapper
+                .toResponseDTO(
+                        usuario
+                );
     }
 
     @Override
@@ -152,7 +191,9 @@ public class UsuarioServiceImpl
             String email
     ) {
         String emailNormalizado =
-                normalizarEmail(email);
+                normalizarEmail(
+                        email
+                );
 
         return usuarioRepository
                 .findByEmailIgnoreCase(

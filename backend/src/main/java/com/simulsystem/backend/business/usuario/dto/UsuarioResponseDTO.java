@@ -10,6 +10,7 @@ public record UsuarioResponseDTO(
         String email,
         PerfilUsuario perfil,
         Boolean ativo,
+        Boolean emailVerificado,
         LocalDateTime dataCriacao,
         LocalDateTime dataAtualizacao
 ) {

@@ -29,56 +29,89 @@ public class SecurityConfig {
     ) throws Exception {
 
         http
-                .csrf(csrf -> csrf.disable())
-                .cors(Customizer.withDefaults())
+                .csrf(csrf ->
+                        csrf.disable()
+                )
+                .cors(
+                        Customizer.withDefaults()
+                )
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS
                         )
                 )
                 .authorizeHttpRequests(auth -> auth
+
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/usuarios"
                         ).permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/usuarios/verificar-email"
+                        ).permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/usuarios/reenviar-verificacao"
+                        ).permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/usuarios/recuperar-senha"
+                        ).permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/usuarios/redefinir-senha"
+                        ).permitAll()
+
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/auth/login"
                         ).permitAll()
+
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/rotas/consulta"
                         ).permitAll()
+
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/rotas/areas"
                         ).permitAll()
+
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/notificacoes/push/public-key"
                         ).permitAll()
-                        .anyRequest().authenticated()
+
+                        .anyRequest()
+                        .authenticated()
                 )
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(
-                                jwtAuthenticationEntryPoint
-                        )
-                        .accessDeniedHandler(
-                                jwtAccessDeniedHandler
-                        )
-                )
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .authenticationEntryPoint(
-                                jwtAuthenticationEntryPoint
-                        )
-                        .accessDeniedHandler(
-                                jwtAccessDeniedHandler
-                        )
-                        .jwt(jwt -> jwt
-                                .jwtAuthenticationConverter(
-                                        jwtAuthenticationConverter
+                .exceptionHandling(exception ->
+                        exception
+                                .authenticationEntryPoint(
+                                        jwtAuthenticationEntryPoint
                                 )
-                        )
+                                .accessDeniedHandler(
+                                        jwtAccessDeniedHandler
+                                )
+                )
+                .oauth2ResourceServer(oauth2 ->
+                        oauth2
+                                .authenticationEntryPoint(
+                                        jwtAuthenticationEntryPoint
+                                )
+                                .accessDeniedHandler(
+                                        jwtAccessDeniedHandler
+                                )
+                                .jwt(jwt ->
+                                        jwt.jwtAuthenticationConverter(
+                                                jwtAuthenticationConverter
+                                        )
+                                )
                 );
 
         return http.build();
@@ -90,11 +123,17 @@ public class SecurityConfig {
             PasswordEncoder passwordEncoder
     ) {
         DaoAuthenticationProvider authenticationProvider =
-                new DaoAuthenticationProvider(userDetailsService);
+                new DaoAuthenticationProvider(
+                        userDetailsService
+                );
 
-        authenticationProvider.setPasswordEncoder(passwordEncoder);
+        authenticationProvider.setPasswordEncoder(
+                passwordEncoder
+        );
 
-        return new ProviderManager(authenticationProvider);
+        return new ProviderManager(
+                authenticationProvider
+        );
     }
 
     @Bean
@@ -103,8 +142,13 @@ public class SecurityConfig {
         JwtGrantedAuthoritiesConverter authoritiesConverter =
                 new JwtGrantedAuthoritiesConverter();
 
-        authoritiesConverter.setAuthoritiesClaimName("roles");
-        authoritiesConverter.setAuthorityPrefix("ROLE_");
+        authoritiesConverter.setAuthoritiesClaimName(
+                "roles"
+        );
+
+        authoritiesConverter.setAuthorityPrefix(
+                "ROLE_"
+        );
 
         JwtAuthenticationConverter authenticationConverter =
                 new JwtAuthenticationConverter();

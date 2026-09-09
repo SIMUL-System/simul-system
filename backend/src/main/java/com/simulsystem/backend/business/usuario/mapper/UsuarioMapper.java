@@ -13,8 +13,13 @@ public class UsuarioMapper {
     ) {
         Usuario usuario = new Usuario();
 
-        usuario.setNome(requestDTO.nome());
-        usuario.setEmail(requestDTO.email());
+        usuario.setNome(
+                requestDTO.nome()
+        );
+
+        usuario.setEmail(
+                requestDTO.email()
+        );
 
         return usuario;
     }
@@ -28,6 +33,7 @@ public class UsuarioMapper {
                 usuario.getEmail(),
                 usuario.getPerfil(),
                 usuario.getAtivo(),
+                usuario.getEmailVerificado(),
                 usuario.getDataCriacao(),
                 usuario.getDataAtualizacao()
         );

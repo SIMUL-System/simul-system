@@ -43,6 +43,9 @@ public class Usuario {
     @Column(nullable = false)
     private Boolean ativo;
 
+    @Column(name = "email_verificado", nullable = false)
+    private Boolean emailVerificado;
+
     @Column(name = "data_criacao", nullable = false, updatable = false)
     private LocalDateTime dataCriacao;
 
@@ -58,6 +61,10 @@ public class Usuario {
 
         if (this.ativo == null) {
             this.ativo = true;
+        }
+
+        if (this.emailVerificado == null) {
+            this.emailVerificado = false;
         }
 
         if (this.perfil == null) {

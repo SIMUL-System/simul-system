@@ -4,7 +4,9 @@ import com.simulsystem.backend.business.rota.controller.ConsultaRotaController;
 import com.simulsystem.backend.business.rota.service.RotaService;
 import com.simulsystem.backend.business.usuario.controller.AdminUsuarioController;
 import com.simulsystem.backend.business.usuario.controller.UsuarioController;
+import com.simulsystem.backend.business.usuario.service.RecuperacaoSenhaService;
 import com.simulsystem.backend.business.usuario.service.UsuarioService;
+import com.simulsystem.backend.business.usuario.service.VerificacaoEmailService;
 
 import org.junit.jupiter.api.Test;
 
@@ -53,6 +55,12 @@ class SecurityHttpTest {
 
     @MockitoBean
     private UsuarioService usuarioService;
+
+    @MockitoBean
+    private VerificacaoEmailService verificacaoEmailService;
+
+    @MockitoBean
+    private RecuperacaoSenhaService recuperacaoSenhaService;
 
     @MockitoBean
     private UserDetailsService userDetailsService;

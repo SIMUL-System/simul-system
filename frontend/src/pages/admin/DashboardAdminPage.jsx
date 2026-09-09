@@ -26,9 +26,11 @@ function DashboardAdminPage() {
   ] = useState({
     rotas: 0,
     rotasAtivas: 0,
+
     areas: 0,
     areasComGeometria: 0,
     areasSemGeometria: 0,
+
     cronogramas: 0,
     cronogramasAtivos: 0,
   })
@@ -139,27 +141,58 @@ function DashboardAdminPage() {
     }
   }, [])
 
+  const rotasInativas =
+    resumo.rotas -
+    resumo.rotasAtivas
+
+  const cronogramasInativos =
+    resumo.cronogramas -
+    resumo.cronogramasAtivos
+
+  const possuiPendencias =
+    resumo.areasSemGeometria > 0 ||
+    rotasInativas > 0 ||
+    cronogramasInativos > 0
+
   if (carregando) {
     return (
-      <div
-        className="mensagem"
-        role="status"
+      <section
+        aria-labelledby="titulo-dashboard-admin"
+        aria-busy="true"
       >
-        Carregando resumo administrativo...
-      </div>
+        <h2
+          id="titulo-dashboard-admin"
+          className="visualmente-oculto"
+        >
+          Visão geral administrativa
+        </h2>
+
+        <div
+          className="mensagem"
+          role="status"
+          aria-live="polite"
+        >
+          Carregando resumo
+          administrativo...
+        </div>
+      </section>
     )
   }
 
   return (
     <>
-      <header className="admin-secao__cabecalho">
-        <h2>
+      <header
+        className="admin-secao__cabecalho"
+        aria-labelledby="titulo-visao-geral-admin"
+      >
+        <h2 id="titulo-visao-geral-admin">
           Visão geral
         </h2>
 
         <p>
           Acompanhe rapidamente o estado
-          atual da operação cadastrada no
+          atual dos cadastros e
+          configurações operacionais do
           SIMUL.
         </p>
       </header>
@@ -168,6 +201,7 @@ function DashboardAdminPage() {
         <div
           className="mensagem mensagem--erro"
           role="alert"
+          aria-live="assertive"
         >
           {erro}
         </div>
@@ -175,13 +209,24 @@ function DashboardAdminPage() {
 
       {!erro && (
         <>
-          <section className="admin-dashboard">
-            <article className="admin-dashboard__card">
-              <h3>
+          <section
+            className="admin-dashboard"
+            aria-label="Resumo administrativo"
+          >
+            <article
+              className="admin-dashboard__card"
+              aria-labelledby="titulo-card-rotas"
+            >
+              <h3 id="titulo-card-rotas">
                 Rotas
               </h3>
 
-              <p className="admin-dashboard__numero">
+              <p
+                className="admin-dashboard__numero"
+                aria-label={
+                  `${resumo.rotas} rotas cadastradas`
+                }
+              >
                 {resumo.rotas}
               </p>
 
@@ -199,8 +244,7 @@ function DashboardAdminPage() {
                   <strong>
                     Inativas:
                   </strong>{' '}
-                  {resumo.rotas -
-                    resumo.rotasAtivas}
+                  {rotasInativas}
                 </p>
               </div>
 
@@ -212,12 +256,20 @@ function DashboardAdminPage() {
               </Link>
             </article>
 
-            <article className="admin-dashboard__card">
-              <h3>
+            <article
+              className="admin-dashboard__card"
+              aria-labelledby="titulo-card-areas"
+            >
+              <h3 id="titulo-card-areas">
                 Áreas atendidas
               </h3>
 
-              <p className="admin-dashboard__numero">
+              <p
+                className="admin-dashboard__numero"
+                aria-label={
+                  `${resumo.areas} áreas cadastradas`
+                }
+              >
                 {resumo.areas}
               </p>
 
@@ -227,7 +279,8 @@ function DashboardAdminPage() {
                     Com geometria:
                   </strong>{' '}
                   {
-                    resumo.areasComGeometria
+                    resumo
+                      .areasComGeometria
                   }
                 </p>
 
@@ -236,7 +289,8 @@ function DashboardAdminPage() {
                     Sem geometria:
                   </strong>{' '}
                   {
-                    resumo.areasSemGeometria
+                    resumo
+                      .areasSemGeometria
                   }
                 </p>
               </div>
@@ -249,12 +303,20 @@ function DashboardAdminPage() {
               </Link>
             </article>
 
-            <article className="admin-dashboard__card">
-              <h3>
+            <article
+              className="admin-dashboard__card"
+              aria-labelledby="titulo-card-cronogramas"
+            >
+              <h3 id="titulo-card-cronogramas">
                 Cronogramas
               </h3>
 
-              <p className="admin-dashboard__numero">
+              <p
+                className="admin-dashboard__numero"
+                aria-label={
+                  `${resumo.cronogramas} cronogramas cadastrados`
+                }
+              >
                 {
                   resumo.cronogramas
                 }
@@ -266,7 +328,8 @@ function DashboardAdminPage() {
                     Ativos:
                   </strong>{' '}
                   {
-                    resumo.cronogramasAtivos
+                    resumo
+                      .cronogramasAtivos
                   }
                 </p>
 
@@ -274,9 +337,9 @@ function DashboardAdminPage() {
                   <strong>
                     Inativos:
                   </strong>{' '}
-                  {resumo.cronogramas -
-                    resumo
-                      .cronogramasAtivos}
+                  {
+                    cronogramasInativos
+                  }
                 </p>
               </div>
 
@@ -289,14 +352,25 @@ function DashboardAdminPage() {
             </article>
           </section>
 
-          <section className="admin-dashboard__pendencias">
-            <h3>
+          <section
+            className="admin-dashboard__pendencias"
+            aria-labelledby="titulo-pendencias-admin"
+          >
+            <h3 id="titulo-pendencias-admin">
               Pendências
             </h3>
 
+            {!possuiPendencias && (
+              <p>
+                Não foram identificadas
+                pendências nos cadastros
+                administrativos.
+              </p>
+            )}
+
             {resumo
               .areasSemGeometria >
-            0 ? (
+              0 && (
               <p>
                 Existem{' '}
                 <strong>
@@ -306,38 +380,42 @@ function DashboardAdminPage() {
                   }
                 </strong>{' '}
                 áreas ainda sem geometria
-                própria cadastrada.
-              </p>
-            ) : (
-              <p>
-                Todas as áreas cadastradas
-                possuem geometria.
+                própria cadastrada.{' '}
+
+                <Link to="/admin/areas">
+                  Revisar áreas
+                </Link>
               </p>
             )}
 
-            {resumo.rotasAtivas <
-              resumo.rotas && (
+            {rotasInativas > 0 && (
               <p>
                 Existem{' '}
                 <strong>
-                  {resumo.rotas -
-                    resumo.rotasAtivas}
+                  {rotasInativas}
                 </strong>{' '}
-                rotas inativas.
+                rotas inativas.{' '}
+
+                <Link to="/admin/rotas">
+                  Revisar rotas
+                </Link>
               </p>
             )}
 
-            {resumo
-              .cronogramasAtivos <
-              resumo.cronogramas && (
+            {cronogramasInativos >
+              0 && (
               <p>
                 Existem{' '}
                 <strong>
-                  {resumo.cronogramas -
-                    resumo
-                      .cronogramasAtivos}
+                  {
+                    cronogramasInativos
+                  }
                 </strong>{' '}
-                cronogramas inativos.
+                cronogramas inativos.{' '}
+
+                <Link to="/admin/cronogramas">
+                  Revisar cronogramas
+                </Link>
               </p>
             )}
           </section>

@@ -2,8 +2,10 @@ import {
   NavLink,
   useNavigate,
 } from 'react-router-dom'
+
 import {
   useEffect,
+  useRef,
   useState,
 } from 'react'
 
@@ -19,6 +21,8 @@ import {
 function NavegacaoPrincipal() {
   const navigate = useNavigate()
 
+  const botaoMenuRef = useRef(null)
+
   const [menuAberto, setMenuAberto] =
     useState(false)
 
@@ -32,6 +36,10 @@ function NavegacaoPrincipal() {
 
     async function carregarUsuario() {
       if (!token) {
+        if (componenteAtivo) {
+          setUsuario(null)
+        }
+
         return
       }
 
@@ -56,6 +64,32 @@ function NavegacaoPrincipal() {
     }
   }, [token])
 
+  useEffect(() => {
+    if (!menuAberto) {
+      return undefined
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        setMenuAberto(false)
+
+        botaoMenuRef.current?.focus()
+      }
+    }
+
+    document.addEventListener(
+      'keydown',
+      handleKeyDown,
+    )
+
+    return () => {
+      document.removeEventListener(
+        'keydown',
+        handleKeyDown,
+      )
+    }
+  }, [menuAberto])
+
   function classeLink({
     isActive,
   }) {
@@ -68,19 +102,32 @@ function NavegacaoPrincipal() {
     setMenuAberto(false)
   }
 
+  function alternarMenu() {
+    setMenuAberto(
+      (valorAtual) =>
+        !valorAtual,
+    )
+  }
+
   function handleLogout() {
     logout()
 
     setUsuario(null)
     setMenuAberto(false)
 
-    navigate('/', {
-      replace: true,
-    })
+    navigate(
+      '/',
+      {
+        replace: true,
+      },
+    )
   }
 
   const autenticado =
-    Boolean(token && usuario)
+    Boolean(
+      token &&
+      usuario,
+    )
 
   const admin =
     usuario?.perfil === 'ADMIN'
@@ -92,13 +139,19 @@ function NavegacaoPrincipal() {
           to="/"
           className="navegacao-principal__marca"
           onClick={fecharMenu}
+          aria-label="SIMUL - Ir para a página inicial"
         >
-          <span className="navegacao-principal__simbolo">
+          <span
+            className="navegacao-principal__simbolo"
+            aria-hidden="true"
+          >
             ♻
           </span>
 
           <span className="navegacao-principal__identidade">
-            <strong>SIMUL</strong>
+            <strong>
+              SIMUL
+            </strong>
 
             <small>
               Monitoramento Urbano de
@@ -108,28 +161,38 @@ function NavegacaoPrincipal() {
         </NavLink>
 
         <button
+          ref={botaoMenuRef}
           type="button"
           className="navegacao-principal__menu-botao"
           aria-label={
             menuAberto
-              ? 'Fechar menu'
-              : 'Abrir menu'
+              ? 'Fechar menu de navegação'
+              : 'Abrir menu de navegação'
           }
           aria-expanded={
             menuAberto
           }
-          onClick={() =>
-            setMenuAberto(
-              (valor) => !valor,
-            )
+          aria-controls="menu-principal"
+          onClick={
+            alternarMenu
           }
         >
-          <span />
-          <span />
-          <span />
+          <span
+            aria-hidden="true"
+          />
+
+          <span
+            aria-hidden="true"
+          />
+
+          <span
+            aria-hidden="true"
+          />
         </button>
 
         <nav
+          id="menu-principal"
+          aria-label="Navegação principal"
           className={
             menuAberto
               ? 'navegacao-principal__links navegacao-principal__links--aberto'
@@ -139,8 +202,12 @@ function NavegacaoPrincipal() {
           <NavLink
             to="/"
             end
-            className={classeLink}
-            onClick={fecharMenu}
+            className={
+              classeLink
+            }
+            onClick={
+              fecharMenu
+            }
           >
             Consulta
           </NavLink>
@@ -152,7 +219,9 @@ function NavegacaoPrincipal() {
                 className={
                   classeLink
                 }
-                onClick={fecharMenu}
+                onClick={
+                  fecharMenu
+                }
               >
                 Minha conta
               </NavLink>
@@ -162,7 +231,9 @@ function NavegacaoPrincipal() {
                 className={
                   classeLink
                 }
-                onClick={fecharMenu}
+                onClick={
+                  fecharMenu
+                }
               >
                 Notificações
               </NavLink>

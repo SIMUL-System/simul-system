@@ -1,4 +1,7 @@
-import { useEffect, useState } from 'react'
+import {
+  useEffect,
+  useState,
+} from 'react'
 
 import {
   alterarStatusCronograma,
@@ -12,19 +15,55 @@ import {
 } from '../../services/adminRotaService'
 
 const DIAS_SEMANA = [
-  'SEGUNDA',
-  'TERCA',
-  'QUARTA',
-  'QUINTA',
-  'SEXTA',
-  'SABADO',
-  'DOMINGO',
+  {
+    valor: 'SEGUNDA',
+    rotulo: 'Segunda-feira',
+  },
+  {
+    valor: 'TERCA',
+    rotulo: 'Terça-feira',
+  },
+  {
+    valor: 'QUARTA',
+    rotulo: 'Quarta-feira',
+  },
+  {
+    valor: 'QUINTA',
+    rotulo: 'Quinta-feira',
+  },
+  {
+    valor: 'SEXTA',
+    rotulo: 'Sexta-feira',
+  },
+  {
+    valor: 'SABADO',
+    rotulo: 'Sábado',
+  },
+  {
+    valor: 'DOMINGO',
+    rotulo: 'Domingo',
+  },
 ]
 
+function obterRotuloDia(
+  valor,
+) {
+  return (
+    DIAS_SEMANA.find(
+      (dia) =>
+        dia.valor === valor,
+    )?.rotulo || valor
+  )
+}
+
 function CronogramasAdminPage() {
-  const [rotas, setRotas] = useState([])
-  const [cronogramas, setCronogramas] =
+  const [rotas, setRotas] =
     useState([])
+
+  const [
+    cronogramas,
+    setCronogramas,
+  ] = useState([])
 
   const [
     cronogramaEmEdicao,
@@ -36,23 +75,36 @@ function CronogramasAdminPage() {
     setRotaCronogramaId,
   ] = useState('')
 
-  const [diaSemana, setDiaSemana] =
-    useState('SEGUNDA')
+  const [
+    diaSemana,
+    setDiaSemana,
+  ] = useState('SEGUNDA')
 
-  const [horarioInicio, setHorarioInicio] =
+  const [
+    horarioInicio,
+    setHorarioInicio,
+  ] = useState('')
+
+  const [
+    horarioFim,
+    setHorarioFim,
+  ] = useState('')
+
+  const [erro, setErro] =
     useState('')
 
-  const [horarioFim, setHorarioFim] =
+  const [sucesso, setSucesso] =
     useState('')
 
-  const [erro, setErro] = useState('')
-  const [sucesso, setSucesso] = useState('')
+  const [
+    carregando,
+    setCarregando,
+  ] = useState(true)
 
-  const [carregando, setCarregando] =
-    useState(true)
-
-  const [salvando, setSalvando] =
-    useState(false)
+  const [
+    salvando,
+    setSalvando,
+  ] = useState(false)
 
   const [
     alterandoStatusId,
@@ -66,23 +118,32 @@ function CronogramasAdminPage() {
       listarRotas(),
       listarCronogramas(),
     ])
-      .then(([dadosRotas, dadosCronogramas]) => {
-        if (!componenteAtivo) {
-          return
-        }
+      .then(
+        ([
+          dadosRotas,
+          dadosCronogramas,
+        ]) => {
+          if (!componenteAtivo) {
+            return
+          }
 
-        setRotas(
-          Array.isArray(dadosRotas)
-            ? dadosRotas
-            : [],
-        )
+          setRotas(
+            Array.isArray(
+              dadosRotas,
+            )
+              ? dadosRotas
+              : [],
+          )
 
-        setCronogramas(
-          Array.isArray(dadosCronogramas)
-            ? dadosCronogramas
-            : [],
-        )
-      })
+          setCronogramas(
+            Array.isArray(
+              dadosCronogramas,
+            )
+              ? dadosCronogramas
+              : [],
+          )
+        },
+      )
       .catch((error) => {
         if (!componenteAtivo) {
           return
@@ -105,13 +166,19 @@ function CronogramasAdminPage() {
   }, [])
 
   async function recarregarCronogramas() {
-    const dados = await listarCronogramas()
+    const dados =
+      await listarCronogramas()
 
     setCronogramas(
       Array.isArray(dados)
         ? dados
         : [],
     )
+  }
+
+  function limparMensagens() {
+    setErro('')
+    setSucesso('')
   }
 
   function limparFormulario({
@@ -128,28 +195,34 @@ function CronogramasAdminPage() {
     setHorarioFim('')
   }
 
-  function iniciarEdicao(cronograma) {
-    setErro('')
-    setSucesso('')
+  function iniciarEdicao(
+    cronograma,
+  ) {
+    limparMensagens()
 
-    setCronogramaEmEdicao(cronograma)
+    setCronogramaEmEdicao(
+      cronograma,
+    )
 
     setRotaCronogramaId(
-      String(cronograma.rotaId ?? ''),
+      String(
+        cronograma.rotaId ?? '',
+      ),
     )
 
     setDiaSemana(
-      cronograma.diaSemana ?? 'SEGUNDA',
+      cronograma.diaSemana ??
+        'SEGUNDA',
     )
 
     setHorarioInicio(
-      cronograma.horarioInicio?.slice(0, 5) ??
-        '',
+      cronograma.horarioInicio
+        ?.slice(0, 5) ?? '',
     )
 
     setHorarioFim(
-      cronograma.horarioFim?.slice(0, 5) ??
-        '',
+      cronograma.horarioFim
+        ?.slice(0, 5) ?? '',
     )
 
     window.scrollTo({
@@ -160,16 +233,15 @@ function CronogramasAdminPage() {
 
   function cancelarEdicao() {
     limparFormulario()
-
-    setErro('')
-    setSucesso('')
+    limparMensagens()
   }
 
-  async function handleSubmit(event) {
+  async function handleSubmit(
+    event,
+  ) {
     event.preventDefault()
 
-    setErro('')
-    setSucesso('')
+    limparMensagens()
 
     if (
       !rotaCronogramaId ||
@@ -180,38 +252,50 @@ function CronogramasAdminPage() {
       setErro(
         'Informe a rota, o dia da semana e os horários.',
       )
+
       return
     }
 
-    if (horarioInicio === horarioFim) {
+    if (
+      horarioInicio === horarioFim
+    ) {
       setErro(
         'O horário inicial e o horário final não podem ser iguais.',
       )
+
       return
     }
 
-    const rotaId = Number(
-      rotaCronogramaId,
-    )
+    const rotaId =
+      Number(rotaCronogramaId)
 
-    if (!Number.isInteger(rotaId)) {
+    if (
+      !Number.isInteger(
+        rotaId,
+      )
+    ) {
       setErro(
         'Selecione uma rota válida.',
       )
+
       return
     }
 
     const dados = {
       rotaId,
       diaSemana,
-      horarioInicio: `${horarioInicio}:00`,
-      horarioFim: `${horarioFim}:00`,
+      horarioInicio:
+        `${horarioInicio}:00`,
+      horarioFim:
+        `${horarioFim}:00`,
     }
 
     try {
       setSalvando(true)
 
-      if (cronogramaEmEdicao) {
+      if (
+        cronogramaEmEdicao
+      ) {
         await atualizarCronograma(
           cronogramaEmEdicao.id,
           dados,
@@ -223,7 +307,9 @@ function CronogramasAdminPage() {
 
         limparFormulario()
       } else {
-        await criarCronograma(dados)
+        await criarCronograma(
+          dados,
+        )
 
         setSucesso(
           'Cronograma cadastrado com sucesso. Você pode adicionar outro horário para a mesma rota.',
@@ -248,11 +334,25 @@ function CronogramasAdminPage() {
   async function handleAlterarStatus(
     cronograma,
   ) {
-    setErro('')
-    setSucesso('')
+    limparMensagens()
 
     const novoStatus =
       !cronograma.ativo
+
+    if (!novoStatus) {
+      const confirmou =
+        window.confirm(
+          `Deseja realmente desativar o cronograma de ${obterNomeRota(
+            cronograma.rotaId,
+          )} em ${obterRotuloDia(
+            cronograma.diaSemana,
+          )}?`,
+        )
+
+      if (!confirmou) {
+        return
+      }
+    }
 
     try {
       setAlterandoStatusId(
@@ -281,22 +381,38 @@ function CronogramasAdminPage() {
     }
   }
 
-  function obterNomeRota(rotaId) {
+  function obterNomeRota(
+    rotaId,
+  ) {
     const rota = rotas.find(
-      (item) => item.id === rotaId,
+      (item) =>
+        item.id === rotaId,
     )
 
-    return rota?.nome ?? `Rota ${rotaId}`
+    return (
+      rota?.nome ||
+      `Rota ${rotaId}`
+    )
   }
+
+  const operacaoEmAndamento =
+    salvando ||
+    alterandoStatusId !== null
 
   return (
     <>
-      <header className="admin-secao__cabecalho">
-        <h2>Cronogramas</h2>
+      <header
+        className="admin-secao__cabecalho"
+        aria-labelledby="titulo-cronogramas-admin"
+      >
+        <h2 id="titulo-cronogramas-admin">
+          Cronogramas
+        </h2>
 
         <p>
-          Configure os dias e horários de coleta
-          associados a cada rota.
+          Configure os dias e horários
+          de coleta associados a cada
+          rota.
         </p>
       </header>
 
@@ -304,6 +420,7 @@ function CronogramasAdminPage() {
         <div
           className="mensagem mensagem--erro"
           role="alert"
+          aria-live="assertive"
         >
           {erro}
         </div>
@@ -313,13 +430,18 @@ function CronogramasAdminPage() {
         <div
           className="mensagem mensagem--sucesso"
           role="status"
+          aria-live="polite"
         >
           {sucesso}
         </div>
       )}
 
-      <section className="resultado">
-        <h3>
+      <section
+        className="resultado"
+        aria-labelledby="titulo-formulario-cronograma"
+        aria-busy={salvando}
+      >
+        <h3 id="titulo-formulario-cronograma">
           {cronogramaEmEdicao
             ? 'Editar cronograma'
             : 'Cadastrar cronograma'}
@@ -328,6 +450,7 @@ function CronogramasAdminPage() {
         <form
           className="consulta__formulario"
           onSubmit={handleSubmit}
+          noValidate
         >
           <div className="campo">
             <label htmlFor="rotaCronograma">
@@ -336,30 +459,46 @@ function CronogramasAdminPage() {
 
             <select
               id="rotaCronograma"
-              value={rotaCronogramaId}
-              onChange={(event) =>
+              value={
+                rotaCronogramaId
+              }
+              onChange={(event) => {
                 setRotaCronogramaId(
                   event.target.value,
                 )
+
+                limparMensagens()
+              }}
+              disabled={
+                carregando ||
+                operacaoEmAndamento
               }
-              disabled={carregando}
+              required
             >
               <option value="">
                 Selecione uma rota
               </option>
 
-              {rotas.map((rota) => (
-                <option
-                  key={rota.id}
-                  value={rota.id}
-                  disabled={!rota.ativo}
-                >
-                  {rota.nome}
-                  {!rota.ativo
-                    ? ' — Inativa'
-                    : ''}
-                </option>
-              ))}
+              {rotas.map(
+                (rota) => (
+                  <option
+                    key={rota.id}
+                    value={rota.id}
+                    disabled={
+                      !rota.ativo &&
+                      Number(
+                        rotaCronogramaId,
+                      ) !== rota.id
+                    }
+                  >
+                    {rota.nome}
+
+                    {!rota.ativo
+                      ? ' — Inativa'
+                      : ''}
+                  </option>
+                ),
+              )}
             </select>
           </div>
 
@@ -371,20 +510,31 @@ function CronogramasAdminPage() {
             <select
               id="diaSemana"
               value={diaSemana}
-              onChange={(event) =>
+              onChange={(event) => {
                 setDiaSemana(
                   event.target.value,
                 )
+
+                limparMensagens()
+              }}
+              disabled={
+                operacaoEmAndamento
               }
             >
-              {DIAS_SEMANA.map((dia) => (
-                <option
-                  key={dia}
-                  value={dia}
-                >
-                  {dia}
-                </option>
-              ))}
+              {DIAS_SEMANA.map(
+                (dia) => (
+                  <option
+                    key={
+                      dia.valor
+                    }
+                    value={
+                      dia.valor
+                    }
+                  >
+                    {dia.rotulo}
+                  </option>
+                ),
+              )}
             </select>
           </div>
 
@@ -396,12 +546,20 @@ function CronogramasAdminPage() {
             <input
               id="horarioInicio"
               type="time"
-              value={horarioInicio}
-              onChange={(event) =>
+              value={
+                horarioInicio
+              }
+              onChange={(event) => {
                 setHorarioInicio(
                   event.target.value,
                 )
+
+                limparMensagens()
+              }}
+              disabled={
+                operacaoEmAndamento
               }
+              required
             />
           </div>
 
@@ -414,17 +572,25 @@ function CronogramasAdminPage() {
               id="horarioFim"
               type="time"
               value={horarioFim}
-              onChange={(event) =>
+              onChange={(event) => {
                 setHorarioFim(
                   event.target.value,
                 )
+
+                limparMensagens()
+              }}
+              disabled={
+                operacaoEmAndamento
               }
+              required
             />
           </div>
 
           <button
             type="submit"
-            disabled={salvando}
+            disabled={
+              operacaoEmAndamento
+            }
           >
             {salvando
               ? 'Salvando...'
@@ -436,8 +602,12 @@ function CronogramasAdminPage() {
           {cronogramaEmEdicao && (
             <button
               type="button"
-              onClick={cancelarEdicao}
-              disabled={salvando}
+              onClick={
+                cancelarEdicao
+              }
+              disabled={
+                operacaoEmAndamento
+              }
             >
               Cancelar edição
             </button>
@@ -445,86 +615,148 @@ function CronogramasAdminPage() {
         </form>
       </section>
 
-      <section className="resultado">
-        <h3>Cronogramas cadastrados</h3>
+      <section
+        className="resultado"
+        aria-labelledby="titulo-lista-cronogramas"
+        aria-busy={carregando}
+      >
+        <h3 id="titulo-lista-cronogramas">
+          Cronogramas cadastrados
+        </h3>
 
         {carregando ? (
-          <p>
+          <p
+            role="status"
+            aria-live="polite"
+          >
             Carregando cronogramas...
           </p>
-        ) : cronogramas.length === 0 ? (
+        ) : cronogramas.length ===
+          0 ? (
           <p>
-            Nenhum cronograma cadastrado.
+            Nenhum cronograma
+            cadastrado.
           </p>
         ) : (
           <div className="lista-rotas">
             {cronogramas.map(
-              (cronograma) => (
-                <article
-                  className="rota-admin"
-                  key={cronograma.id}
-                >
-                  <div className="rota-admin__conteudo">
-                    <h3>
-                      {obterNomeRota(
-                        cronograma.rotaId,
-                      )}
-                    </h3>
+              (cronograma) => {
+                const nomeRota =
+                  obterNomeRota(
+                    cronograma.rotaId,
+                  )
 
-                    <p>
-                      <strong>Dia:</strong>{' '}
-                      {cronograma.diaSemana}
-                    </p>
+                const dia =
+                  obterRotuloDia(
+                    cronograma.diaSemana,
+                  )
 
-                    <p>
-                      <strong>Horário:</strong>{' '}
-                      {cronograma.horarioInicio}
-                      {' — '}
-                      {cronograma.horarioFim}
-                    </p>
+                return (
+                  <article
+                    className="rota-admin"
+                    key={cronograma.id}
+                    aria-labelledby={
+                      `cronograma-${cronograma.id}`
+                    }
+                  >
+                    <div className="rota-admin__conteudo">
+                      <h3
+                        id={
+                          `cronograma-${cronograma.id}`
+                        }
+                      >
+                        {nomeRota}
+                      </h3>
 
-                    <p>
-                      <strong>Status:</strong>{' '}
-                      {cronograma.ativo
-                        ? 'Ativo'
-                        : 'Inativo'}
-                    </p>
-                  </div>
+                      <p>
+                        <strong>
+                          Dia:
+                        </strong>{' '}
+                        {dia}
+                      </p>
 
-                  <div className="rota-admin__acoes">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        iniciarEdicao(
-                          cronograma,
-                        )
+                      <p>
+                        <strong>
+                          Horário:
+                        </strong>{' '}
+                        {
+                          cronograma.horarioInicio
+                        }
+                        {' — '}
+                        {
+                          cronograma.horarioFim
+                        }
+                      </p>
+
+                      <p>
+                        <strong>
+                          Status:
+                        </strong>{' '}
+
+                        <span
+                          className={
+                            cronograma.ativo
+                              ? 'status-admin status-admin--ativo'
+                              : 'status-admin status-admin--inativo'
+                          }
+                        >
+                          {cronograma.ativo
+                            ? 'Ativo'
+                            : 'Inativo'}
+                        </span>
+                      </p>
+                    </div>
+
+                    <div
+                      className="rota-admin__acoes"
+                      aria-label={
+                        `Ações do cronograma de ${nomeRota} em ${dia}`
                       }
                     >
-                      Editar
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          iniciarEdicao(
+                            cronograma,
+                          )
+                        }
+                        disabled={
+                          operacaoEmAndamento
+                        }
+                        aria-label={
+                          `Editar cronograma de ${nomeRota} em ${dia}`
+                        }
+                      >
+                        Editar
+                      </button>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleAlterarStatus(
-                          cronograma,
-                        )
-                      }
-                      disabled={
-                        alterandoStatusId ===
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleAlterarStatus(
+                            cronograma,
+                          )
+                        }
+                        disabled={
+                          operacaoEmAndamento
+                        }
+                        aria-label={
+                          cronograma.ativo
+                            ? `Desativar cronograma de ${nomeRota} em ${dia}`
+                            : `Ativar cronograma de ${nomeRota} em ${dia}`
+                        }
+                      >
+                        {alterandoStatusId ===
                         cronograma.id
-                      }
-                    >
-                      {alterandoStatusId ===
-                      cronograma.id
-                        ? 'Alterando...'
-                        : cronograma.ativo
-                          ? 'Desativar'
-                          : 'Ativar'}
-                    </button>
-                  </div>
-                </article>
-              ),
+                          ? 'Alterando...'
+                          : cronograma.ativo
+                            ? 'Desativar'
+                            : 'Ativar'}
+                      </button>
+                    </div>
+                  </article>
+                )
+              },
             )}
           </div>
         )}

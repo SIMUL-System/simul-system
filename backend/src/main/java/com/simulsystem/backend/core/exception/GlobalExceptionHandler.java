@@ -13,10 +13,37 @@ public class GlobalExceptionHandler {
             CredenciaisInvalidasException exception
     ) {
         ProblemDetail problem =
-                ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
+                ProblemDetail.forStatus(
+                        HttpStatus.UNAUTHORIZED
+                );
 
-        problem.setTitle("Credenciais inválidas");
-        problem.setDetail(exception.getMessage());
+        problem.setTitle(
+                "Credenciais inválidas"
+        );
+
+        problem.setDetail(
+                exception.getMessage()
+        );
+
+        return problem;
+    }
+
+    @ExceptionHandler(EmailNaoVerificadoException.class)
+    public ProblemDetail handleEmailNaoVerificado(
+            EmailNaoVerificadoException exception
+    ) {
+        ProblemDetail problem =
+                ProblemDetail.forStatus(
+                        HttpStatus.FORBIDDEN
+                );
+
+        problem.setTitle(
+                "E-mail não verificado"
+        );
+
+        problem.setDetail(
+                exception.getMessage()
+        );
 
         return problem;
     }
@@ -26,10 +53,17 @@ public class GlobalExceptionHandler {
             UsuarioNaoEncontradoException exception
     ) {
         ProblemDetail problem =
-                ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+                ProblemDetail.forStatus(
+                        HttpStatus.NOT_FOUND
+                );
 
-        problem.setTitle("Usuário não encontrado");
-        problem.setDetail(exception.getMessage());
+        problem.setTitle(
+                "Usuário não encontrado"
+        );
+
+        problem.setDetail(
+                exception.getMessage()
+        );
 
         return problem;
     }
@@ -39,10 +73,17 @@ public class GlobalExceptionHandler {
             EmailJaCadastradoException exception
     ) {
         ProblemDetail problem =
-                ProblemDetail.forStatus(HttpStatus.CONFLICT);
+                ProblemDetail.forStatus(
+                        HttpStatus.CONFLICT
+                );
 
-        problem.setTitle("E-mail já cadastrado");
-        problem.setDetail(exception.getMessage());
+        problem.setTitle(
+                "E-mail já cadastrado"
+        );
+
+        problem.setDetail(
+                exception.getMessage()
+        );
 
         return problem;
     }
@@ -52,10 +93,17 @@ public class GlobalExceptionHandler {
             AreaAtendidaJaCadastradaException exception
     ) {
         ProblemDetail problem =
-                ProblemDetail.forStatus(HttpStatus.CONFLICT);
+                ProblemDetail.forStatus(
+                        HttpStatus.CONFLICT
+                );
 
-        problem.setTitle("Área atendida já cadastrada");
-        problem.setDetail(exception.getMessage());
+        problem.setTitle(
+                "Área atendida já cadastrada"
+        );
+
+        problem.setDetail(
+                exception.getMessage()
+        );
 
         return problem;
     }
@@ -65,10 +113,17 @@ public class GlobalExceptionHandler {
             AreaAtendidaNaoEncontradaException exception
     ) {
         ProblemDetail problem =
-                ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+                ProblemDetail.forStatus(
+                        HttpStatus.NOT_FOUND
+                );
 
-        problem.setTitle("Área atendida não encontrada");
-        problem.setDetail(exception.getMessage());
+        problem.setTitle(
+                "Área atendida não encontrada"
+        );
+
+        problem.setDetail(
+                exception.getMessage()
+        );
 
         return problem;
     }
@@ -78,10 +133,17 @@ public class GlobalExceptionHandler {
             RotaNaoEncontradaException exception
     ) {
         ProblemDetail problem =
-                ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+                ProblemDetail.forStatus(
+                        HttpStatus.NOT_FOUND
+                );
 
-        problem.setTitle("Rota não encontrada");
-        problem.setDetail(exception.getMessage());
+        problem.setTitle(
+                "Rota não encontrada"
+        );
+
+        problem.setDetail(
+                exception.getMessage()
+        );
 
         return problem;
     }
@@ -91,10 +153,17 @@ public class GlobalExceptionHandler {
             CronogramaJaCadastradoException exception
     ) {
         ProblemDetail problem =
-                ProblemDetail.forStatus(HttpStatus.CONFLICT);
+                ProblemDetail.forStatus(
+                        HttpStatus.CONFLICT
+                );
 
-        problem.setTitle("Cronograma já cadastrado");
-        problem.setDetail(exception.getMessage());
+        problem.setTitle(
+                "Cronograma já cadastrado"
+        );
+
+        problem.setDetail(
+                exception.getMessage()
+        );
 
         return problem;
     }
@@ -104,10 +173,17 @@ public class GlobalExceptionHandler {
             HorarioCronogramaInvalidoException exception
     ) {
         ProblemDetail problem =
-                ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+                ProblemDetail.forStatus(
+                        HttpStatus.BAD_REQUEST
+                );
 
-        problem.setTitle("Horário do cronograma inválido");
-        problem.setDetail(exception.getMessage());
+        problem.setTitle(
+                "Horário do cronograma inválido"
+        );
+
+        problem.setDetail(
+                exception.getMessage()
+        );
 
         return problem;
     }
@@ -117,10 +193,17 @@ public class GlobalExceptionHandler {
             CronogramaNaoEncontradoException exception
     ) {
         ProblemDetail problem =
-                ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+                ProblemDetail.forStatus(
+                        HttpStatus.NOT_FOUND
+                );
 
-        problem.setTitle("Cronograma não encontrado");
-        problem.setDetail(exception.getMessage());
+        problem.setTitle(
+                "Cronograma não encontrado"
+        );
+
+        problem.setDetail(
+                exception.getMessage()
+        );
 
         return problem;
     }
@@ -130,12 +213,17 @@ public class GlobalExceptionHandler {
             PreferenciaNotificacaoJaCadastradaException exception
     ) {
         ProblemDetail problem =
-                ProblemDetail.forStatus(HttpStatus.CONFLICT);
+                ProblemDetail.forStatus(
+                        HttpStatus.CONFLICT
+                );
 
         problem.setTitle(
                 "Preferência de notificação já cadastrada"
         );
-        problem.setDetail(exception.getMessage());
+
+        problem.setDetail(
+                exception.getMessage()
+        );
 
         return problem;
     }
@@ -145,12 +233,17 @@ public class GlobalExceptionHandler {
             PreferenciaNotificacaoNaoEncontradaException exception
     ) {
         ProblemDetail problem =
-                ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+                ProblemDetail.forStatus(
+                        HttpStatus.NOT_FOUND
+                );
 
         problem.setTitle(
                 "Preferência de notificação não encontrada"
         );
-        problem.setDetail(exception.getMessage());
+
+        problem.setDetail(
+                exception.getMessage()
+        );
 
         return problem;
     }

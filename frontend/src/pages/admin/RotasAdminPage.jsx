@@ -1,4 +1,7 @@
-import { useEffect, useState } from 'react'
+import {
+  useEffect,
+  useState,
+} from 'react'
 
 import {
   alterarStatusRota,
@@ -8,21 +11,37 @@ import {
 } from '../../services/adminRotaService'
 
 function RotasAdminPage() {
-  const [rotas, setRotas] = useState([])
+  const [rotas, setRotas] =
+    useState([])
 
-  const [nome, setNome] = useState('')
-  const [descricao, setDescricao] = useState('')
-  const [rotaEmEdicao, setRotaEmEdicao] =
-    useState(null)
+  const [nome, setNome] =
+    useState('')
 
-  const [erro, setErro] = useState('')
-  const [sucesso, setSucesso] = useState('')
+  const [
+    descricao,
+    setDescricao,
+  ] = useState('')
 
-  const [carregando, setCarregando] =
-    useState(true)
+  const [
+    rotaEmEdicao,
+    setRotaEmEdicao,
+  ] = useState(null)
 
-  const [salvando, setSalvando] =
-    useState(false)
+  const [erro, setErro] =
+    useState('')
+
+  const [sucesso, setSucesso] =
+    useState('')
+
+  const [
+    carregando,
+    setCarregando,
+  ] = useState(true)
+
+  const [
+    salvando,
+    setSalvando,
+  ] = useState(false)
 
   const [
     alterandoStatusId,
@@ -66,13 +85,19 @@ function RotasAdminPage() {
   }, [])
 
   async function recarregarRotas() {
-    const dados = await listarRotas()
+    const dados =
+      await listarRotas()
 
     setRotas(
       Array.isArray(dados)
         ? dados
         : [],
     )
+  }
+
+  function limparMensagens() {
+    setErro('')
+    setSucesso('')
   }
 
   function limparFormulario() {
@@ -82,12 +107,17 @@ function RotasAdminPage() {
   }
 
   function iniciarEdicao(rota) {
-    setErro('')
-    setSucesso('')
+    limparMensagens()
 
     setRotaEmEdicao(rota)
-    setNome(rota.nome ?? '')
-    setDescricao(rota.descricao ?? '')
+
+    setNome(
+      rota.nome ?? '',
+    )
+
+    setDescricao(
+      rota.descricao ?? '',
+    )
 
     window.scrollTo({
       top: 0,
@@ -97,24 +127,63 @@ function RotasAdminPage() {
 
   function cancelarEdicao() {
     limparFormulario()
-    setErro('')
-    setSucesso('')
+    limparMensagens()
   }
 
-  async function handleSubmit(event) {
+  async function handleSubmit(
+    event,
+  ) {
     event.preventDefault()
 
-    setErro('')
-    setSucesso('')
+    limparMensagens()
 
-    if (!nome.trim()) {
-      setErro('Informe o nome da rota.')
+    const nomeNormalizado =
+      nome
+        .trim()
+        .replace(/\s+/g, ' ')
+
+    const descricaoNormalizada =
+      descricao
+        .trim()
+        .replace(/\s+/g, ' ')
+
+    if (!nomeNormalizado) {
+      setErro(
+        'Informe o nome da rota.',
+      )
+
+      return
+    }
+
+    const rotaDuplicada =
+      rotas.find(
+        (rota) =>
+          rota.id !==
+            rotaEmEdicao?.id &&
+          rota.nome
+            ?.trim()
+            .toLocaleLowerCase(
+              'pt-BR',
+            ) ===
+            nomeNormalizado.toLocaleLowerCase(
+              'pt-BR',
+            ),
+      )
+
+    if (rotaDuplicada) {
+      setErro(
+        'Já existe uma rota cadastrada com esse nome.',
+      )
+
       return
     }
 
     const dados = {
-      nome: nome.trim(),
-      descricao: descricao.trim(),
+      nome:
+        nomeNormalizado,
+
+      descricao:
+        descricaoNormalizada,
     }
 
     try {
@@ -130,7 +199,9 @@ function RotasAdminPage() {
           'Rota atualizada com sucesso.',
         )
       } else {
-        await criarRota(dados)
+        await criarRota(
+          dados,
+        )
 
         setSucesso(
           'Rota cadastrada com sucesso.',
@@ -138,6 +209,7 @@ function RotasAdminPage() {
       }
 
       limparFormulario()
+
       await recarregarRotas()
     } catch (error) {
       setErro(
@@ -149,14 +221,29 @@ function RotasAdminPage() {
     }
   }
 
-  async function handleAlterarStatus(rota) {
-    setErro('')
-    setSucesso('')
+  async function handleAlterarStatus(
+    rota,
+  ) {
+    limparMensagens()
 
-    const novoStatus = !rota.ativo
+    const novoStatus =
+      !rota.ativo
+
+    if (!novoStatus) {
+      const confirmou =
+        window.confirm(
+          `Deseja realmente desativar a rota "${rota.nome}"? Áreas e cronogramas relacionados continuarão cadastrados, mas a rota ficará inativa.`,
+        )
+
+      if (!confirmou) {
+        return
+      }
+    }
 
     try {
-      setAlterandoStatusId(rota.id)
+      setAlterandoStatusId(
+        rota.id,
+      )
 
       await alterarStatusRota(
         rota.id,
@@ -180,14 +267,34 @@ function RotasAdminPage() {
     }
   }
 
+  const operacaoEmAndamento =
+    salvando ||
+    alterandoStatusId !== null
+
+  const totalAtivas =
+    rotas.filter(
+      (rota) =>
+        rota.ativo,
+    ).length
+
+  const totalInativas =
+    rotas.length -
+    totalAtivas
+
   return (
     <>
-      <header className="admin-secao__cabecalho">
-        <h2>Rotas</h2>
+      <header
+        className="admin-secao__cabecalho"
+        aria-labelledby="titulo-rotas-admin"
+      >
+        <h2 id="titulo-rotas-admin">
+          Rotas
+        </h2>
 
         <p>
-          Crie e mantenha as rotas de referência
-          usadas para organizar as áreas e os
+          Crie e mantenha as rotas de
+          referência usadas para
+          organizar as áreas e os
           cronogramas de coleta.
         </p>
       </header>
@@ -196,6 +303,7 @@ function RotasAdminPage() {
         <div
           className="mensagem mensagem--erro"
           role="alert"
+          aria-live="assertive"
         >
           {erro}
         </div>
@@ -205,13 +313,18 @@ function RotasAdminPage() {
         <div
           className="mensagem mensagem--sucesso"
           role="status"
+          aria-live="polite"
         >
           {sucesso}
         </div>
       )}
 
-      <section className="resultado">
-        <h3>
+      <section
+        className="resultado"
+        aria-labelledby="titulo-formulario-rota"
+        aria-busy={salvando}
+      >
+        <h3 id="titulo-formulario-rota">
           {rotaEmEdicao
             ? 'Editar rota'
             : 'Cadastrar nova rota'}
@@ -220,6 +333,7 @@ function RotasAdminPage() {
         <form
           className="consulta__formulario"
           onSubmit={handleSubmit}
+          noValidate
         >
           <div className="campo">
             <label htmlFor="nomeRota">
@@ -230,11 +344,26 @@ function RotasAdminPage() {
               id="nomeRota"
               type="text"
               value={nome}
-              onChange={(event) =>
-                setNome(event.target.value)
-              }
+              onChange={(event) => {
+                setNome(
+                  event.target.value,
+                )
+
+                limparMensagens()
+              }}
               placeholder="Ex.: Rota Jardim Nova Goiânia"
+              autoComplete="off"
+              disabled={
+                operacaoEmAndamento
+              }
+              aria-describedby="ajuda-nome-rota"
             />
+
+            <small id="ajuda-nome-rota">
+              Use um nome que permita
+              identificar facilmente a
+              região ou operação da rota.
+            </small>
           </div>
 
           <div className="campo">
@@ -245,19 +374,33 @@ function RotasAdminPage() {
             <textarea
               id="descricaoRota"
               value={descricao}
-              onChange={(event) =>
+              onChange={(event) => {
                 setDescricao(
                   event.target.value,
                 )
-              }
+
+                limparMensagens()
+              }}
               placeholder="Descrição opcional da rota"
               rows="4"
+              disabled={
+                operacaoEmAndamento
+              }
+              aria-describedby="ajuda-descricao-rota"
             />
+
+            <small id="ajuda-descricao-rota">
+              Campo opcional para
+              observações administrativas
+              sobre a rota.
+            </small>
           </div>
 
           <button
             type="submit"
-            disabled={salvando}
+            disabled={
+              operacaoEmAndamento
+            }
           >
             {salvando
               ? 'Salvando...'
@@ -269,8 +412,12 @@ function RotasAdminPage() {
           {rotaEmEdicao && (
             <button
               type="button"
-              onClick={cancelarEdicao}
-              disabled={salvando}
+              onClick={
+                cancelarEdicao
+              }
+              disabled={
+                operacaoEmAndamento
+              }
             >
               Cancelar edição
             </button>
@@ -278,66 +425,145 @@ function RotasAdminPage() {
         </form>
       </section>
 
-      <section className="resultado">
-        <h3>Rotas cadastradas</h3>
+      <section
+        className="resultado"
+        aria-labelledby="titulo-lista-rotas"
+        aria-busy={carregando}
+      >
+        <h3 id="titulo-lista-rotas">
+          Rotas cadastradas
+        </h3>
+
+        {!carregando && (
+          <div className="resultado__informacoes">
+            <p>
+              <strong>
+                Total:
+              </strong>{' '}
+              {rotas.length}
+            </p>
+
+            <p>
+              <strong>
+                Ativas:
+              </strong>{' '}
+              {totalAtivas}
+            </p>
+
+            <p>
+              <strong>
+                Inativas:
+              </strong>{' '}
+              {totalInativas}
+            </p>
+          </div>
+        )}
 
         {carregando ? (
-          <p>Carregando rotas...</p>
+          <p
+            role="status"
+            aria-live="polite"
+          >
+            Carregando rotas...
+          </p>
         ) : rotas.length === 0 ? (
-          <p>Nenhuma rota cadastrada.</p>
+          <p>
+            Nenhuma rota cadastrada.
+          </p>
         ) : (
           <div className="lista-rotas">
-            {rotas.map((rota) => (
-              <article
-                className="rota-admin"
-                key={rota.id}
-              >
-                <div className="rota-admin__conteudo">
-                  <h3>{rota.nome}</h3>
+            {rotas.map(
+              (rota) => (
+                <article
+                  className="rota-admin"
+                  key={rota.id}
+                  aria-labelledby={
+                    `rota-${rota.id}`
+                  }
+                >
+                  <div className="rota-admin__conteudo">
+                    <h3
+                      id={
+                        `rota-${rota.id}`
+                      }
+                    >
+                      {rota.nome}
+                    </h3>
 
-                  <p>
-                    {rota.descricao ||
-                      'Sem descrição.'}
-                  </p>
+                    <p>
+                      {rota.descricao ||
+                        'Sem descrição.'}
+                    </p>
 
-                  <p>
-                    <strong>Status:</strong>{' '}
-                    {rota.ativo
-                      ? 'Ativa'
-                      : 'Inativa'}
-                  </p>
-                </div>
+                    <p>
+                      <strong>
+                        Status:
+                      </strong>{' '}
 
-                <div className="rota-admin__acoes">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      iniciarEdicao(rota)
+                      <span
+                        className={
+                          rota.ativo
+                            ? 'status-admin status-admin--ativo'
+                            : 'status-admin status-admin--inativo'
+                        }
+                      >
+                        {rota.ativo
+                          ? 'Ativa'
+                          : 'Inativa'}
+                      </span>
+                    </p>
+                  </div>
+
+                  <div
+                    className="rota-admin__acoes"
+                    aria-label={
+                      `Ações da rota ${rota.nome}`
                     }
                   >
-                    Editar
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        iniciarEdicao(
+                          rota,
+                        )
+                      }
+                      disabled={
+                        operacaoEmAndamento
+                      }
+                      aria-label={
+                        `Editar rota ${rota.nome}`
+                      }
+                    >
+                      Editar
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleAlterarStatus(rota)
-                    }
-                    disabled={
-                      alterandoStatusId ===
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleAlterarStatus(
+                          rota,
+                        )
+                      }
+                      disabled={
+                        operacaoEmAndamento
+                      }
+                      aria-label={
+                        rota.ativo
+                          ? `Desativar rota ${rota.nome}`
+                          : `Ativar rota ${rota.nome}`
+                      }
+                    >
+                      {alterandoStatusId ===
                       rota.id
-                    }
-                  >
-                    {alterandoStatusId ===
-                    rota.id
-                      ? 'Alterando...'
-                      : rota.ativo
-                        ? 'Desativar'
-                        : 'Ativar'}
-                  </button>
-                </div>
-              </article>
-            ))}
+                        ? 'Alterando...'
+                        : rota.ativo
+                          ? 'Desativar'
+                          : 'Ativar'}
+                    </button>
+                  </div>
+                </article>
+              ),
+            )}
           </div>
         )}
       </section>
