@@ -44,7 +44,7 @@ public class SecurityConfig {
 
                         .requestMatchers(
                                 HttpMethod.POST,
-                                "/api/usuarios/**/recuperar-senha"
+                                "/api/usuarios/*/recuperar-senha"
                         ).permitAll()
 
                         .requestMatchers(
