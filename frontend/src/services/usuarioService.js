@@ -40,18 +40,13 @@ function reenviarVerificacaoEmail(
   )
 }
 
-function solicitarRecuperacaoSenha(
-  email,
-) {
-  return apiRequest(
-    '/api/usuarios/recuperar-senha',
-    {
-      method: 'POST',
-      body: {
-        email,
-      },
+function solicitarRecuperacaoSenha(email) {
+  return apiRequest('/api/usuarios/recuperar-senha', {
+    method: 'POST',
+    body: {
+      email,
     },
-  )
+  })
 }
 
 function redefinirSenha(dados) {
