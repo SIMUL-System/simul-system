@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(mvnw spring-boot:build-info)",
+      "Bash(./mvnw spring-boot:build-info)",
+      "Bash(psql:*)",
+      "Bash(ls dist/assets/*.css)",
+      "Bash(grep -o \"leaflet-container\\\\|leaflet-pane\\\\|leaflet-control\" dist/assets/*.css)",
+      "Bash(grep -rn geoman src --include=*.jsx --include=*.js --include=*.css)",
+      "Bash(ls src/*.css src/*.jsx)",
+      "Bash(cd:*)",
+      "Bash(curl:*)"
+    ]
+  }
+}
