@@ -216,12 +216,12 @@ function CronogramasAdminPage() {
     )
 
     setHorarioInicio(
-      cronograma.horarioInicio
+      cronograma.horarioInicio?.slice(0,5)
         ?.slice(0, 5) ?? '',
     )
 
     setHorarioFim(
-      cronograma.horarioFim
+      cronograma.horarioFim?.slice(0,5)
         ?.slice(0, 5) ?? '',
     )
 
@@ -680,11 +680,11 @@ function CronogramasAdminPage() {
                           Horário:
                         </strong>{' '}
                         {
-                          cronograma.horarioInicio
+                          cronograma.horarioInicio?.slice(0,5)
                         }
                         {' — '}
                         {
-                          cronograma.horarioFim
+                          cronograma.horarioFim?.slice(0,5)
                         }
                       </p>
 

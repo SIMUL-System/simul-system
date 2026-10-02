@@ -1193,8 +1193,8 @@ function ConsultaPage() {
                     return (
                       <article
                         className="cronograma consulta-publica__cronograma"
-                        key={`${cronograma.diaSemana}-${cronograma.horarioInicio}-${cronograma.horarioFim}-${index}`}
-                        aria-label={`${dia}, das ${cronograma.horarioInicio} às ${cronograma.horarioFim}`}
+                        key={`${cronograma.diaSemana}-${cronograma.horarioInicio?.slice(0,5)}-${cronograma.horarioFim?.slice(0,5)}-${index}`}
+                        aria-label={`${dia}, das ${cronograma.horarioInicio?.slice(0,5)} às ${cronograma.horarioFim?.slice(0,5)}`}
                       >
                         <div>
                           <span
@@ -1211,13 +1211,13 @@ function ConsultaPage() {
 
                         <span className="consulta-publica__horario">
                           {
-                            cronograma.horarioInicio
+                            cronograma.horarioInicio?.slice(0,5)
                           }
 
                           {' — '}
 
                           {
-                            cronograma.horarioFim
+                            cronograma.horarioFim?.slice(0,5)
                           }
                         </span>
                       </article>
