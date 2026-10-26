@@ -12,6 +12,7 @@ import com.simulsystem.backend.core.exception.CredenciaisInvalidasException;
 import com.simulsystem.backend.core.exception.EmailNaoVerificadoException;
 import com.simulsystem.backend.core.exception.UsuarioNaoEncontradoException;
 import com.simulsystem.backend.core.security.JwtService;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -22,8 +23,7 @@ import org.springframework.stereotype.Service;
 import java.util.Locale;
 
 @Service
-public class UsuarioServiceImpl
-        implements UsuarioService {
+public class UsuarioServiceImpl implements UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final UsuarioMapper usuarioMapper;
@@ -42,127 +42,63 @@ public class UsuarioServiceImpl
             JwtService jwtService,
             VerificacaoEmailService verificacaoEmailService
     ) {
-        this.usuarioRepository =
-                usuarioRepository;
-
-        this.usuarioMapper =
-                usuarioMapper;
-
-        this.usuarioValidation =
-                usuarioValidation;
-
-        this.passwordEncoder =
-                passwordEncoder;
-
-        this.authenticationManager =
-                authenticationManager;
-
-        this.jwtService =
-                jwtService;
-
-        this.verificacaoEmailService =
-                verificacaoEmailService;
+        this.usuarioRepository = usuarioRepository;
+        this.usuarioMapper = usuarioMapper;
+        this.usuarioValidation = usuarioValidation;
+        this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.jwtService = jwtService;
+        this.verificacaoEmailService = verificacaoEmailService;
     }
 
     @Override
-    public UsuarioResponseDTO cadastrar(
-            UsuarioRequestDTO requestDTO
-    ) {
-        String emailNormalizado =
-                normalizarEmail(
-                        requestDTO.email()
-                );
+    public UsuarioResponseDTO cadastrar(UsuarioRequestDTO requestDTO) {
+        String emailNormalizado = normalizarEmail(requestDTO.email());
 
-        usuarioValidation
-                .validarEmailNaoCadastrado(
-                        emailNormalizado
-                );
+        usuarioValidation.validarEmailNaoCadastrado(emailNormalizado);
 
-        Usuario usuario =
-                usuarioMapper.toEntity(
-                        requestDTO
-                );
+        Usuario usuario = usuarioMapper.toEntity(requestDTO);
 
-        usuario.setEmail(
-                emailNormalizado
-        );
+        usuario.setEmail(emailNormalizado);
+        usuario.setSenha(passwordEncoder.encode(requestDTO.senha()));
+        usuario.setEmailVerificado(false);
 
-        usuario.setSenha(
-                passwordEncoder.encode(
-                        requestDTO.senha()
-                )
-        );
+        Usuario usuarioSalvo = usuarioRepository.save(usuario);
 
-        usuario.setEmailVerificado(
-                false
-        );
+        verificacaoEmailService.enviarVerificacao(usuarioSalvo);
 
-        Usuario usuarioSalvo =
-                usuarioRepository.save(
-                        usuario
-                );
-
-        verificacaoEmailService
-                .enviarVerificacao(
-                        usuarioSalvo
-                );
-
-        return usuarioMapper
-                .toResponseDTO(
-                        usuarioSalvo
-                );
+        return usuarioMapper.toResponseDTO(usuarioSalvo);
     }
 
     @Override
-    public LoginResponseDTO autenticar(
-            LoginRequestDTO requestDTO
-    ) {
-        String emailNormalizado =
-                normalizarEmail(
-                        requestDTO.email()
-                );
+    public LoginResponseDTO autenticar(LoginRequestDTO requestDTO) {
+        String emailNormalizado = normalizarEmail(requestDTO.email());
 
         try {
-            Authentication authentication =
-                    authenticationManager
-                            .authenticate(
-                                    UsernamePasswordAuthenticationToken
-                                            .unauthenticated(
-                                                    emailNormalizado,
-                                                    requestDTO.senha()
-                                            )
-                            );
-
-            Usuario usuario =
-                    usuarioRepository
-                            .findByEmailIgnoreCase(
-                                    emailNormalizado
-                            )
-                            .orElseThrow(() ->
-                                    new CredenciaisInvalidasException(
-                                            "E-mail ou senha inválidos."
-                                    )
-                            );
-
-            if (
-                    !Boolean.TRUE.equals(
-                            usuario.getEmailVerificado()
+            Authentication authentication = authenticationManager.authenticate(
+                    UsernamePasswordAuthenticationToken.unauthenticated(
+                            emailNormalizado,
+                            requestDTO.senha()
                     )
-            ) {
+            );
+
+            Usuario usuario = usuarioRepository
+                    .findByEmailIgnoreCase(emailNormalizado)
+                    .orElseThrow(() ->
+                            new CredenciaisInvalidasException(
+                                    "E-mail ou senha inválidos."
+                            )
+                    );
+
+            if (!Boolean.TRUE.equals(usuario.getEmailVerificado())) {
                 throw new EmailNaoVerificadoException(
                         "Confirme seu e-mail antes de entrar."
                 );
             }
 
-            String token =
-                    jwtService.gerarToken(
-                            authentication
-                    );
+            String token = jwtService.gerarToken(authentication);
 
-            return new LoginResponseDTO(
-                    token,
-                    "Bearer"
-            );
+            return new LoginResponseDTO(token, "Bearer");
 
         } catch (AuthenticationException exception) {
             throw new CredenciaisInvalidasException(
@@ -172,33 +108,18 @@ public class UsuarioServiceImpl
     }
 
     @Override
-    public UsuarioResponseDTO buscarUsuarioAutenticado(
-            String email
-    ) {
-        Usuario usuario =
-                buscarEntidadePorEmail(
-                        email
-                );
+    public UsuarioResponseDTO buscarUsuarioAutenticado(String email) {
+        Usuario usuario = buscarEntidadePorEmail(email);
 
-        return usuarioMapper
-                .toResponseDTO(
-                        usuario
-                );
+        return usuarioMapper.toResponseDTO(usuario);
     }
 
     @Override
-    public Usuario buscarEntidadePorEmail(
-            String email
-    ) {
-        String emailNormalizado =
-                normalizarEmail(
-                        email
-                );
+    public Usuario buscarEntidadePorEmail(String email) {
+        String emailNormalizado = normalizarEmail(email);
 
         return usuarioRepository
-                .findByEmailIgnoreCase(
-                        emailNormalizado
-                )
+                .findByEmailIgnoreCase(emailNormalizado)
                 .orElseThrow(() ->
                         new UsuarioNaoEncontradoException(
                                 "Usuário autenticado não foi encontrado."
@@ -206,17 +127,11 @@ public class UsuarioServiceImpl
                 );
     }
 
-    private String normalizarEmail(
-            String email
-    ) {
+    private String normalizarEmail(String email) {
         if (email == null) {
             return null;
         }
 
-        return email
-                .trim()
-                .toLowerCase(
-                        Locale.ROOT
-                );
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 }

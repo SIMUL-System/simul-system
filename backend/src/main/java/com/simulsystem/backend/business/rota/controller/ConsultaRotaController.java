@@ -23,16 +23,6 @@ public class ConsultaRotaController {
         this.rotaService = rotaService;
     }
 
-    @GetMapping("/areas")
-    public ResponseEntity<List<AreaDisponivelResponseDTO>>
-    listarAreasDisponiveis() {
-
-        List<AreaDisponivelResponseDTO> areas =
-                rotaService.listarAreasDisponiveis();
-
-        return ResponseEntity.ok(areas);
-    }
-
     @GetMapping("/consulta")
     public ResponseEntity<ConsultaColetaResponseDTO> consultar(
             @RequestParam String cidade,
