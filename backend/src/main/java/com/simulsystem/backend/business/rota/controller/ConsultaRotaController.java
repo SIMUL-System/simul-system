@@ -1,5 +1,6 @@
 package com.simulsystem.backend.business.rota.controller;
 
+import com.simulsystem.backend.business.rota.dto.AreaAtendidaResponseDTO;
 import com.simulsystem.backend.business.rota.dto.AreaDisponivelResponseDTO;
 import com.simulsystem.backend.business.rota.dto.ConsultaColetaResponseDTO;
 import com.simulsystem.backend.business.rota.service.RotaService;
@@ -35,5 +36,13 @@ public class ConsultaRotaController {
                 );
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/areas")
+    public ResponseEntity<List<AreaAtendidaResponseDTO>> listarAreas() {
+        List<AreaAtendidaResponseDTO> areas =
+                rotaService.listarAreasAtendidas();
+
+        return ResponseEntity.ok(areas);
     }
 }
