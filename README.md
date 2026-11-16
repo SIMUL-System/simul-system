@@ -1431,27 +1431,15 @@ Abra outro terminal:
 cd frontend
 ```
 
-Copie o exemplo:
+**Não é necessário criar `.env.local` para executar localmente.** O Vite encaminha automaticamente as chamadas `/api` para `http://localhost:8080`, onde o Spring Boot fica disponível por padrão.
 
-### PowerShell
-
-```powershell
-Copy-Item .env.example .env.local
-```
-
-### Linux/macOS
-
-```bash
-cp .env.example .env.local
-```
-
-Conteúdo esperado:
+Opcionalmente, se quiser apontar o front-end diretamente para outra API durante o desenvolvimento, crie `frontend/.env.local` com:
 
 ```env
 VITE_API_URL=http://localhost:8080
 ```
 
-`frontend/.env.local` não deve ser versionado.
+Esse arquivo é opcional e não deve ser versionado. Em produção, a URL pública do back-end deve ser configurada como `VITE_API_URL` no serviço de hospedagem do front-end, antes de gerar o build.
 
 ---
 
@@ -1700,11 +1688,13 @@ Build Command: npm ci && npm run build
 Publish Directory: dist
 ```
 
-Configure:
+Configure no serviço do front-end:
 
 ```text
-VITE_API_URL=https://<URL_DO_BACKEND>
+VITE_API_URL=https://<URL_PUBLICA_DO_BACKEND>
 ```
+
+Essa variável é incorporada ao JavaScript durante o build do Vite. Depois de adicioná-la ou alterá-la, escolha **Save, rebuild, and deploy** na Render (ou execute um novo deploy que refaça o build). Não é necessário configurar nada nos computadores dos usuários que apenas acessam o site publicado.
 
 Como o projeto usa `BrowserRouter`, a hospedagem precisa redirecionar rotas do SPA para `index.html`.
 

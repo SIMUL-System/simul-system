@@ -1,12 +1,12 @@
-const API_URL =
-  import.meta.env.VITE_API_URL?.replace(
-    /\/+$/,
-    '',
-  )
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim()
 
-if (!API_URL) {
+// No desenvolvimento local, a API usa o proxy do Vite (/api -> localhost:8080).
+// Em produção, VITE_API_URL deve apontar para a URL pública do back-end.
+const API_URL = (configuredApiUrl || '').replace(/\/+$/, '')
+
+if (!API_URL && !import.meta.env.DEV) {
   throw new Error(
-    'A variável VITE_API_URL não foi configurada.',
+    'API não configurada. Defina VITE_API_URL no ambiente de build do front-end.',
   )
 }
 
