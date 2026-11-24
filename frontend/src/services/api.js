@@ -10,6 +10,34 @@ if (!API_URL && !import.meta.env.DEV) {
   )
 }
 
+// Tempo máximo de espera. A Render gratuita "dorme" após 15 min sem uso e
+// a primeira resposta pode levar perto de 1 minuto, por isso o limite é alto.
+const TEMPO_LIMITE_MS = 75000
+
+// A partir deste tempo a tela avisa que o servidor pode estar acordando.
+const AVISO_LENTO_MS = 6000
+
+let requisicoesLentas = 0
+const ouvintesLentidao = new Set()
+
+function avisarLentidao() {
+  const ativo = requisicoesLentas > 0
+  ouvintesLentidao.forEach((ouvinte) => ouvinte(ativo))
+}
+
+/**
+ * Permite a um componente saber se há requisição demorando.
+ * Retorna a função que cancela a inscrição.
+ */
+function inscreverServidorLento(ouvinte) {
+  ouvintesLentidao.add(ouvinte)
+  ouvinte(requisicoesLentas > 0)
+
+  return () => {
+    ouvintesLentidao.delete(ouvinte)
+  }
+}
+
 class ApiError extends Error {
   constructor(message, status, data) {
     super(message)
@@ -91,17 +119,54 @@ async function apiRequest(
       `Bearer ${token}`
   }
 
-  const response = await fetch(
-    `${API_URL}${path}`,
-    {
-      method,
-      headers: requestHeaders,
-      body:
-        body !== undefined
-          ? JSON.stringify(body)
-          : undefined,
-    },
-  )
+  const controlador = new AbortController()
+  const limite = setTimeout(() => controlador.abort(), TEMPO_LIMITE_MS)
+
+  let marcadaComoLenta = false
+  const aviso = setTimeout(() => {
+    marcadaComoLenta = true
+    requisicoesLentas += 1
+    avisarLentidao()
+  }, AVISO_LENTO_MS)
+
+  let response
+
+  try {
+    response = await fetch(
+      `${API_URL}${path}`,
+      {
+        method,
+        headers: requestHeaders,
+        body:
+          body !== undefined
+            ? JSON.stringify(body)
+            : undefined,
+        signal: controlador.signal,
+      },
+    )
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      throw new ApiError(
+        'O servidor demorou demais para responder. Na hospedagem gratuita ele pode levar até 1 minuto para iniciar. Tente de novo.',
+        0,
+        null,
+      )
+    }
+
+    throw new ApiError(
+      'Não foi possível conectar ao servidor. Verifique sua internet e tente de novo.',
+      0,
+      null,
+    )
+  } finally {
+    clearTimeout(limite)
+    clearTimeout(aviso)
+
+    if (marcadaComoLenta) {
+      requisicoesLentas -= 1
+      avisarLentidao()
+    }
+  }
 
   if (response.status === 204) {
     return null
@@ -148,6 +213,7 @@ async function apiRequest(
 }
 
 export {
+  inscreverServidorLento,
   API_URL,
   ApiError,
   apiRequest,

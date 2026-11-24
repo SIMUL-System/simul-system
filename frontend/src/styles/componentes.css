@@ -377,3 +377,33 @@ select.campo-ds__controle {
     transform: rotate(360deg);
   }
 }
+
+/* ---------- Aviso de servidor lento (hospedagem gratuita) ---------- */
+.aviso-servidor {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-4);
+  z-index: 1000;
+  width: min(560px, calc(100vw - 32px));
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.aviso-servidor__caixa {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--ink);
+  color: var(--surface);
+  box-shadow: var(--shadow-overlay);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.aviso-servidor__caixa .carregando__spinner {
+  flex-shrink: 0;
+  border-color: var(--border-strong);
+  border-top-color: var(--brand-yellow);
+}

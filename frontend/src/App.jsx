@@ -11,6 +11,7 @@ import {
   useLocation,
 } from 'react-router-dom'
 
+import AvisoServidorLento from './components/AvisoServidorLento'
 import NavegacaoPrincipal from './components/NavegacaoPrincipal'
 import RotaAdmin from './components/RotaAdmin'
 import RotaProtegida from './components/RotaProtegida'
@@ -205,6 +206,8 @@ function App() {
       </a>
 
       <NavegacaoPrincipal />
+
+      <AvisoServidorLento />
 
       <div
         id="conteudo-principal"

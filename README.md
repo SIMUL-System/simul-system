@@ -1765,6 +1765,10 @@ Em produção:
 
 > **E-mail na Render.** Desde setembro de 2025 a Render gratuita bloqueia as portas SMTP (25, 465 e 587), então o envio por Gmail/SMTP falha lá. Em produção use `SIMUL_MAIL_PROVEDOR=brevo`, que envia pela API HTTPS do Brevo (plano gratuito: 300 e-mails/dia). Passos: criar conta em brevo.com → *Senders, Domains & Dedicated IPs* → cadastrar e confirmar o remetente (o mesmo e-mail de `SMTP_FROM`) → *SMTP & API* → *API Keys* → gerar a chave e colocá-la em `BREVO_API_KEY`. Localmente, o SMTP continua sendo o padrão.
 
+> **Front-end na Render (rotas como `/login`).** O front é um *Static Site*: sem regra de reescrita, abrir `/login` direto ou dar F5 numa página interna devolve "Not Found". No painel do Static Site → *Redirects/Rewrites* → adicionar: Source `/*`, Destination `/index.html`, Action **Rewrite**. A regra só vale quando não existe arquivo no caminho, então CSS, JS e imagens continuam normais.
+
+> **Servidor "dormindo".** O web service gratuito para após 15 minutos sem acesso; a primeira requisição depois disso leva até ~1 minuto, e enquanto ele dorme o agendador dos lembretes também para. Para a demonstração e para os lembretes: em *Settings → Health Check Path* use `/api/status`, e cadastre num serviço de ping gratuito (cron-job.org ou UptimeRobot) um GET em `https://<back-end>.onrender.com/api/status` a cada 10 minutos. O front mostra o aviso "Conectando ao servidor…" quando uma resposta passa de 6 segundos.
+
 > Embora as propriedades VAPID tenham fallback vazio no `application.properties`, `WebPushConfig` rejeita valores vazios durante a inicialização. Portanto, configure as três variáveis no ambiente atual.
 
 ## Front-end

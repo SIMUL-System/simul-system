@@ -44,6 +44,12 @@ public class SecurityConfig {
                                 "/error"
                         ).permitAll()
 
+                        // Saúde do serviço (Render e ping externo).
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/status"
+                        ).permitAll()
+
                         // Cadastro público: não exige JWT prévio.
                         .requestMatchers(
                                 HttpMethod.POST,
