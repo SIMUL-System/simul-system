@@ -2,426 +2,296 @@ import {
   useEffect,
   useState,
 } from 'react'
+import { Link } from 'react-router-dom'
+
+import Alerta from '../../components/Alerta'
+import Icone from '../../components/Icone'
+
+import { listarAreasAtendidas } from '../../services/adminAreaService'
+import { listarCronogramas } from '../../services/adminCronogramaService'
+import { listarRotas } from '../../services/adminRotaService'
 
 import {
-  Link,
-} from 'react-router-dom'
+  calcularResumo,
+  diaDeHoje,
+} from '../../utils/painel'
+import { nomeRotaCurto } from '../../utils/areas'
 
-import {
-  listarAreasAtendidas,
-} from '../../services/adminAreaService'
-
-import {
-  listarRotas,
-} from '../../services/adminRotaService'
-
-import {
-  listarCronogramas,
-} from '../../services/adminCronogramaService'
+function comoLista(dados) {
+  return Array.isArray(dados) ? dados : []
+}
 
 function DashboardAdminPage() {
-  const [
-    resumo,
-    setResumo,
-  ] = useState({
-    rotas: 0,
-    rotasAtivas: 0,
-
-    areas: 0,
-    areasComGeometria: 0,
-    areasSemGeometria: 0,
-
-    cronogramas: 0,
-    cronogramasAtivos: 0,
-  })
-
-  const [
-    carregando,
-    setCarregando,
-  ] = useState(true)
-
-  const [
-    erro,
-    setErro,
-  ] = useState('')
+  const [dados, setDados] = useState(null)
+  const [erro, setErro] = useState('')
+  const [hoje] = useState(() => diaDeHoje(new Date().getDay()))
 
   useEffect(() => {
-    let componenteAtivo = true
+    let ativo = true
 
-    Promise.all([
-      listarRotas(),
-      listarAreasAtendidas(),
-      listarCronogramas(),
-    ])
-      .then(
-        ([
-          dadosRotas,
-          dadosAreas,
-          dadosCronogramas,
-        ]) => {
-          if (!componenteAtivo) {
-            return
-          }
-
-          const rotas =
-            Array.isArray(
-              dadosRotas,
-            )
-              ? dadosRotas
-              : []
-
-          const areas =
-            Array.isArray(
-              dadosAreas,
-            )
-              ? dadosAreas
-              : []
-
-          const cronogramas =
-            Array.isArray(
-              dadosCronogramas,
-            )
-              ? dadosCronogramas
-              : []
-
-          const areasComGeometria =
-            areas.filter(
-              (area) =>
-                area.possuiGeometria,
-            ).length
-
-          setResumo({
-            rotas:
-              rotas.length,
-
-            rotasAtivas:
-              rotas.filter(
-                (rota) =>
-                  rota.ativo,
-              ).length,
-
-            areas:
-              areas.length,
-
-            areasComGeometria,
-
-            areasSemGeometria:
-              areas.length -
-              areasComGeometria,
-
-            cronogramas:
-              cronogramas.length,
-
-            cronogramasAtivos:
-              cronogramas.filter(
-                (cronograma) =>
-                  cronograma.ativo,
-              ).length,
+    Promise.all([listarRotas(), listarAreasAtendidas(), listarCronogramas()])
+      .then(([rotas, areas, cronogramas]) => {
+        if (ativo) {
+          setDados({
+            rotas: comoLista(rotas),
+            areas: comoLista(areas),
+            cronogramas: comoLista(cronogramas),
           })
-        },
-      )
-      .catch((error) => {
-        if (!componenteAtivo) {
-          return
         }
-
-        setErro(
-          error.message ||
-            'Não foi possível carregar o resumo administrativo.',
-        )
       })
-      .finally(() => {
-        if (componenteAtivo) {
-          setCarregando(false)
-        }
+      .catch((error) => {
+        if (ativo) setErro(error.message || 'Não foi possível carregar o resumo do painel.')
       })
 
     return () => {
-      componenteAtivo = false
+      ativo = false
     }
   }, [])
 
-  const rotasInativas =
-    resumo.rotas -
-    resumo.rotasAtivas
+  if (erro) {
+    return <Alerta tipo="erro">{erro}</Alerta>
+  }
 
-  const cronogramasInativos =
-    resumo.cronogramas -
-    resumo.cronogramasAtivos
-
-  const possuiPendencias =
-    resumo.areasSemGeometria > 0 ||
-    rotasInativas > 0 ||
-    cronogramasInativos > 0
-
-  if (carregando) {
+  if (!dados) {
     return (
-      <section
-        aria-labelledby="titulo-dashboard-admin"
-        aria-busy="true"
+      <div
+        className="carregando"
+        role="status"
       >
-        <h2
-          id="titulo-dashboard-admin"
-          className="visualmente-oculto"
-        >
-          Visão geral administrativa
-        </h2>
-
-        <div
-          className="mensagem"
-          role="status"
-          aria-live="polite"
-        >
-          Carregando resumo
-          administrativo...
-        </div>
-      </section>
+        <span
+          className="carregando__spinner"
+          aria-hidden="true"
+        />
+        Carregando a visão geral…
+      </div>
     )
   }
 
-  return (
-    <>
-      <header
-        className="admin-secao__cabecalho"
-        aria-labelledby="titulo-visao-geral-admin"
-      >
-        <h2 id="titulo-visao-geral-admin">
-          Visão geral
-        </h2>
+  const resumo = calcularResumo(dados)
+  const maiorRota = Math.max(1, ...resumo.areasPorRota.map((item) => item.quantidade))
 
-        <p>
-          Acompanhe rapidamente o estado
-          atual dos cadastros e
-          configurações operacionais do
-          SIMUL.
-        </p>
+  const indicadores = [
+    {
+      rotulo: 'Rotas ativas',
+      valor: resumo.totalRotasAtivas,
+      detalhe: `de ${resumo.totalRotas} cadastradas`,
+      link: '/admin/rotas',
+    },
+    {
+      rotulo: 'Áreas atendidas',
+      valor: resumo.totalAreas,
+      detalhe: resumo.unicaCidade
+        ? `bairros em ${resumo.unicaCidade}`
+        : `bairros em ${resumo.totalCidades} cidades`,
+      link: '/admin/areas',
+    },
+    {
+      rotulo: 'Horários publicados',
+      valor: resumo.totalHorarios,
+      detalhe: 'ativos em rotas ativas',
+      link: '/admin/cronogramas',
+    },
+  ]
+
+  return (
+    <div className="admin-pagina">
+      <header className="admin-pagina__cabecalho">
+        <div>
+          <h1 className="admin-pagina__titulo">Visão geral da coleta</h1>
+          <p className="admin-pagina__texto">
+            O que está publicado para os moradores e o que precisa de atenção.
+          </p>
+        </div>
+
+        <div className="admin-pagina__acoes">
+          <Link
+            to="/admin/areas"
+            className="botao botao--secundario"
+          >
+            Áreas atendidas
+          </Link>
+          <Link
+            to="/admin/cronogramas"
+            className="botao botao--primario"
+          >
+            Cronogramas
+          </Link>
+        </div>
       </header>
 
-      {erro && (
-        <div
-          className="mensagem mensagem--erro"
-          role="alert"
-          aria-live="assertive"
+      <ul
+        className="indicadores"
+        aria-label="Indicadores"
+      >
+        {indicadores.map((item) => (
+          <li key={item.rotulo}>
+            <Link
+              to={item.link}
+              className="indicador"
+            >
+              <span className="indicador__rotulo">{item.rotulo}</span>
+              <strong className="indicador__valor">{item.valor}</strong>
+              <span className="indicador__detalhe">
+                {item.detalhe}
+                <Icone
+                  nome="seta"
+                  tamanho={16}
+                />
+              </span>
+            </Link>
+          </li>
+        ))}
+
+        <li>
+          <a
+            href="#precisa-de-atencao"
+            className={`indicador ${resumo.totalPendencias > 0 ? 'indicador--alerta' : 'indicador--ok'}`}
+          >
+            <span className="indicador__rotulo">Pendências</span>
+            <strong className="indicador__valor">{resumo.totalPendencias}</strong>
+            <span className="indicador__detalhe">
+              {resumo.totalPendencias > 0 ? 'itens para revisar' : 'tudo em ordem'}
+            </span>
+          </a>
+        </li>
+      </ul>
+
+      <div className="painel-grade">
+        <section
+          id="precisa-de-atencao"
+          className="admin-quadro painel-bloco painel-grade__largo"
+          aria-labelledby="titulo-atencao"
         >
-          {erro}
+          <h2
+            id="titulo-atencao"
+            className="painel-bloco__titulo"
+          >
+            Precisa de atenção
+          </h2>
+
+          <ul className="pendencias">
+            {resumo.pendencias.map((item) => {
+              const ok = item.quantidade === 0
+
+              return (
+                <li
+                  key={item.id}
+                  className="pendencia"
+                >
+                  <span className={`pendencia__icone ${ok ? 'pendencia__icone--ok' : ''}`}>
+                    <Icone
+                      nome={ok ? 'sucesso' : 'aviso'}
+                      tamanho={18}
+                    />
+                  </span>
+
+                  <div className="pendencia__texto">
+                    <strong>{item.titulo}</strong>
+                    <span>{item.texto}</span>
+                  </div>
+
+                  <span className="pendencia__numero">{item.quantidade}</span>
+
+                  {ok ? (
+                    <span className="selo selo--ativo">Tudo certo</span>
+                  ) : (
+                    <Link
+                      to={item.link}
+                      className="botao botao--pequeno botao--secundario"
+                    >
+                      {item.acao}
+                    </Link>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        </section>
+
+        <section
+          className="admin-quadro painel-bloco"
+          aria-labelledby="titulo-areas-rota"
+        >
+          <h2
+            id="titulo-areas-rota"
+            className="painel-bloco__titulo"
+          >
+            Bairros por rota
+          </h2>
+
+          {resumo.areasPorRota.length === 0 ? (
+            <p className="admin-pagina__texto">Nenhuma rota ativa.</p>
+          ) : (
+            <ul className="barras">
+              {resumo.areasPorRota.map(({ rota, quantidade }) => (
+                <li key={rota.id}>
+                  <Link
+                    to={`/admin/areas?rota=${rota.id}`}
+                    className="barras__item"
+                  >
+                    <span className="barras__topo">
+                      <span>{nomeRotaCurto(rota.nome, resumo.unicaCidade)}</span>
+                      <strong>{quantidade}</strong>
+                    </span>
+                    <span
+                      className="barras__trilho"
+                      aria-hidden="true"
+                    >
+                      <span
+                        className="barras__valor"
+                        style={{ width: `${(quantidade / maiorRota) * 100}%` }}
+                      />
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
+
+      <section
+        className="admin-quadro painel-bloco"
+        aria-labelledby="titulo-semana"
+      >
+        <div className="painel-bloco__topo">
+          <h2
+            id="titulo-semana"
+            className="painel-bloco__titulo"
+          >
+            Coletas da semana
+          </h2>
+          <Link to="/admin/cronogramas">Abrir a grade completa</Link>
         </div>
-      )}
 
-      {!erro && (
-        <>
-          <section
-            className="admin-dashboard"
-            aria-label="Resumo administrativo"
-          >
-            <article
-              className="admin-dashboard__card"
-              aria-labelledby="titulo-card-rotas"
-            >
-              <h3 id="titulo-card-rotas">
-                Rotas
-              </h3>
+        <ol className="semana-resumo">
+          {resumo.semana.map(({ dia, rotas }) => {
+            const ehHoje = dia.valor === hoje
 
-              <p
-                className="admin-dashboard__numero"
-                aria-label={
-                  `${resumo.rotas} rotas cadastradas`
-                }
+            return (
+              <li
+                key={dia.valor}
+                className={[
+                  'semana-resumo__dia',
+                  ehHoje ? 'semana-resumo__dia--hoje' : '',
+                  rotas === 0 ? 'semana-resumo__dia--vazio' : '',
+                ].join(' ')}
+                aria-current={ehHoje ? 'date' : undefined}
               >
-                {resumo.rotas}
-              </p>
-
-              <div className="admin-dashboard__detalhes">
-                <p>
-                  <strong>
-                    Ativas:
-                  </strong>{' '}
-                  {
-                    resumo.rotasAtivas
-                  }
-                </p>
-
-                <p>
-                  <strong>
-                    Inativas:
-                  </strong>{' '}
-                  {rotasInativas}
-                </p>
-              </div>
-
-              <Link
-                to="/admin/rotas"
-                className="admin-dashboard__acao"
-              >
-                Gerenciar rotas
-              </Link>
-            </article>
-
-            <article
-              className="admin-dashboard__card"
-              aria-labelledby="titulo-card-areas"
-            >
-              <h3 id="titulo-card-areas">
-                Áreas atendidas
-              </h3>
-
-              <p
-                className="admin-dashboard__numero"
-                aria-label={
-                  `${resumo.areas} áreas cadastradas`
-                }
-              >
-                {resumo.areas}
-              </p>
-
-              <div className="admin-dashboard__detalhes">
-                <p>
-                  <strong>
-                    Com geometria:
-                  </strong>{' '}
-                  {
-                    resumo
-                      .areasComGeometria
-                  }
-                </p>
-
-                <p>
-                  <strong>
-                    Sem geometria:
-                  </strong>{' '}
-                  {
-                    resumo
-                      .areasSemGeometria
-                  }
-                </p>
-              </div>
-
-              <Link
-                to="/admin/areas"
-                className="admin-dashboard__acao"
-              >
-                Gerenciar áreas
-              </Link>
-            </article>
-
-            <article
-              className="admin-dashboard__card"
-              aria-labelledby="titulo-card-cronogramas"
-            >
-              <h3 id="titulo-card-cronogramas">
-                Cronogramas
-              </h3>
-
-              <p
-                className="admin-dashboard__numero"
-                aria-label={
-                  `${resumo.cronogramas} cronogramas cadastrados`
-                }
-              >
-                {
-                  resumo.cronogramas
-                }
-              </p>
-
-              <div className="admin-dashboard__detalhes">
-                <p>
-                  <strong>
-                    Ativos:
-                  </strong>{' '}
-                  {
-                    resumo
-                      .cronogramasAtivos
-                  }
-                </p>
-
-                <p>
-                  <strong>
-                    Inativos:
-                  </strong>{' '}
-                  {
-                    cronogramasInativos
-                  }
-                </p>
-              </div>
-
-              <Link
-                to="/admin/cronogramas"
-                className="admin-dashboard__acao"
-              >
-                Gerenciar cronogramas
-              </Link>
-            </article>
-          </section>
-
-          <section
-            className="admin-dashboard__pendencias"
-            aria-labelledby="titulo-pendencias-admin"
-          >
-            <h3 id="titulo-pendencias-admin">
-              Pendências
-            </h3>
-
-            {!possuiPendencias && (
-              <p>
-                Não foram identificadas
-                pendências nos cadastros
-                administrativos.
-              </p>
-            )}
-
-            {resumo
-              .areasSemGeometria >
-              0 && (
-              <p>
-                Existem{' '}
-                <strong>
-                  {
-                    resumo
-                      .areasSemGeometria
-                  }
-                </strong>{' '}
-                áreas ainda sem geometria
-                própria cadastrada.{' '}
-
-                <Link to="/admin/areas">
-                  Revisar áreas
-                </Link>
-              </p>
-            )}
-
-            {rotasInativas > 0 && (
-              <p>
-                Existem{' '}
-                <strong>
-                  {rotasInativas}
-                </strong>{' '}
-                rotas inativas.{' '}
-
-                <Link to="/admin/rotas">
-                  Revisar rotas
-                </Link>
-              </p>
-            )}
-
-            {cronogramasInativos >
-              0 && (
-              <p>
-                Existem{' '}
-                <strong>
-                  {
-                    cronogramasInativos
-                  }
-                </strong>{' '}
-                cronogramas inativos.{' '}
-
-                <Link to="/admin/cronogramas">
-                  Revisar cronogramas
-                </Link>
-              </p>
-            )}
-          </section>
-        </>
-      )}
-    </>
+                <span className="semana-resumo__nome">
+                  <abbr title={dia.longo}>{dia.curto}</abbr>
+                  {ehHoje && ' · hoje'}
+                </span>
+                <strong className="semana-resumo__numero">{rotas}</strong>
+                <span className="semana-resumo__rotulo">
+                  {rotas === 0 ? 'sem coleta' : rotas === 1 ? 'rota' : 'rotas'}
+                </span>
+              </li>
+            )
+          })}
+        </ol>
+      </section>
+    </div>
   )
 }
 

@@ -36,12 +36,13 @@ function AreasAdminPage() {
   const [carregando, setCarregando] = useState(true)
   const [erroCarga, setErroCarga] = useState('')
 
-  // "/admin/areas?rota=3" (link da tela de Rotas) já abre filtrado.
+  // "/admin/areas?rota=3" ou "?mapa=sem" (links de Rotas e da Visão geral)
+  // já abrem a lista filtrada.
   const [parametros] = useSearchParams()
   const [filtros, setFiltros] = useState({
     busca: '',
     rotaId: parametros.get('rota') ?? '',
-    mapa: 'todas',
+    mapa: ['sem', 'com'].includes(parametros.get('mapa')) ? parametros.get('mapa') : 'todas',
   })
   const [pagina, setPagina] = useState(1)
   const [mensagem, setMensagem] = useState(null)
