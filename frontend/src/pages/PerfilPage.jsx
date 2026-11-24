@@ -11,12 +11,49 @@ import {
   obterUsuarioAtual,
 } from '../services/usuarioService'
 
+import {
+  obterPreferencia,
+} from '../services/notificacaoService'
+
 import '../App.css'
+import '../styles/conta.css'
+
+import Alerta from '../components/Alerta'
+import Icone from '../components/Icone'
+
+function descreverAntecedencia(horas) {
+  if (horas === 0) {
+    return 'no horário da coleta'
+  }
+
+  return horas === 1
+    ? '1 hora antes'
+    : `${horas} horas antes`
+}
+
+function descreverCanais(preferencia) {
+  const canais = []
+
+  if (preferencia.emailAtivo) {
+    canais.push('e-mail')
+  }
+
+  if (preferencia.webPushAtivo) {
+    canais.push('navegador')
+  }
+
+  return canais.join(' e ')
+}
 
 function PerfilPage() {
   const [
     usuario,
     setUsuario,
+  ] = useState(null)
+
+  const [
+    preferencia,
+    setPreferencia,
   ] = useState(null)
 
   const [
@@ -32,19 +69,31 @@ function PerfilPage() {
   useEffect(() => {
     let componenteAtivo = true
 
-    async function carregarUsuario() {
+    async function carregarDados() {
       try {
-        const dados =
-          await obterUsuarioAtual()
+        const [dadosUsuario, dadosPreferencia] =
+          await Promise.all([
+            obterUsuarioAtual(),
+
+            // Sem preferência cadastrada a API responde 404.
+            obterPreferencia().catch((error) => {
+              if (error?.status === 404) {
+                return null
+              }
+
+              throw error
+            }),
+          ])
 
         if (componenteAtivo) {
-          setUsuario(dados)
+          setUsuario(dadosUsuario)
+          setPreferencia(dadosPreferencia)
         }
       } catch (error) {
         if (componenteAtivo) {
           setErro(
             error.message ||
-              'Não foi possível carregar o usuário.',
+              'Não foi possível carregar seus dados.',
           )
         }
       } finally {
@@ -54,201 +103,205 @@ function PerfilPage() {
       }
     }
 
-    carregarUsuario()
+    carregarDados()
 
     return () => {
       componenteAtivo = false
     }
   }, [])
 
+  const admin =
+    usuario?.perfil === 'ADMIN'
+
+  const lembreteAtivo =
+    preferencia &&
+    (preferencia.emailAtivo ||
+      preferencia.webPushAtivo)
+
   return (
-    <main className="app">
-      <section
-        className="consulta"
-        aria-labelledby="titulo-minha-conta"
-        aria-busy={carregando}
-      >
-        <header className="consulta__cabecalho">
+    <main
+      className="conta-pagina"
+      aria-labelledby="titulo-minha-conta"
+      aria-busy={carregando}
+    >
+      <header className="conta-cabecalho">
+        <p className="sobretitulo">
+          Conta
+        </p>
+
+        <h1
+          id="titulo-minha-conta"
+          className="conta-cabecalho__titulo"
+        >
+          Minha conta
+        </h1>
+      </header>
+
+      {carregando && (
+        <p
+          className="carregando"
+          role="status"
+        >
           <span
-            className="consulta__marca"
+            className="carregando__spinner"
             aria-hidden="true"
+          />
+          Carregando seus dados…
+        </p>
+      )}
+
+      {!carregando && erro && (
+        <Alerta
+          tipo="erro"
+          titulo="Não foi possível carregar"
+        >
+          {erro}
+        </Alerta>
+      )}
+
+      {!carregando && usuario && (
+        <>
+          <section
+            className="cartao perfil"
+            aria-labelledby="titulo-resumo-conta"
           >
-            CONTA
-          </span>
-
-          <h1 id="titulo-minha-conta">
-            Minha conta
-          </h1>
-
-          <p>
-            Consulte seus dados e acesse
-            rapidamente as configurações
-            do SIMUL.
-          </p>
-        </header>
-
-        {carregando && (
-          <div
-            className="mensagem"
-            role="status"
-            aria-live="polite"
-          >
-            Carregando seus dados...
-          </div>
-        )}
-
-        {!carregando &&
-          erro && (
-            <div
-              className="mensagem mensagem--erro"
-              role="alert"
-              aria-live="assertive"
+            <span
+              className="perfil__avatar"
+              aria-hidden="true"
             >
-              {erro}
-            </div>
-          )}
+              {usuario.nome?.charAt(0)?.toUpperCase() || 'U'}
+            </span>
 
-        {!carregando &&
-          usuario && (
-            <>
-              <section
-                className="conta-resumo"
-                aria-labelledby="titulo-resumo-conta"
+            <div className="perfil__dados">
+              <h2
+                id="titulo-resumo-conta"
+                className="perfil__nome"
               >
-                <div
-                  className="conta-resumo__avatar"
+                {usuario.nome}
+              </h2>
+
+              <p className="perfil__email">
+                {usuario.email}
+              </p>
+            </div>
+
+            <span
+              className={
+                admin
+                  ? 'selo selo--info'
+                  : 'selo selo--ativo'
+              }
+            >
+              {admin ? 'Administrador' : 'Morador'}
+            </span>
+          </section>
+
+          <section
+            className={
+              lembreteAtivo
+                ? 'cartao lembrete-cartao lembrete-cartao--ativo'
+                : 'cartao lembrete-cartao'
+            }
+            aria-labelledby="titulo-lembrete-conta"
+          >
+            <div className="lembrete-cartao__texto">
+              <p className="sobretitulo">
+                Seu lembrete
+              </p>
+
+              <h2
+                id="titulo-lembrete-conta"
+                className="titulo-cartao"
+              >
+                {!preferencia
+                  ? 'Nenhum lembrete configurado'
+                  : lembreteAtivo
+                    ? `Ativo por ${descreverCanais(preferencia)}`
+                    : 'Lembrete pausado'}
+              </h2>
+
+              {preferencia ? (
+                <p>
+                  {preferencia.nomeRota}
+                  {' · '}
+                  {descreverAntecedencia(
+                    preferencia.antecedenciaHoras,
+                  )}
+                </p>
+              ) : (
+                <p>
+                  Escolha seu bairro e receba um
+                  aviso antes de cada coleta.
+                </p>
+              )}
+            </div>
+
+            <Link
+              to="/preferencias"
+              className={
+                preferencia
+                  ? 'botao botao--secundario'
+                  : 'botao botao--primario'
+              }
+            >
+              {preferencia
+                ? 'Alterar lembrete'
+                : 'Ativar lembrete'}
+            </Link>
+          </section>
+
+          <nav
+            className="atalhos-conta"
+            aria-label="Atalhos da conta"
+          >
+            <Link
+              to="/"
+              className="atalho-conta"
+            >
+              <span
+                className="atalho-conta__icone"
+                aria-hidden="true"
+              >
+                <Icone nome="busca" />
+              </span>
+
+              <span className="atalho-conta__texto">
+                <strong>Consultar coleta</strong>
+                Dias e horários de qualquer bairro.
+              </span>
+
+              <Icone
+                nome="seta"
+                className="atalho-conta__seta"
+              />
+            </Link>
+
+            {admin && (
+              <Link
+                to="/admin"
+                className="atalho-conta"
+              >
+                <span
+                  className="atalho-conta__icone"
                   aria-hidden="true"
                 >
-                  {usuario.nome
-                    ?.charAt(0)
-                    ?.toUpperCase() ||
-                    'U'}
-                </div>
+                  <Icone nome="painel" />
+                </span>
 
-                <div>
-                  <h2 id="titulo-resumo-conta">
-                    {usuario.nome}
-                  </h2>
+                <span className="atalho-conta__texto">
+                  <strong>Painel administrativo</strong>
+                  Rotas, bairros e cronogramas.
+                </span>
 
-                  <p>
-                    {usuario.email}
-                  </p>
-
-                  <span className="conta-resumo__perfil">
-                    {usuario.perfil ===
-                    'ADMIN'
-                      ? 'Administrador'
-                      : 'Usuário'}
-                  </span>
-                </div>
-              </section>
-
-              <section
-                className="conta-atalhos"
-                aria-labelledby="titulo-atalhos-conta"
-              >
-                <h2
-                  id="titulo-atalhos-conta"
-                  className="visualmente-oculto"
-                >
-                  Atalhos da conta
-                </h2>
-
-                <Link
-                  to="/"
-                  className="conta-atalho"
-                >
-                  <span
-                    className="conta-atalho__icone"
-                    aria-hidden="true"
-                  >
-                    ♻
-                  </span>
-
-                  <div>
-                    <strong>
-                      Consultar coleta
-                    </strong>
-
-                    <p>
-                      Veja os dias e
-                      horários da coleta
-                      na sua região.
-                    </p>
-                  </div>
-
-                  <span
-                    aria-hidden="true"
-                  >
-                    →
-                  </span>
-                </Link>
-
-                <Link
-                  to="/preferencias"
-                  className="conta-atalho"
-                >
-                  <span
-                    className="conta-atalho__icone"
-                    aria-hidden="true"
-                  >
-                    🔔
-                  </span>
-
-                  <div>
-                    <strong>
-                      Notificações
-                    </strong>
-
-                    <p>
-                      Configure seus
-                      lembretes de coleta.
-                    </p>
-                  </div>
-
-                  <span
-                    aria-hidden="true"
-                  >
-                    →
-                  </span>
-                </Link>
-
-                {usuario.perfil ===
-                  'ADMIN' && (
-                  <Link
-                    to="/admin"
-                    className="conta-atalho"
-                  >
-                    <span
-                      className="conta-atalho__icone"
-                      aria-hidden="true"
-                    >
-                      ⚙
-                    </span>
-
-                    <div>
-                      <strong>
-                        Painel administrativo
-                      </strong>
-
-                      <p>
-                        Gerencie rotas,
-                        áreas e
-                        cronogramas.
-                      </p>
-                    </div>
-
-                    <span
-                      aria-hidden="true"
-                    >
-                      →
-                    </span>
-                  </Link>
-                )}
-              </section>
-            </>
-          )}
-      </section>
+                <Icone
+                  nome="seta"
+                  className="atalho-conta__seta"
+                />
+              </Link>
+            )}
+          </nav>
+        </>
+      )}
     </main>
   )
 }
