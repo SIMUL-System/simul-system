@@ -6,7 +6,24 @@ import {
   useState,
 } from 'react'
 
+import { Link } from 'react-router-dom'
+
 import '../App.css'
+import '../styles/consulta.css'
+
+import Icone from '../components/Icone'
+import CartaoProximaColeta from '../components/coleta/CartaoProximaColeta'
+import ComoFunciona from '../components/coleta/ComoFunciona'
+import DiasSemana from '../components/coleta/DiasSemana'
+
+import { obterToken } from '../services/authService'
+
+import {
+  calcularProximaColeta,
+  formatarHora,
+  ordenarCronogramas,
+  rotuloDia,
+} from '../utils/coleta'
 
 import {
   buscarCoordenadasArea,
@@ -24,29 +41,6 @@ const MapaColeta = lazy(
     ),
 )
 
-const ROTULOS_DIAS = {
-  SEGUNDA:
-    'Segunda-feira',
-
-  TERCA:
-    'Terça-feira',
-
-  QUARTA:
-    'Quarta-feira',
-
-  QUINTA:
-    'Quinta-feira',
-
-  SEXTA:
-    'Sexta-feira',
-
-  SABADO:
-    'Sábado',
-
-  DOMINGO:
-    'Domingo',
-}
-
 function ordenarTexto(
   a,
   b,
@@ -58,17 +52,6 @@ function ordenarTexto(
       sensitivity:
         'base',
     },
-  )
-}
-
-function obterRotuloDia(
-  diaSemana,
-) {
-  return (
-    ROTULOS_DIAS[
-      diaSemana
-    ] ||
-    diaSemana
   )
 }
 
@@ -176,6 +159,13 @@ function ConsultaPage() {
       navigator.geolocation
         ? ''
         : 'Seu navegador não oferece suporte à localização. Você ainda pode selecionar a cidade e o bairro manualmente.',
+  )
+
+  const [
+    agora,
+    setAgora,
+  ] = useState(
+    () => new Date(),
   )
 
   const ultimaSelecaoRef =
@@ -653,6 +643,10 @@ function ConsultaPage() {
         return
       }
 
+      setAgora(
+        new Date(),
+      )
+
       setResultado(
         dadosColeta,
       )
@@ -808,432 +802,446 @@ function ConsultaPage() {
     carregandoAreas ||
     carregando
 
+  const cronogramasOrdenados =
+    ordenarCronogramas(
+      resultado?.cronogramas,
+    )
+
+  const proximaColeta =
+    calcularProximaColeta(
+      cronogramasOrdenados,
+      agora,
+    )
+
+  const usuarioLogado =
+    Boolean(obterToken())
+
+  const textoLocalizacao = {
+    buscando:
+      'Procurando sua localização para mostrar no mapa…',
+    precisa:
+      'Sua localização aparece no mapa.',
+    aproximada:
+      'Sua localização aproximada aparece no mapa.',
+  }[statusLocalizacaoUsuario]
+
   return (
     <main
-      className="app app--publica"
-      aria-busy={
-        paginaCarregando
-      }
+      className="consulta-pagina"
+      aria-busy={paginaCarregando}
     >
       <section
-        className="consulta consulta--publica"
+        className="consulta-hero"
         aria-labelledby="titulo-consulta-publica"
       >
-        <header className="consulta-publica__hero">
-          <div className="consulta-publica__marca">
-            <span
-              className="consulta-publica__simbolo"
-              aria-hidden="true"
-            >
-              ♻
-            </span>
+        <div className="consulta-hero__texto">
+          <p className="sobretitulo sobretitulo--verde">
+            Coleta seletiva
+          </p>
 
-            <div>
-              <strong>
-                SIMUL
-              </strong>
+          <h1
+            id="titulo-consulta-publica"
+            className="consulta-hero__titulo"
+          >
+            Quando passa a coleta
+            seletiva no seu bairro?
+          </h1>
 
-              <span>
-                Sistema Integrado de
-                Monitoramento Urbano de
-                Limpeza
-              </span>
-            </div>
-          </div>
+          <p className="consulta-hero__lead">
+            Escolha sua cidade e seu
+            bairro para ver os dias, os
+            horários e a área atendida.
+            Com uma conta, você recebe um
+            lembrete por e-mail antes de
+            cada coleta.
+          </p>
+        </div>
 
-          <div className="consulta-publica__hero-conteudo">
-            <span
-              className="consulta-publica__destaque"
-              aria-hidden="true"
-            >
-              COLETA SELETIVA
-            </span>
-
-            <h1 id="titulo-consulta-publica">
-              Saiba quando a coleta passa
-              na sua região
-            </h1>
-
-            <p>
-              Selecione sua cidade e seu
-              bairro para consultar os
-              dias, horários e a área
-              atendida pela coleta
-              seletiva.
-            </p>
-          </div>
-        </header>
-
-        <section
-          className="consulta-publica__painel"
+        <form
+          className="consulta-busca"
           aria-labelledby="titulo-consulta-regiao"
-          aria-busy={
-            carregandoAreas
+          aria-busy={carregandoAreas}
+          onSubmit={(event) =>
+            event.preventDefault()
           }
         >
-          <div className="consulta-publica__painel-cabecalho">
-            <div>
-              <span
-                className="consulta-publica__etapa"
-                aria-hidden="true"
+          <h2
+            id="titulo-consulta-regiao"
+            className="titulo-cartao"
+          >
+            Encontre sua região
+          </h2>
+
+          <div className="consulta-busca__campos">
+            <div className="campo-ds">
+              <label
+                className="campo-ds__rotulo"
+                htmlFor="cidade"
               >
-                CONSULTA
-              </span>
-
-              <h2 id="titulo-consulta-regiao">
-                Encontre sua região
-              </h2>
-            </div>
-
-            <p>
-              O cronograma é carregado
-              automaticamente após a
-              seleção do bairro.
-            </p>
-          </div>
-
-          <div className="consulta__formulario consulta-publica__filtros">
-            <div className="campo">
-              <label htmlFor="cidade">
                 Cidade
               </label>
 
               <select
                 id="cidade"
+                className="campo-ds__controle"
                 value={cidade}
-                onChange={
-                  handleCidadeChange
-                }
+                onChange={handleCidadeChange}
                 disabled={
                   carregandoAreas ||
-                  cidades.length ===
-                    0
+                  cidades.length === 0
                 }
                 aria-describedby="ajuda-cidade"
-                aria-busy={
-                  carregandoAreas
-                }
+                aria-busy={carregandoAreas}
               >
                 <option value="">
                   {carregandoAreas
-                    ? 'Carregando cidades...'
-                    : cidades.length ===
-                        0
+                    ? 'Carregando cidades…'
+                    : cidades.length === 0
                       ? 'Nenhuma cidade disponível'
-                      : 'Selecione uma cidade'}
+                      : 'Selecione a cidade'}
                 </option>
 
-                {cidades.map(
-                  (
-                    nomeCidade,
-                  ) => (
-                    <option
-                      key={
-                        nomeCidade
-                      }
-                      value={
-                        nomeCidade
-                      }
-                    >
-                      {
-                        nomeCidade
-                      }
-                    </option>
-                  ),
-                )}
+                {cidades.map((nomeCidade) => (
+                  <option
+                    key={nomeCidade}
+                    value={nomeCidade}
+                  >
+                    {nomeCidade}
+                  </option>
+                ))}
               </select>
 
-              <small id="ajuda-cidade">
+              <p
+                id="ajuda-cidade"
+                className="campo-ds__dica"
+              >
                 {carregandoAreas
-                  ? 'Aguarde enquanto as cidades atendidas são carregadas.'
-                  : cidades.length >
-                      0
-                    ? 'Selecione a cidade onde deseja consultar a coleta seletiva.'
+                  ? 'Carregando as cidades atendidas.'
+                  : cidades.length > 0
+                    ? `${cidades.length} ${cidades.length === 1 ? 'cidade atendida' : 'cidades atendidas'}.`
                     : 'Nenhuma cidade atendida foi encontrada.'}
-              </small>
+              </p>
             </div>
 
-            <div className="campo">
-              <label htmlFor="bairro">
+            <div className="campo-ds">
+              <label
+                className="campo-ds__rotulo"
+                htmlFor="bairro"
+              >
                 Bairro
               </label>
 
               <select
                 id="bairro"
+                className="campo-ds__controle"
                 value={bairro}
-                onChange={
-                  handleBairroChange
-                }
+                onChange={handleBairroChange}
                 disabled={
                   !cidade ||
-                  bairros.length ===
-                    0 ||
+                  bairros.length === 0 ||
                   carregando
                 }
                 aria-describedby="ajuda-bairro"
-                aria-busy={
-                  carregando
-                }
+                aria-busy={carregando}
               >
                 <option value="">
                   {!cidade
-                    ? 'Selecione primeiro a cidade'
-                    : bairros.length ===
-                        0
+                    ? 'Escolha a cidade primeiro'
+                    : bairros.length === 0
                       ? 'Nenhum bairro disponível'
                       : carregando
-                        ? 'Consultando bairro...'
-                        : 'Selecione um bairro'}
+                        ? 'Consultando…'
+                        : 'Selecione o bairro'}
                 </option>
 
-                {bairros.map(
-                  (
-                    nomeBairro,
-                  ) => (
-                    <option
-                      key={
-                        nomeBairro
-                      }
-                      value={
-                        nomeBairro
-                      }
-                    >
-                      {
-                        nomeBairro
-                      }
-                    </option>
-                  ),
-                )}
+                {bairros.map((nomeBairro) => (
+                  <option
+                    key={nomeBairro}
+                    value={nomeBairro}
+                  >
+                    {nomeBairro}
+                  </option>
+                ))}
               </select>
 
-              <small id="ajuda-bairro">
+              <p
+                id="ajuda-bairro"
+                className="campo-ds__dica"
+              >
                 {!cidade
-                  ? 'Selecione uma cidade para liberar a lista de bairros.'
-                  : bairros.length ===
-                      0
-                    ? 'Nenhum bairro atendido foi encontrado para esta cidade.'
-                    : 'Ao selecionar o bairro, o cronograma será consultado automaticamente.'}
-              </small>
+                  ? 'A lista de bairros aparece depois da cidade.'
+                  : bairros.length === 0
+                    ? 'Nenhum bairro atendido nesta cidade.'
+                    : 'O resultado aparece assim que você escolher.'}
+              </p>
             </div>
           </div>
-        </section>
 
-        <section
+          {(textoLocalizacao ||
+            erroLocalizacaoUsuario) && (
+            <p
+              className="consulta-busca__local"
+              role="status"
+              aria-live="polite"
+            >
+              <Icone
+                nome="local"
+                tamanho={16}
+              />
+              {textoLocalizacao ||
+                erroLocalizacaoUsuario}
+            </p>
+          )}
+        </form>
+      </section>
+
+      <div className="consulta-grade">
+        <div className="consulta-grade__principal">
+          {erro && (
+            <div
+              className="alerta alerta--erro"
+              role="alert"
+            >
+              <Icone nome="erro" />
+
+              <div>
+                <strong>
+                  Não foi possível consultar
+                </strong>
+                {erro}
+              </div>
+            </div>
+          )}
+
+          {carregando && (
+            <div
+              className="consulta-carregando"
+              role="status"
+              aria-live="polite"
+            >
+              <span className="consulta-carregando__barra" />
+              <span className="consulta-carregando__barra consulta-carregando__barra--curta" />
+              <span className="visualmente-oculto">
+                Carregando os horários da
+                coleta…
+              </span>
+            </div>
+          )}
+
+          {resultado && !carregando && (
+            <section
+              className="consulta-resultado"
+              aria-labelledby="titulo-resultado-consulta"
+            >
+              <header className="consulta-resultado__cabecalho">
+                <p className="sobretitulo">
+                  Resultado da consulta
+                </p>
+
+                <h2
+                  id="titulo-resultado-consulta"
+                  ref={tituloResultadoRef}
+                  tabIndex="-1"
+                  className="consulta-resultado__titulo"
+                >
+                  Coleta seletiva em{' '}
+                  {resultado.bairro}
+                </h2>
+
+                <p className="consulta-resultado__local">
+                  {resultado.cidade}
+                  {resultado.nomeRota && (
+                    <>
+                      {' · '}
+                      {resultado.nomeRota}
+                    </>
+                  )}
+                </p>
+              </header>
+
+              {cronogramasOrdenados.length > 0 ? (
+                <>
+                  <CartaoProximaColeta
+                    proxima={proximaColeta}
+                    bairro={resultado.bairro}
+                  />
+
+                  <section
+                    className="cartao"
+                    aria-labelledby="titulo-dias-coleta"
+                  >
+                    <h3
+                      id="titulo-dias-coleta"
+                      className="titulo-cartao"
+                    >
+                      Dias e horários
+                    </h3>
+
+                    <DiasSemana
+                      cronogramas={
+                        cronogramasOrdenados
+                      }
+                      hoje={agora}
+                    />
+
+                    <ul className="horarios">
+                      {cronogramasOrdenados.map(
+                        (cronograma, indice) => {
+                          const inicio =
+                            formatarHora(
+                              cronograma.horarioInicio,
+                            )
+
+                          const fim =
+                            formatarHora(
+                              cronograma.horarioFim,
+                            )
+
+                          return (
+                            <li
+                              key={`${cronograma.diaSemana}-${inicio}-${indice}`}
+                              className="horarios__item"
+                            >
+                              <span className="horarios__dia">
+                                {rotuloDia(
+                                  cronograma.diaSemana,
+                                )}
+                              </span>
+
+                              <span className="horarios__hora">
+                                <time dateTime={inicio}>
+                                  {inicio}
+                                </time>
+                                {' – '}
+                                <time dateTime={fim}>
+                                  {fim}
+                                </time>
+                              </span>
+                            </li>
+                          )
+                        },
+                      )}
+                    </ul>
+                  </section>
+
+                  <section
+                    className="chamada-lembrete"
+                    aria-labelledby="titulo-chamada-lembrete"
+                  >
+                    <span
+                      className="chamada-lembrete__icone"
+                      aria-hidden="true"
+                    >
+                      <Icone
+                        nome="sino"
+                        tamanho={24}
+                      />
+                    </span>
+
+                    <div className="chamada-lembrete__texto">
+                      <h3 id="titulo-chamada-lembrete">
+                        Não esqueça a próxima
+                        coleta
+                      </h3>
+
+                      <p>
+                        {usuarioLogado
+                          ? 'Escolha esta rota nas suas preferências e defina com quanta antecedência quer o lembrete.'
+                          : 'Crie uma conta gratuita e receba um e-mail antes de cada coleta do seu bairro.'}
+                      </p>
+                    </div>
+
+                    <Link
+                      to={
+                        usuarioLogado
+                          ? '/preferencias'
+                          : '/cadastro'
+                      }
+                      className="botao botao--primario"
+                    >
+                      {usuarioLogado
+                        ? 'Configurar lembrete'
+                        : 'Ativar lembrete'}
+                    </Link>
+                  </section>
+                </>
+              ) : (
+                <div
+                  className="alerta alerta--info"
+                  role="status"
+                >
+                  <Icone nome="info" />
+
+                  <div>
+                    <strong>
+                      Ainda não há coleta
+                      cadastrada
+                    </strong>
+                    Este bairro ainda não tem
+                    coleta seletiva ativa no
+                    SIMUL.
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
+          {avisoMapa && (
+            <div
+              className="alerta alerta--aviso"
+              role="status"
+            >
+              <Icone nome="aviso" />
+
+              <div>
+                <strong>
+                  Sobre o mapa
+                </strong>
+                {avisoMapa}
+              </div>
+            </div>
+          )}
+
+          {!resultado && !carregando && (
+            <ComoFunciona />
+          )}
+        </div>
+
+        <aside
+          className="consulta-grade__mapa"
           aria-label="Mapa da área de coleta"
         >
           <Suspense
             fallback={
               <div
-                className="mapa-coleta__card"
+                className="mapa mapa--carregando"
                 role="status"
                 aria-live="polite"
                 aria-busy="true"
               >
-                Carregando mapa...
+                Carregando mapa…
               </div>
             }
           >
             <MapaColeta
-              latitude={
-                latitudeMapa
-              }
-              longitude={
-                longitudeMapa
-              }
-              nomeArea={
-                nomeAreaMapa
-              }
+              latitude={latitudeMapa}
+              longitude={longitudeMapa}
+              nomeArea={nomeAreaMapa}
               carregandoLocalizacao={
                 carregandoLocalizacaoMapa
               }
-              geometriaArea={
-                geometriaArea
-              }
-              limitesArea={
-                limitesArea
-              }
-              latitudeUsuario={
-                latitudeUsuario
-              }
-              longitudeUsuario={
-                longitudeUsuario
-              }
-              precisaoUsuario={
-                precisaoUsuario
-              }
+              geometriaArea={geometriaArea}
+              limitesArea={limitesArea}
+              latitudeUsuario={latitudeUsuario}
+              longitudeUsuario={longitudeUsuario}
+              precisaoUsuario={precisaoUsuario}
               statusLocalizacaoUsuario={
                 statusLocalizacaoUsuario
               }
             />
           </Suspense>
-        </section>
-
-        {erroLocalizacaoUsuario && (
-          <div
-            className="mensagem consulta-publica__mensagem"
-            role="status"
-            aria-live="polite"
-          >
-            {
-              erroLocalizacaoUsuario
-            }
-          </div>
-        )}
-
-        {carregando && (
-          <div
-            className="mensagem consulta-publica__mensagem"
-            role="status"
-            aria-live="polite"
-          >
-            Carregando horários da
-            coleta...
-          </div>
-        )}
-
-        {erro && (
-          <div
-            className="mensagem mensagem--erro consulta-publica__mensagem"
-            role="alert"
-            aria-live="assertive"
-          >
-            {erro}
-          </div>
-        )}
-
-        {avisoMapa && (
-          <div
-            className="mensagem consulta-publica__mensagem"
-            role="status"
-            aria-live="polite"
-          >
-            {avisoMapa}
-          </div>
-        )}
-
-        {resultado && (
-          <section
-            className="consulta-publica__resultado"
-            aria-labelledby="titulo-resultado-consulta"
-          >
-            <div className="consulta-publica__resultado-cabecalho">
-              <div>
-                <span
-                  className="consulta-publica__etapa"
-                  aria-hidden="true"
-                >
-                  CRONOGRAMA
-                </span>
-
-                <h2
-                  id="titulo-resultado-consulta"
-                  ref={
-                    tituloResultadoRef
-                  }
-                  tabIndex="-1"
-                >
-                  Coleta em{' '}
-                  {
-                    resultado.bairro
-                  }
-                </h2>
-              </div>
-
-              <span className="consulta-publica__status">
-                Coleta cadastrada
-              </span>
-            </div>
-
-            <div className="consulta-publica__local">
-              <div>
-                <span>
-                  Cidade
-                </span>
-
-                <strong>
-                  {
-                    resultado.cidade
-                  }
-                </strong>
-              </div>
-
-              <div>
-                <span>
-                  Bairro
-                </span>
-
-                <strong>
-                  {
-                    resultado.bairro
-                  }
-                </strong>
-              </div>
-            </div>
-
-            <h3>
-              Dias e horários
-            </h3>
-
-            {resultado.cronogramas
-              ?.length > 0 ? (
-              <div
-                className="cronogramas"
-                aria-label="Cronogramas disponíveis"
-              >
-                {resultado.cronogramas.map(
-                  (
-                    cronograma,
-                    index,
-                  ) => {
-                    const dia =
-                      obterRotuloDia(
-                        cronograma.diaSemana,
-                      )
-
-                    return (
-                      <article
-                        className="cronograma consulta-publica__cronograma"
-                        key={`${cronograma.diaSemana}-${cronograma.horarioInicio?.slice(0,5)}-${cronograma.horarioFim?.slice(0,5)}-${index}`}
-                        aria-label={`${dia}, das ${cronograma.horarioInicio?.slice(0,5)} às ${cronograma.horarioFim?.slice(0,5)}`}
-                      >
-                        <div>
-                          <span
-                            className="consulta-publica__icone-dia"
-                            aria-hidden="true"
-                          >
-                            ♻
-                          </span>
-
-                          <strong>
-                            {dia}
-                          </strong>
-                        </div>
-
-                        <span className="consulta-publica__horario">
-                          {
-                            cronograma.horarioInicio?.slice(0,5)
-                          }
-
-                          {' — '}
-
-                          {
-                            cronograma.horarioFim?.slice(0,5)
-                          }
-                        </span>
-                      </article>
-                    )
-                  },
-                )}
-              </div>
-            ) : (
-              <p>
-                Nenhum cronograma ativo
-                encontrado.
-              </p>
-            )}
-          </section>
-        )}
-      </section>
+        </aside>
+      </div>
     </main>
   )
 }

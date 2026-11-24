@@ -13,6 +13,14 @@ import {
 
 import 'leaflet/dist/leaflet.css'
 
+import { useCoresTema } from '../hooks/useCoresTema'
+
+const TOKENS_MAPA = [
+  'brand-blue',
+  'brand-green',
+  'surface-raised',
+]
+
 function ControlarVisualizacaoMapa({
   latitude,
   longitude,
@@ -96,6 +104,8 @@ function MapaColeta({
   precisaoUsuario,
   statusLocalizacaoUsuario,
 }) {
+  const cores = useCoresTema(TOKENS_MAPA)
+
   const centroInicial = [
     -16.708,
     -49.093,
@@ -142,71 +152,63 @@ function MapaColeta({
         : null
 
   return (
-    <section className="mapa-coleta__secao mapa-coleta__card">
-      <div className="mapa-coleta__cabecalho">
-        <div>
-          <span className="consulta-publica__etapa">
-            MAPA
-          </span>
+    <section
+      className="mapa"
+      aria-labelledby="titulo-mapa"
+    >
+      <div className="mapa__cabecalho">
+        <h2
+          id="titulo-mapa"
+          className="titulo-cartao"
+        >
+          Mapa da área atendida
+        </h2>
 
-          <h2>
-            Mapa da região
-          </h2>
-        </div>
-
-        {carregandoLocalizacao ? (
-          <p>
-            Localizando a região
-            selecionada...
-          </p>
-        ) : nomeArea ? (
-          <p>
-            Área selecionada:{' '}
-            <strong>
-              {nomeArea}
-            </strong>
-          </p>
-        ) : mostrarPinUsuario ? (
-          <p>
-            Sua localização foi encontrada.
-          </p>
-        ) : localizacaoImprecisa ? (
-          <p>
-            A localização disponível está
-            muito imprecisa para indicar
-            onde você está com segurança.
-          </p>
-        ) : (
-          <p>
-            Selecione uma cidade e um
-            bairro para visualizar a
-            região atendida.
-          </p>
-        )}
+        <p
+          className="mapa__status"
+          role="status"
+          aria-live="polite"
+        >
+          {carregandoLocalizacao ? (
+            'Localizando a região selecionada…'
+          ) : nomeArea ? (
+            <>
+              Mostrando{' '}
+              <strong>
+                {nomeArea}
+              </strong>
+            </>
+          ) : mostrarPinUsuario ? (
+            'Sua localização aparece no mapa. Escolha o bairro para ver a área.'
+          ) : localizacaoImprecisa ? (
+            'Sua localização está imprecisa demais para ser mostrada.'
+          ) : (
+            'Escolha uma cidade e um bairro para ver a área atendida.'
+          )}
+        </p>
 
         {mostrarMargemImprecisa && (
-          <div className="mapa-coleta__aviso">
+          <p className="mapa__aviso">
             O dispositivo informou uma
-            margem de erro de aproximadamente{' '}
+            margem de erro de cerca de{' '}
             <strong>
               {Math.round(
                 precisaoUsuario,
               )}{' '}
               metros
             </strong>
-            . Por isso o SIMUL não mostra
-            essa coordenada como “Você está
-            aqui”.
-          </div>
+            , então o SIMUL não marca esse
+            ponto como “Você está aqui”.
+          </p>
         )}
       </div>
 
-      <div className="mapa-coleta__container">
+      <div className="mapa__container">
         <MapContainer
           center={centroInicial}
           zoom={13}
           scrollWheelZoom
-          className="mapa-coleta"
+          className="mapa__leaflet"
         >
           <TileLayer
             attribution="&copy; OpenStreetMap contributors"
@@ -222,13 +224,14 @@ function MapaColeta({
 
           {geometriaArea && (
             <GeoJSON
-              key={JSON.stringify(
-                geometriaArea,
-              )}
+              key={
+                JSON.stringify(geometriaArea) +
+                cores['brand-blue']
+              }
               data={geometriaArea}
               style={{
-                color: '#075fd8',
-                fillColor: '#20c745',
+                color: cores['brand-blue'],
+                fillColor: cores['brand-green'],
                 weight: 3,
                 fillOpacity: 0.18,
               }}
@@ -257,8 +260,8 @@ function MapaColeta({
                   ]}
                   radius={precisaoUsuario}
                   pathOptions={{
-                    color: '#00a9f4',
-                    fillColor: '#00a9f4',
+                    color: cores['brand-blue'],
+                    fillColor: cores['brand-blue'],
                     fillOpacity: 0.08,
                     weight: 1,
                   }}
@@ -272,8 +275,8 @@ function MapaColeta({
                 ]}
                 radius={8}
                 pathOptions={{
-                  color: '#ffffff',
-                  fillColor: '#075fd8',
+                  color: cores['surface-raised'],
+                  fillColor: cores['brand-blue'],
                   fillOpacity: 1,
                   weight: 3,
                 }}
@@ -311,8 +314,8 @@ function MapaColeta({
                 ]}
                 radius={precisaoUsuario}
                 pathOptions={{
-                  color: '#075fd8',
-                  fillColor: '#00a9f4',
+                  color: cores['brand-blue'],
+                  fillColor: cores['brand-blue'],
                   fillOpacity: 0.04,
                   weight: 1,
                 }}

@@ -1,0 +1,355 @@
+/* =========================================
+   Componentes compartilhados (Design System SIMUL)
+   Usados por todas as páginas redesenhadas.
+   ========================================= */
+
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Tipografia utilitária ---------- */
+.sobretitulo {
+  margin: 0;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.sobretitulo--verde {
+  color: var(--brand-green);
+}
+
+.titulo-secao {
+  margin: 0 0 var(--space-4);
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 700;
+}
+
+.titulo-cartao {
+  margin: 0;
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 600;
+}
+
+/* ---------- Cartão ---------- */
+.cartao {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+@media (max-width: 720px) {
+  .cartao {
+    padding: var(--space-4);
+  }
+}
+
+/* ---------- Campo (Field) ---------- */
+.campo-ds {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+}
+
+.campo-ds__rotulo {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.campo-ds__controle {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px var(--space-3);
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--ink);
+  background-color: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+select.campo-ds__controle {
+  appearance: none;
+  padding-right: 40px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--ink-muted) 50%),
+    linear-gradient(135deg, var(--ink-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 20px) 50%,
+    calc(100% - 15px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+.campo-ds__controle:disabled {
+  color: var(--ink-muted);
+  background-color: var(--surface-sunken);
+  border-color: var(--border);
+  cursor: not-allowed;
+}
+
+.campo-ds__controle[aria-invalid='true'] {
+  border: 2px solid var(--danger);
+}
+
+.campo-ds__dica {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ink-muted);
+}
+
+.campo-ds__erro {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+/* ---------- Selo (Badge) ---------- */
+.selo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.selo::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.selo--ativo {
+  background: var(--brand-green-tint);
+  color: var(--brand-green);
+}
+
+.selo--inativo {
+  background: var(--surface-sunken);
+  color: var(--ink-muted);
+}
+
+.selo--info {
+  background: var(--brand-blue-tint);
+  color: var(--brand-blue);
+}
+
+.selo--falha {
+  background: var(--danger-tint);
+  color: var(--danger);
+}
+
+.selo--hoje {
+  background: var(--brand-yellow);
+  color: var(--on-accent);
+}
+
+.selo--hoje::before {
+  display: none;
+}
+
+/* ---------- Alerta (Alert) ---------- */
+.alerta {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--ink);
+}
+
+.alerta > .icone {
+  flex: none;
+  margin-top: 1px;
+}
+
+.alerta strong {
+  display: block;
+  font-weight: 600;
+}
+
+.alerta--info {
+  background: var(--brand-blue-tint);
+}
+
+.alerta--info > .icone {
+  color: var(--brand-blue);
+}
+
+.alerta--sucesso {
+  background: var(--brand-green-tint);
+}
+
+.alerta--sucesso > .icone {
+  color: var(--brand-green);
+}
+
+.alerta--aviso {
+  background: var(--brand-yellow-tint);
+  border-color: var(--brand-yellow);
+}
+
+.alerta--aviso > .icone,
+.alerta--aviso strong {
+  color: var(--warning-ink);
+}
+
+.alerta--erro {
+  background: var(--danger-tint);
+}
+
+.alerta--erro > .icone,
+.alerta--erro strong {
+  color: var(--danger);
+}
+
+/* ---------- Dias da semana (DiasSemana) ---------- */
+.dias-semana {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dia-pilula {
+  display: inline-grid;
+  place-items: center;
+  min-width: 48px;
+  height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--surface-raised);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+.dia-pilula--coleta {
+  background: var(--brand-green);
+  border-color: var(--brand-green);
+  color: var(--on-brand);
+}
+
+.dia-pilula--hoje {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.dias-semana__legenda {
+  margin: var(--space-2) 0 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ink-muted);
+}
+
+/* ---------- Cartão da coleta (ColetaCard) ---------- */
+.coleta-cartao {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.coleta-cartao--hoje {
+  background: var(--brand-yellow-tint);
+  border-color: var(--brand-yellow);
+}
+
+.coleta-cartao__topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.coleta-cartao__dia {
+  margin: var(--space-1) 0 0;
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 700;
+}
+
+.coleta-cartao__dia::first-letter {
+  text-transform: uppercase;
+}
+
+.coleta-cartao__hora {
+  margin: 0;
+  font-size: 40px;
+  line-height: 44px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--brand-blue);
+}
+
+.coleta-cartao__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ink-muted);
+}
+
+.coleta-cartao__meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+@media (max-width: 720px) {
+  .coleta-cartao {
+    padding: var(--space-4);
+  }
+
+  .coleta-cartao__hora {
+    font-size: 32px;
+    line-height: 36px;
+  }
+}
