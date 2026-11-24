@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/** Resposta 401 em ProblemDetail quando falta o token ou ele é inválido. */
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
@@ -30,7 +31,6 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
             HttpServletResponse response,
             AuthenticationException authException
     ) throws IOException, ServletException {
-
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
@@ -41,15 +41,9 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         body.put("type", "about:blank");
         body.put("title", "Não autorizado");
         body.put("status", HttpStatus.UNAUTHORIZED.value());
-        body.put(
-                "detail",
-                "Autenticação necessária ou token inválido."
-        );
+        body.put("detail", "Autenticação necessária ou token inválido.");
         body.put("instance", request.getRequestURI());
 
-        jsonMapper.writeValue(
-                response.getOutputStream(),
-                body
-        );
+        jsonMapper.writeValue(response.getOutputStream(), body);
     }
 }

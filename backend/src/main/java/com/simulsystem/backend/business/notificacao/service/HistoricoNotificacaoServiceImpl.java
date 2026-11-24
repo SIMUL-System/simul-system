@@ -6,6 +6,7 @@ import com.simulsystem.backend.business.notificacao.model.StatusNotificacao;
 import com.simulsystem.backend.business.notificacao.repository.HistoricoNotificacaoRepository;
 import com.simulsystem.backend.business.rota.model.Rota;
 import com.simulsystem.backend.business.usuario.model.Usuario;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -13,18 +14,16 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+/** Implementação de HistoricoNotificacaoService (até 3 tentativas, 5 minutos entre elas). */
 @Service
 public class HistoricoNotificacaoServiceImpl
         implements HistoricoNotificacaoService {
-
     private static final int LIMITE_TENTATIVAS = 3;
     private static final long INTERVALO_RETRY_MINUTOS = 5;
 
     private final HistoricoNotificacaoRepository repository;
 
-    public HistoricoNotificacaoServiceImpl(
-            HistoricoNotificacaoRepository repository
-    ) {
+    public HistoricoNotificacaoServiceImpl(HistoricoNotificacaoRepository repository) {
         this.repository = repository;
     }
 
@@ -35,15 +34,9 @@ public class HistoricoNotificacaoServiceImpl
             LocalDateTime dataHoraColeta,
             CanalNotificacao canal
     ) {
-        validarDadosReserva(
-                usuario,
-                rota,
-                dataHoraColeta,
-                canal
-        );
+        validarDadosReserva(usuario, rota, dataHoraColeta, canal);
 
-        boolean jaExiste =
-                repository.existsByUsuarioIdAndRotaIdAndDataHoraColetaAndCanal(
+        boolean jaExiste = repository.existsByUsuarioIdAndRotaIdAndDataHoraColetaAndCanal(
                         usuario.getId(),
                         rota.getId(),
                         dataHoraColeta,
@@ -54,8 +47,7 @@ public class HistoricoNotificacaoServiceImpl
             return Optional.empty();
         }
 
-        HistoricoNotificacao historico =
-                new HistoricoNotificacao();
+        HistoricoNotificacao historico = new HistoricoNotificacao();
 
         historico.setUsuario(usuario);
         historico.setRota(rota);
@@ -65,33 +57,23 @@ public class HistoricoNotificacaoServiceImpl
         historico.setNumeroTentativas(0);
 
         try {
-            return Optional.of(
-                    repository.saveAndFlush(historico)
-            );
+            return Optional.of(repository.saveAndFlush(historico));
         } catch (DataIntegrityViolationException exception) {
             return Optional.empty();
         }
     }
 
     @Override
-    public void marcarComoEnviado(
-            Long historicoId,
-            LocalDateTime dataEnvio
-    ) {
+    public void marcarComoEnviado(Long historicoId, LocalDateTime dataEnvio) {
         if (historicoId == null) {
-            throw new IllegalArgumentException(
-                    "O identificador do histórico é obrigatório."
-            );
+            throw new IllegalArgumentException("O identificador do histórico é obrigatório.");
         }
 
         if (dataEnvio == null) {
-            throw new IllegalArgumentException(
-                    "A data de envio é obrigatória."
-            );
+            throw new IllegalArgumentException("A data de envio é obrigatória.");
         }
 
-        HistoricoNotificacao historico =
-                buscarPorId(historicoId);
+        HistoricoNotificacao historico = buscarPorId(historicoId);
 
         incrementarTentativas(historico);
 
@@ -104,40 +86,25 @@ public class HistoricoNotificacaoServiceImpl
     }
 
     @Override
-    public void marcarComoFalha(
-            Long historicoId,
-            String mensagemErro,
-            LocalDateTime referencia
-    ) {
+    public void marcarComoFalha(Long historicoId, String mensagemErro, LocalDateTime referencia) {
         if (historicoId == null) {
-            throw new IllegalArgumentException(
-                    "O identificador do histórico é obrigatório."
-            );
+            throw new IllegalArgumentException("O identificador do histórico é obrigatório.");
         }
 
         if (referencia == null) {
-            throw new IllegalArgumentException(
-                    "A data e hora de referência são obrigatórias."
-            );
+            throw new IllegalArgumentException("A data e hora de referência são obrigatórias.");
         }
 
-        HistoricoNotificacao historico =
-                buscarPorId(historicoId);
+        HistoricoNotificacao historico = buscarPorId(historicoId);
 
         incrementarTentativas(historico);
 
         historico.setStatus(StatusNotificacao.FALHA);
         historico.setDataEnvio(null);
-        historico.setMensagemErro(
-                limitarMensagemErro(mensagemErro)
-        );
+        historico.setMensagemErro(limitarMensagemErro(mensagemErro));
 
         if (historico.getNumeroTentativas() < LIMITE_TENTATIVAS) {
-            historico.setProximaTentativa(
-                    referencia.plusMinutes(
-                            INTERVALO_RETRY_MINUTOS
-                    )
-            );
+            historico.setProximaTentativa(referencia.plusMinutes(INTERVALO_RETRY_MINUTOS));
         } else {
             historico.setProximaTentativa(null);
         }
@@ -146,21 +113,14 @@ public class HistoricoNotificacaoServiceImpl
     }
 
     @Override
-    public void marcarComoCancelado(
-            Long historicoId
-    ) {
+    public void marcarComoCancelado(Long historicoId) {
         if (historicoId == null) {
-            throw new IllegalArgumentException(
-                    "O identificador do histórico é obrigatório."
-            );
+            throw new IllegalArgumentException("O identificador do histórico é obrigatório.");
         }
 
-        HistoricoNotificacao historico =
-                buscarPorId(historicoId);
+        HistoricoNotificacao historico = buscarPorId(historicoId);
 
-        historico.setStatus(
-                StatusNotificacao.CANCELADO
-        );
+        historico.setStatus(StatusNotificacao.CANCELADO);
 
         historico.setProximaTentativa(null);
         historico.setDataEnvio(null);
@@ -177,86 +137,50 @@ public class HistoricoNotificacaoServiceImpl
     }
 
     @Override
-    public List<HistoricoNotificacao> buscarFalhasElegiveisParaRetry(
-            LocalDateTime referencia
-    ) {
+    public List<HistoricoNotificacao> buscarFalhasElegiveisParaRetry(LocalDateTime referencia) {
         if (referencia == null) {
-            throw new IllegalArgumentException(
-                    "A data e hora de referência são obrigatórias."
-            );
+            throw new IllegalArgumentException("A data e hora de referência são obrigatórias.");
         }
 
-        return repository.buscarFalhasElegiveisParaRetry(
-                StatusNotificacao.FALHA,
-                referencia,
-                LIMITE_TENTATIVAS
-        );
+        return repository.buscarFalhasElegiveisParaRetry(StatusNotificacao.FALHA, referencia, LIMITE_TENTATIVAS);
     }
 
-    private HistoricoNotificacao buscarPorId(
-            Long historicoId
-    ) {
+    private HistoricoNotificacao buscarPorId(Long historicoId) {
         return repository.findById(historicoId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Histórico de notificação não encontrado."
-                        )
+                        new IllegalArgumentException("Histórico de notificação não encontrado.")
                 );
     }
 
-    private void incrementarTentativas(
-            HistoricoNotificacao historico
-    ) {
-        int tentativasAtuais =
-                historico.getNumeroTentativas() == null
+    private void incrementarTentativas(HistoricoNotificacao historico) {
+        int tentativasAtuais = historico.getNumeroTentativas() == null
                         ? 0
                         : historico.getNumeroTentativas();
 
-        int novaQuantidade =
-                Math.min(
-                        tentativasAtuais + 1,
-                        LIMITE_TENTATIVAS
-                );
+        int novaQuantidade = Math.min(tentativasAtuais + 1, LIMITE_TENTATIVAS);
 
-        historico.setNumeroTentativas(
-                novaQuantidade
-        );
+        historico.setNumeroTentativas(novaQuantidade);
     }
 
-    private void validarDadosReserva(
-            Usuario usuario,
-            Rota rota,
-            LocalDateTime dataHoraColeta,
-            CanalNotificacao canal
-    ) {
+    private void validarDadosReserva(Usuario usuario, Rota rota, LocalDateTime dataHoraColeta, CanalNotificacao canal) {
         if (usuario == null || usuario.getId() == null) {
-            throw new IllegalArgumentException(
-                    "O usuário é obrigatório."
-            );
+            throw new IllegalArgumentException("O usuário é obrigatório.");
         }
 
         if (rota == null || rota.getId() == null) {
-            throw new IllegalArgumentException(
-                    "A rota é obrigatória."
-            );
+            throw new IllegalArgumentException("A rota é obrigatória.");
         }
 
         if (dataHoraColeta == null) {
-            throw new IllegalArgumentException(
-                    "A data e hora da coleta são obrigatórias."
-            );
+            throw new IllegalArgumentException("A data e hora da coleta são obrigatórias.");
         }
 
         if (canal == null) {
-            throw new IllegalArgumentException(
-                    "O canal da notificação é obrigatório."
-            );
+            throw new IllegalArgumentException("O canal da notificação é obrigatório.");
         }
     }
 
-    private String limitarMensagemErro(
-            String mensagemErro
-    ) {
+    private String limitarMensagemErro(String mensagemErro) {
         if (mensagemErro == null || mensagemErro.isBlank()) {
             return "Falha no envio da notificação.";
         }

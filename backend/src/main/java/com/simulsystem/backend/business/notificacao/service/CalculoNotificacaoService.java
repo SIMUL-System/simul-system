@@ -2,23 +2,12 @@ package com.simulsystem.backend.business.notificacao.service;
 
 import java.time.LocalDateTime;
 
+/** Cálculo de horários do lembrete. */
 public interface CalculoNotificacaoService {
 
     /**
-     * Horário em que o lembrete de uma coleta deve ser enviado:
-     * data/hora da coleta menos a antecedência.
+     * Data/hora da coleta cujo lembrete deve sair no minuto de referência:
+     * referência (sem segundos) mais a antecedência escolhida pelo morador.
      */
-    LocalDateTime calcularHorarioEnvio(
-            LocalDateTime proximaColeta,
-            Integer antecedenciaHoras
-    );
-
-    /**
-     * Data/hora da coleta cujo lembrete deve ser enviado no minuto de
-     * referência: referência (truncada ao minuto) mais a antecedência.
-     */
-    LocalDateTime calcularHorarioColetaAlvo(
-            LocalDateTime referencia,
-            Integer antecedenciaHoras
-    );
+    LocalDateTime calcularHorarioColetaAlvo(LocalDateTime referencia, Integer antecedenciaHoras);
 }

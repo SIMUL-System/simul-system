@@ -1,7 +1,4 @@
-import {
-  useEffect,
-  useState,
-} from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import Alerta from '../../components/Alerta'
@@ -11,16 +8,11 @@ import { listarAreasAtendidas } from '../../services/adminAreaService'
 import { listarCronogramas } from '../../services/adminCronogramaService'
 import { listarRotas } from '../../services/adminRotaService'
 
-import {
-  calcularResumo,
-  diaDeHoje,
-} from '../../utils/painel'
+import { calcularResumo, diaDeHoje } from '../../utils/painel'
 import { nomeRotaCurto } from '../../utils/areas'
+import { comoLista } from '../../utils/texto'
 
-function comoLista(dados) {
-  return Array.isArray(dados) ? dados : []
-}
-
+/** Admin: indicadores, pendências e resumo da semana. */
 function DashboardAdminPage() {
   const [dados, setDados] = useState(null)
   const [erro, setErro] = useState('')
@@ -54,14 +46,8 @@ function DashboardAdminPage() {
 
   if (!dados) {
     return (
-      <div
-        className="carregando"
-        role="status"
-      >
-        <span
-          className="carregando__spinner"
-          aria-hidden="true"
-        />
+      <div className="carregando" role="status">
+        <span className="carregando__spinner" aria-hidden="true" />
         Carregando a visão geral…
       </div>
     )
@@ -104,39 +90,24 @@ function DashboardAdminPage() {
         </div>
 
         <div className="admin-pagina__acoes">
-          <Link
-            to="/admin/areas"
-            className="botao botao--secundario"
-          >
+          <Link to="/admin/areas" className="botao botao--secundario">
             Áreas atendidas
           </Link>
-          <Link
-            to="/admin/cronogramas"
-            className="botao botao--primario"
-          >
+          <Link to="/admin/cronogramas" className="botao botao--primario">
             Cronogramas
           </Link>
         </div>
       </header>
 
-      <ul
-        className="indicadores"
-        aria-label="Indicadores"
-      >
+      <ul className="indicadores" aria-label="Indicadores">
         {indicadores.map((item) => (
           <li key={item.rotulo}>
-            <Link
-              to={item.link}
-              className="indicador"
-            >
+            <Link to={item.link} className="indicador">
               <span className="indicador__rotulo">{item.rotulo}</span>
               <strong className="indicador__valor">{item.valor}</strong>
               <span className="indicador__detalhe">
                 {item.detalhe}
-                <Icone
-                  nome="seta"
-                  tamanho={16}
-                />
+                <Icone nome="seta" tamanho={16} />
               </span>
             </Link>
           </li>
@@ -162,10 +133,7 @@ function DashboardAdminPage() {
           className="admin-quadro painel-bloco painel-grade__largo"
           aria-labelledby="titulo-atencao"
         >
-          <h2
-            id="titulo-atencao"
-            className="painel-bloco__titulo"
-          >
+          <h2 id="titulo-atencao" className="painel-bloco__titulo">
             Precisa de atenção
           </h2>
 
@@ -174,15 +142,9 @@ function DashboardAdminPage() {
               const ok = item.quantidade === 0
 
               return (
-                <li
-                  key={item.id}
-                  className="pendencia"
-                >
+                <li key={item.id} className="pendencia">
                   <span className={`pendencia__icone ${ok ? 'pendencia__icone--ok' : ''}`}>
-                    <Icone
-                      nome={ok ? 'sucesso' : 'aviso'}
-                      tamanho={18}
-                    />
+                    <Icone nome={ok ? 'sucesso' : 'aviso'} tamanho={18} />
                   </span>
 
                   <div className="pendencia__texto">
@@ -195,10 +157,7 @@ function DashboardAdminPage() {
                   {ok ? (
                     <span className="selo selo--ativo">Tudo certo</span>
                   ) : (
-                    <Link
-                      to={item.link}
-                      className="botao botao--pequeno botao--secundario"
-                    >
+                    <Link to={item.link} className="botao botao--pequeno botao--secundario">
                       {item.acao}
                     </Link>
                   )}
@@ -208,14 +167,8 @@ function DashboardAdminPage() {
           </ul>
         </section>
 
-        <section
-          className="admin-quadro painel-bloco"
-          aria-labelledby="titulo-areas-rota"
-        >
-          <h2
-            id="titulo-areas-rota"
-            className="painel-bloco__titulo"
-          >
+        <section className="admin-quadro painel-bloco" aria-labelledby="titulo-areas-rota">
+          <h2 id="titulo-areas-rota" className="painel-bloco__titulo">
             Bairros por rota
           </h2>
 
@@ -225,18 +178,12 @@ function DashboardAdminPage() {
             <ul className="barras">
               {resumo.areasPorRota.map(({ rota, quantidade }) => (
                 <li key={rota.id}>
-                  <Link
-                    to={`/admin/areas?rota=${rota.id}`}
-                    className="barras__item"
-                  >
+                  <Link to={`/admin/areas?rota=${rota.id}`} className="barras__item">
                     <span className="barras__topo">
                       <span>{nomeRotaCurto(rota.nome, resumo.unicaCidade)}</span>
                       <strong>{quantidade}</strong>
                     </span>
-                    <span
-                      className="barras__trilho"
-                      aria-hidden="true"
-                    >
+                    <span className="barras__trilho" aria-hidden="true">
                       <span
                         className="barras__valor"
                         style={{ width: `${(quantidade / maiorRota) * 100}%` }}
@@ -250,15 +197,9 @@ function DashboardAdminPage() {
         </section>
       </div>
 
-      <section
-        className="admin-quadro painel-bloco"
-        aria-labelledby="titulo-semana"
-      >
+      <section className="admin-quadro painel-bloco" aria-labelledby="titulo-semana">
         <div className="painel-bloco__topo">
-          <h2
-            id="titulo-semana"
-            className="painel-bloco__titulo"
-          >
+          <h2 id="titulo-semana" className="painel-bloco__titulo">
             Coletas da semana
           </h2>
           <Link to="/admin/cronogramas">Abrir a grade completa</Link>

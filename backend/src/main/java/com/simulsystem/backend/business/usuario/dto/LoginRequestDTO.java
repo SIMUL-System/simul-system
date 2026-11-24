@@ -3,6 +3,7 @@ package com.simulsystem.backend.business.usuario.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
+/** Credenciais do login. */
 public record LoginRequestDTO(
 
         @NotBlank(message = "O e-mail é obrigatório.")

@@ -1,55 +1,35 @@
 package com.simulsystem.backend.business.notificacao.service;
 
+import com.simulsystem.backend.business.notificacao.model.CanalNotificacao;
 import com.simulsystem.backend.business.notificacao.strategy.NotificacaoStrategy;
-import com.simulsystem.backend.business.notificacao.strategy.TipoNotificacao;
+
 import org.springframework.stereotype.Service;
 
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
+/** Implementação de EnvioNotificacaoService baseada nas estratégias registradas. */
 @Service
-public class EnvioNotificacaoServiceImpl
-        implements EnvioNotificacaoService {
+public class EnvioNotificacaoServiceImpl implements EnvioNotificacaoService {
 
-    private final Map<TipoNotificacao, NotificacaoStrategy> strategies;
+    private final Map<CanalNotificacao, NotificacaoStrategy> estrategias = new EnumMap<>(CanalNotificacao.class);
 
-    public EnvioNotificacaoServiceImpl(
-            List<NotificacaoStrategy> strategiesDisponiveis
-    ) {
-        this.strategies =
-                new EnumMap<>(TipoNotificacao.class);
-
-        for (NotificacaoStrategy strategy
-                : strategiesDisponiveis) {
-
-            this.strategies.put(
-                    strategy.getTipo(),
-                    strategy
-            );
+    /** O Spring injeta todas as NotificacaoStrategy registradas como @Component. */
+    public EnvioNotificacaoServiceImpl(List<NotificacaoStrategy> estrategiasDisponiveis) {
+        for (NotificacaoStrategy estrategia : estrategiasDisponiveis) {
+            estrategias.put(estrategia.getCanal(), estrategia);
         }
     }
 
     @Override
-    public void enviar(
-            TipoNotificacao tipo,
-            String destinatario,
-            String assunto,
-            String mensagem
-    ) {
-        NotificacaoStrategy strategy =
-                strategies.get(tipo);
+    public void enviar(CanalNotificacao canal, String destinatario, String assunto, String mensagem) {
+        NotificacaoStrategy estrategia = estrategias.get(canal);
 
-        if (strategy == null) {
-            throw new IllegalArgumentException(
-                    "Não existe estratégia de notificação para o tipo informado."
-            );
+        if (estrategia == null) {
+            throw new IllegalArgumentException("Não existe estratégia de notificação para o canal " + canal + ".");
         }
 
-        strategy.enviar(
-                destinatario,
-                assunto,
-                mensagem
-        );
+        estrategia.enviar(destinatario, assunto, mensagem);
     }
 }

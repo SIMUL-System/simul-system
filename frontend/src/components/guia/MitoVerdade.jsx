@@ -26,24 +26,11 @@ function MitoVerdade() {
         const acertou = palpite === mito.verdade
 
         return (
-          <li
-            key={mito.frase}
-            className={
-              respondido
-                ? 'mito mito--virado'
-                : 'mito'
-            }
-          >
-            <p className="mito__frase">
-              “{mito.frase}”
-            </p>
+          <li key={mito.frase} className={respondido ? 'mito mito--virado' : 'mito'}>
+            <p className="mito__frase">“{mito.frase}”</p>
 
             {!respondido ? (
-              <div
-                className="mito__botoes"
-                role="group"
-                aria-label="Sua resposta"
-              >
+              <div className="mito__botoes" role="group" aria-label="Sua resposta">
                 <button
                   type="button"
                   className="botao botao--secundario botao--pequeno"
@@ -61,10 +48,7 @@ function MitoVerdade() {
                 </button>
               </div>
             ) : (
-              <div
-                className="mito__resposta"
-                role="status"
-              >
+              <div className="mito__resposta" role="status">
                 <p
                   className={
                     acertou
@@ -72,10 +56,7 @@ function MitoVerdade() {
                       : 'mito__veredito mito__veredito--errado'
                   }
                 >
-                  <Icone
-                    nome={acertou ? 'sucesso' : 'info'}
-                    tamanho={18}
-                  />
+                  <Icone nome={acertou ? 'sucesso' : 'info'} tamanho={18} />
                   {acertou ? 'Você acertou!' : 'Boa tentativa!'}
                 </p>
 

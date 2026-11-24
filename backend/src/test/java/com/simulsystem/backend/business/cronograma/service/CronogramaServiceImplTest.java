@@ -6,6 +6,7 @@ import com.simulsystem.backend.business.cronograma.model.DiaSemana;
 import com.simulsystem.backend.business.cronograma.repository.CronogramaRepository;
 import com.simulsystem.backend.business.cronograma.validation.CronogramaValidation;
 import com.simulsystem.backend.business.rota.validation.RotaValidation;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -43,218 +44,35 @@ class CronogramaServiceImplTest {
     private CronogramaServiceImpl cronogramaService;
 
     @Test
-    void deveRetornarColetaDoMesmoDiaQuandoAindaNaoChegouOHorario() {
-
-        configurarCronogramasPadrao();
-
-        LocalDateTime referencia =
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        17,
-                        14,
-                        0
-                );
-
-        Optional<LocalDateTime> resultado =
-                cronogramaService.calcularProximaColeta(
-                        ROTA_ID,
-                        referencia
-                );
-
-        LocalDateTime esperado =
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        17,
-                        19,
-                        0
-                );
-
-        assertTrue(resultado.isPresent());
-        assertEquals(
-                esperado,
-                resultado.orElseThrow()
-        );
-    }
-
-    @Test
-    void deveRetornarProximoDiaDeColetaQuandoHorarioDoDiaJaPassou() {
-
-        configurarCronogramasPadrao();
-
-        LocalDateTime referencia =
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        17,
-                        19,
-                        1
-                );
-
-        Optional<LocalDateTime> resultado =
-                cronogramaService.calcularProximaColeta(
-                        ROTA_ID,
-                        referencia
-                );
-
-        LocalDateTime esperado =
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        19,
-                        19,
-                        0
-                );
-
-        assertTrue(resultado.isPresent());
-        assertEquals(
-                esperado,
-                resultado.orElseThrow()
-        );
-    }
-
-    @Test
-    void deveVirarSemanaQuandoUltimaColetaDaSemanaJaPassou() {
-
-        configurarCronogramasPadrao();
-
-        LocalDateTime referencia =
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        21,
-                        20,
-                        0
-                );
-
-        Optional<LocalDateTime> resultado =
-                cronogramaService.calcularProximaColeta(
-                        ROTA_ID,
-                        referencia
-                );
-
-        LocalDateTime esperado =
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        24,
-                        19,
-                        0
-                );
-
-        assertTrue(resultado.isPresent());
-        assertEquals(
-                esperado,
-                resultado.orElseThrow()
-        );
-    }
-
-    @Test
-    void deveConsiderarColetaAtualQuandoReferenciaForExatamenteHorarioDeInicio() {
-
-        configurarCronogramasPadrao();
-
-        LocalDateTime referencia =
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        17,
-                        19,
-                        0
-                );
-
-        Optional<LocalDateTime> resultado =
-                cronogramaService.calcularProximaColeta(
-                        ROTA_ID,
-                        referencia
-                );
-
-        LocalDateTime esperado =
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        17,
-                        19,
-                        0
-                );
-
-        assertTrue(resultado.isPresent());
-        assertEquals(
-                esperado,
-                resultado.orElseThrow()
-        );
-    }
-
-    @Test
-    void deveRetornarVazioQuandoNaoExistiremCronogramasAtivos() {
-
-        when(
-                cronogramaRepository
-                        .findByRotaIdAndAtivoTrue(ROTA_ID)
-        ).thenReturn(List.of());
-
-        LocalDateTime referencia =
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        16,
-                        14,
-                        0
-                );
-
-        Optional<LocalDateTime> resultado =
-                cronogramaService.calcularProximaColeta(
-                        ROTA_ID,
-                        referencia
-                );
-
-        assertTrue(resultado.isEmpty());
-    }
-
-    @Test
     void deveRetornarColetaQuandoExistirCronogramaNoDiaEHorario() {
-
         configurarCronogramasPadrao();
 
         // 19/08/2026 é quarta-feira; cronograma de quarta às 19:00
-        LocalDateTime dataHora =
-                LocalDateTime.of(2026, 8, 19, 19, 0);
+        LocalDateTime dataHora = LocalDateTime.of(2026, 8, 19, 19, 0);
 
-        Optional<LocalDateTime> resultado =
-                cronogramaService.buscarColetaNoHorario(
-                        ROTA_ID,
-                        dataHora
-                );
+        Optional<LocalDateTime> resultado = cronogramaService.buscarColetaNoHorario(ROTA_ID, dataHora);
 
         assertEquals(Optional.of(dataHora), resultado);
     }
 
     @Test
     void deveIgnorarSegundosAoBuscarColetaNoHorario() {
-
         configurarCronogramasPadrao();
 
-        Optional<LocalDateTime> resultado =
-                cronogramaService.buscarColetaNoHorario(
+        Optional<LocalDateTime> resultado = cronogramaService.buscarColetaNoHorario(
                         ROTA_ID,
                         LocalDateTime.of(2026, 8, 19, 19, 0, 42)
                 );
 
-        assertEquals(
-                Optional.of(LocalDateTime.of(2026, 8, 19, 19, 0)),
-                resultado
-        );
+        assertEquals(Optional.of(LocalDateTime.of(2026, 8, 19, 19, 0)), resultado);
     }
 
     @Test
     void naoDeveRetornarColetaEmDiaSemCronograma() {
-
         configurarCronogramasPadrao();
 
         // 18/08/2026 é terça-feira: sem cronograma
-        Optional<LocalDateTime> resultado =
-                cronogramaService.buscarColetaNoHorario(
+        Optional<LocalDateTime> resultado = cronogramaService.buscarColetaNoHorario(
                         ROTA_ID,
                         LocalDateTime.of(2026, 8, 18, 19, 0)
                 );
@@ -264,11 +82,9 @@ class CronogramaServiceImplTest {
 
     @Test
     void naoDeveRetornarColetaEmHorarioDiferenteDoInicio() {
-
         configurarCronogramasPadrao();
 
-        Optional<LocalDateTime> resultado =
-                cronogramaService.buscarColetaNoHorario(
+        Optional<LocalDateTime> resultado = cronogramaService.buscarColetaNoHorario(
                         ROTA_ID,
                         LocalDateTime.of(2026, 8, 19, 19, 1)
                 );
@@ -278,59 +94,21 @@ class CronogramaServiceImplTest {
 
     @Test
     void deveLancarErroQuandoDataHoraDaBuscaForNula() {
-
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> cronogramaService.buscarColetaNoHorario(
-                        ROTA_ID,
-                        null
-                )
-        );
+        assertThrows(IllegalArgumentException.class, () -> cronogramaService.buscarColetaNoHorario(ROTA_ID, null));
     }
 
     private void configurarCronogramasPadrao() {
+        Cronograma segunda = criarCronograma(DiaSemana.SEGUNDA, LocalTime.of(19, 0), LocalTime.of(1, 0));
 
-        Cronograma segunda =
-                criarCronograma(
-                        DiaSemana.SEGUNDA,
-                        LocalTime.of(19, 0),
-                        LocalTime.of(1, 0)
-                );
+        Cronograma quarta = criarCronograma(DiaSemana.QUARTA, LocalTime.of(19, 0), LocalTime.of(1, 0));
 
-        Cronograma quarta =
-                criarCronograma(
-                        DiaSemana.QUARTA,
-                        LocalTime.of(19, 0),
-                        LocalTime.of(1, 0)
-                );
+        Cronograma sexta = criarCronograma(DiaSemana.SEXTA, LocalTime.of(19, 0), LocalTime.of(1, 0));
 
-        Cronograma sexta =
-                criarCronograma(
-                        DiaSemana.SEXTA,
-                        LocalTime.of(19, 0),
-                        LocalTime.of(1, 0)
-                );
-
-        when(
-                cronogramaRepository
-                        .findByRotaIdAndAtivoTrue(ROTA_ID)
-        ).thenReturn(
-                List.of(
-                        segunda,
-                        quarta,
-                        sexta
-                )
-        );
+        when(cronogramaRepository.findByRotaIdAndAtivoTrue(ROTA_ID)).thenReturn(List.of(segunda, quarta, sexta));
     }
 
-    private Cronograma criarCronograma(
-            DiaSemana diaSemana,
-            LocalTime horarioInicio,
-            LocalTime horarioFim
-    ) {
-
-        Cronograma cronograma =
-                new Cronograma();
+    private Cronograma criarCronograma(DiaSemana diaSemana, LocalTime horarioInicio, LocalTime horarioFim) {
+        Cronograma cronograma = new Cronograma();
 
         cronograma.setDiaSemana(diaSemana);
         cronograma.setHorarioInicio(horarioInicio);

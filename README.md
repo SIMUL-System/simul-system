@@ -1,743 +1,418 @@
 # SIMUL — Sistema Integrado de Monitoramento Urbano de Limpeza
 
-Plataforma web para consulta de informações programadas da coleta seletiva, gerenciamento de rotas/áreas/cronogramas e envio de lembretes aos moradores.
+Plataforma web para o morador consultar **dias, horários e área da coleta seletiva** do seu bairro, receber **lembretes automáticos** antes da coleta e aprender a **separar o lixo** com um guia interativo. A prefeitura (ou a equipe responsável) mantém rotas, bairros e horários por um **painel administrativo**.
 
-> Projeto acadêmico desenvolvido no curso de Análise e Desenvolvimento de Sistemas da Faculdade SENAI FATESG — Goiânia, 2026.
+> Projeto acadêmico do curso de Análise e Desenvolvimento de Sistemas — Faculdade SENAI FATESG, Goiânia, 2026.
 
 ---
 
 ## Sumário
 
-- [1. Visão geral](#1-visão-geral)
-- [2. Como o projeto começou](#2-como-o-projeto-começou)
-- [3. Decisões de arquitetura](#3-decisões-de-arquitetura)
-- [4. Evolução do sistema](#4-evolução-do-sistema)
-- [5. Estado atual](#5-estado-atual)
-- [6. Como o SIMUL funciona](#6-como-o-simul-funciona)
-- [7. Perfis de acesso](#7-perfis-de-acesso)
-- [8. Tecnologias](#8-tecnologias)
-- [9. Estrutura do repositório](#9-estrutura-do-repositório)
-- [10. Arquitetura do back-end](#10-arquitetura-do-back-end)
-- [11. Arquitetura do front-end](#11-arquitetura-do-front-end)
-- [12. Banco de dados e Flyway](#12-banco-de-dados-e-flyway)
-- [13. Segurança](#13-segurança)
-- [14. Cadastro, verificação de e-mail e recuperação de senha](#14-cadastro-verificação-de-e-mail-e-recuperação-de-senha)
-- [15. Sistema de notificações](#15-sistema-de-notificações)
-- [16. Mapas, geolocalização e geometrias](#16-mapas-geolocalização-e-geometrias)
-- [17. API atual](#17-api-atual)
-- [18. Como utilizar o sistema](#18-como-utilizar-o-sistema)
-- [19. Executando localmente em outro computador](#19-executando-localmente-em-outro-computador)
-- [20. Carga acadêmica de Senador Canedo](#20-carga-acadêmica-de-senador-canedo)
-- [21. Criando um administrador local](#21-criando-um-administrador-local)
-- [22. Testes e qualidade](#22-testes-e-qualidade)
-- [23. Deploy na Render](#23-deploy-na-render)
-- [24. Variáveis de ambiente](#24-variáveis-de-ambiente)
-- [25. Problemas comuns](#25-problemas-comuns)
-- [26. Funcionalidades ainda não implementadas](#26-funcionalidades-ainda-não-implementadas)
-- [27. Equipe](#27-equipe)
+1. [O problema e a proposta](#1-o-problema-e-a-proposta)
+2. [O que o sistema faz](#2-o-que-o-sistema-faz)
+3. [Escopo](#3-escopo)
+4. [Tecnologias](#4-tecnologias)
+5. [Arquitetura](#5-arquitetura)
+6. [Estrutura do repositório](#6-estrutura-do-repositório)
+7. [Como o sistema se comporta](#7-como-o-sistema-se-comporta)
+8. [Lembretes: como funcionam por dentro](#8-lembretes-como-funcionam-por-dentro)
+9. [Segurança](#9-segurança)
+10. [API](#10-api)
+11. [Banco de dados](#11-banco-de-dados)
+12. [Front-end](#12-front-end)
+13. [Executando localmente](#13-executando-localmente)
+14. [Testes e integração contínua](#14-testes-e-integração-contínua)
+15. [Deploy na Render](#15-deploy-na-render)
+16. [Variáveis de ambiente](#16-variáveis-de-ambiente)
+17. [Problemas comuns](#17-problemas-comuns)
+18. [Padrões de código](#18-padrões-de-código)
+19. [Fora do escopo e próximos passos](#19-fora-do-escopo-e-próximos-passos)
+20. [Equipe](#20-equipe)
 
 ---
 
-# 1. Visão geral
+## 1. O problema e a proposta
 
-O SIMUL foi criado para enfrentar um problema simples, mas recorrente: moradores nem sempre sabem com clareza em quais dias e horários a coleta seletiva passa em sua região.
+Moradores nem sempre sabem em que dia e horário a coleta seletiva passa no seu bairro. Quando a informação está espalhada ou é difícil de achar, o reciclável é colocado na rua no dia errado, acaba indo para o lixo comum ou fica acumulado em casa.
 
-Quando a informação está espalhada, desatualizada ou difícil de consultar, aumenta a chance de:
+O SIMUL reúne essa informação num **site responsivo** (computador e celular) e vai além da consulta:
 
-- o morador esquecer o dia da coleta;
-- o material reciclável ser colocado para fora no horário errado;
-- resíduos recicláveis acabarem descartados de forma inadequada;
-- a população depender de consultas manuais e pouco práticas.
+- **lembra** o morador antes da coleta, por e-mail ou notificação do navegador;
+- **ensina** a separar os materiais, com um guia em formato de jogo;
+- **dá ao poder público** um painel simples para manter rotas, bairros e horários.
 
-A proposta do SIMUL é centralizar essas informações em um **site responsivo**, acessível por computador ou celular, permitindo que qualquer pessoa consulte a coleta da sua região e que usuários cadastrados recebam lembretes.
-
-A versão atual é uma **plataforma web**. Não existe aplicativo mobile nativo nesta entrega.
+A entrega é uma **plataforma web**. Não há aplicativo nativo.
 
 ---
 
-# 2. Como o projeto começou
+## 2. O que o sistema faz
 
-O projeto começou pela definição do problema, do escopo acadêmico e das decisões arquiteturais antes da implementação.
+### Para qualquer pessoa (sem login)
 
-A sequência geral de evolução foi:
+| Funcionalidade | Onde |
+|---|---|
+| Consultar a coleta: escolher cidade e bairro e ver a rota, os dias, os horários e a **próxima coleta** | Página inicial `/` |
+| Ver o bairro no **mapa** (OpenStreetMap), com o contorno da área e a localização do próprio morador | Página inicial |
+| Aprender a separar o lixo: jogo "Para onde vai?", cartões dos materiais, "mito ou verdade" e missão da semana | `/guia-de-descarte` |
+| Criar conta, confirmar o e-mail, entrar e recuperar a senha | `/cadastro`, `/login`, `/recuperar-senha` |
+| Alternar tema claro/escuro | Cabeçalho |
+
+### Para o morador logado
+
+| Funcionalidade | Onde |
+|---|---|
+| Escolher o bairro do lembrete, os canais (e-mail e/ou navegador) e a antecedência (0 a 72 horas) | `/preferencias` |
+| Ativar notificações do navegador (Web Push) | `/preferencias` |
+| Ver os próprios dados e o resumo do lembrete | `/minha-conta` |
+
+### Para o administrador (perfil ADMIN)
+
+| Funcionalidade | Onde |
+|---|---|
+| Visão geral: indicadores, pendências (bairros sem contorno, rotas sem horário etc.) e coletas da semana | `/admin` |
+| Rotas: criar, editar, ativar/desativar (com confirmação explicando o efeito) | `/admin/rotas` |
+| Áreas atendidas: tabela com busca e filtros, edição em painel lateral e **desenho do contorno no mapa** | `/admin/areas` |
+| Cronogramas: **grade semanal** rota × dia, criação de vários dias de uma vez e **alteração de horário em massa** | `/admin/cronogramas` |
+
+---
+
+## 3. Escopo
+
+**Dentro do escopo:** consulta pública por cidade e bairro; rota, dias e horários; cadastro, confirmação de e-mail e login com JWT; preferências de lembrete; envio automático com deduplicação e novas tentativas; guia de descarte; mapa OpenStreetMap com a localização do morador; painel administrativo.
+
+**Canais de lembrete:** o **e-mail é o canal oficial**. O **Web Push** (notificação do navegador) é um canal **complementar**: foi implementado e funciona, mas depende de o morador permitir notificações no navegador.
+
+**Fora do escopo:** rastreamento do caminhão em tempo real, GPS de veículos, alerta por aproximação do caminhão e aplicativo mobile nativo. O mapa mostra a **área** atendida e a localização do **morador**; ele não acompanha caminhões.
+
+---
+
+## 4. Tecnologias
+
+| Camada | Tecnologia |
+|---|---|
+| Back-end | Java 21, Spring Boot 4.1 (Web MVC, Security, Data JPA, Validation, Mail, OAuth2 Resource Server), Maven Wrapper, Lombok |
+| Banco | PostgreSQL, migrations com Flyway, Hibernate em modo `validate` |
+| Autenticação | JWT HS256 (sem sessão no servidor) e senhas com BCrypt |
+| E-mail | SMTP (local) ou API HTTPS do **Brevo** (produção na Render) |
+| Web Push | `nl.martijndwars:web-push` com chaves VAPID e Bouncy Castle |
+| Front-end | React 19, Vite 8, React Router 7 |
+| Mapas | Leaflet + React-Leaflet, tiles do OpenStreetMap, Geoman (desenho do contorno no admin) e Nominatim (localizar bairros) |
+| Infra | Docker (back-end), Render (web service + static site), GitHub Actions (CI) |
+
+---
+
+## 5. Arquitetura
+
+### 5.1 Visão geral
 
 ```text
-Problema e escopo
-        ↓
-Arquitetura monolítica modular
-        ↓
-Base Java 21 / Spring Boot
-        ↓
-PostgreSQL + Flyway
-        ↓
-Usuários + JWT + BCrypt
-        ↓
-Rotas + áreas atendidas
-        ↓
-Cronogramas + consulta pública
-        ↓
-Notificações por e-mail
-        ↓
-Histórico + deduplicação + retry
-        ↓
-Scheduler
-        ↓
-Front-end React/Vite
-        ↓
-Mapas + geometrias
-        ↓
-Painel administrativo
-        ↓
-Web Push
-        ↓
-Verificação de e-mail
-        ↓
-Recuperação de senha
-        ↓
-Responsividade + acessibilidade
-        ↓
-Code splitting e lazy loading
-        ↓
-Deploy na Render
+ Navegador (React + Vite)
+        │  HTTPS / JSON  (JWT no cabeçalho Authorization)
+        ▼
+ API Spring Boot  ──────────────►  PostgreSQL (Flyway)
+        │
+        ├── Agendador (a cada minuto) ──► lembretes
+        │        ├── EmailGateway ──► SMTP ou API do Brevo
+        │        └── Web Push ─────► serviço de push do navegador (VAPID)
+        │
+        └── Front-end consulta direto o Nominatim (OpenStreetMap) para localizar bairros
 ```
 
-O histórico Git do projeto também mostra essa construção incremental: primeiro a estrutura do repositório e a documentação, depois o back-end, segurança, domínios de negócio, notificações, front-end, mapas, Web Push, Docker e por fim os fluxos de verificação de e-mail e recuperação de senha.
+### 5.2 Monólito modular
 
-Essa evolução incremental foi intencional: cada etapa foi consolidada antes de adicionar novas funcionalidades.
-
----
-
-# 3. Decisões de arquitetura
-
-## 3.1 Por que monólito modular?
-
-O SIMUL utiliza um **monólito modular organizado por domínio**.
-
-A decisão foi tomada porque o projeto:
-
-- é acadêmico;
-- possui uma equipe pequena;
-- não precisa da complexidade operacional de microserviços;
-- exige fácil manutenção;
-- precisa continuar simples de executar localmente;
-- deve permitir evolução futura sem misturar responsabilidades.
-
-Não são utilizados microserviços nesta versão.
-
-O objetivo é obter as vantagens de uma organização modular sem introduzir:
-
-- vários deploys independentes;
-- comunicação distribuída;
-- filas obrigatórias entre serviços;
-- descoberta de serviços;
-- observabilidade distribuída;
-- complexidade extra de infraestrutura.
-
-## 3.2 Organização por domínio
-
-Os principais domínios implementados no back-end são:
+O back-end é **um único serviço** organizado por **domínio de negócio**. Para o tamanho do projeto, isso dá o melhor equilíbrio: um deploy só, uma transação só, e ainda assim cada assunto fica isolado na sua pasta.
 
 ```text
 business/
-├── usuario/
-├── rota/
-├── cronograma/
-└── notificacao/
-```
-
-Cada domínio mantém suas próprias regras e segue uma separação por camadas.
-
-A base utilizada no projeto é:
-
-```text
-Model
-  ↓
-Repository
-  ↓
-DTO
-  ↓
-Mapper
-  ↓
-Validation
-  ↓
-Service
-  ↓
-Controller
-```
-
-Domínios mais complexos, como `notificacao`, possuem classes adicionais dentro dessas mesmas responsabilidades.
-
-## 3.3 Regra de dependência
-
-A regra principal é:
-
-```text
-Controller
-   ↓
-Service
-   ↓
-Validation / Mapper / outros Services
-   ↓
-Repository
-   ↓
-PostgreSQL
-```
-
-Um Controller não acessa Repository diretamente.
-
-Código reutilizável e transversal fica em:
-
-```text
+  usuario/       cadastro, login, confirmação de e-mail, recuperação de senha
+  rota/          rotas, áreas atendidas (bairros) e consulta pública
+  cronograma/    horários de coleta por rota e dia
+  notificacao/   preferências, histórico, agendador, e-mail e Web Push
 core/
-├── config/
-├── exception/
-└── security/
+  config/        CORS, relógio, Web Push, links para o front
+  exception/     exceções de negócio e o GlobalExceptionHandler
+  security/      JWT, BCrypt, regras de acesso, tokens dos links
+  status/        GET /api/status (verificação de saúde)
+  util/          utilidades de texto
 ```
 
----
+### 5.3 Camadas
 
-# 4. Evolução do sistema
-
-A construção do SIMUL pode ser dividida em fases.
-
-## Fase 1 — Fundação
-
-- estrutura Git/GitHub;
-- organização `backend/`, `frontend/`, `docs/` e `mobile/`;
-- Java 21;
-- Spring Boot;
-- Maven;
-- PostgreSQL;
-- Flyway;
-- VS Code.
-
-## Fase 2 — Usuários e segurança
-
-Foram adicionados:
-
-- cadastro de usuários;
-- normalização de e-mail;
-- BCrypt;
-- autenticação JWT stateless;
-- perfis `USUARIO` e `ADMIN`;
-- proteção de endpoints;
-- `401 Unauthorized`;
-- `403 Forbidden`;
-- CORS configurável;
-- DTOs de entrada e saída separados.
-
-## Fase 3 — Coleta seletiva
-
-Foram adicionados:
-
-- rotas;
-- áreas atendidas;
-- cronogramas;
-- ativação/desativação de rotas;
-- ativação/desativação de cronogramas;
-- consulta pública por cidade e bairro.
-
-## Fase 4 — Notificações
-
-O sistema evoluiu para possuir:
-
-- preferências por usuário e rota;
-- SMTP;
-- Strategy Pattern;
-- cálculo do momento do lembrete;
-- processamento individual;
-- processamento em lote;
-- histórico;
-- deduplicação;
-- retries;
-- scheduler;
-- Web Push.
-
-## Fase 5 — Front-end
-
-Foi criado o front-end completo em React + Vite com:
-
-- consulta pública;
-- mapa;
-- cadastro;
-- login;
-- Minha Conta;
-- preferências;
-- Web Push;
-- painel administrativo;
-- gerenciamento de rotas;
-- gerenciamento de áreas;
-- editor de geometria;
-- gerenciamento de cronogramas.
-
-## Fase 6 — Segurança da conta
-
-Foram adicionados:
-
-- confirmação obrigatória do e-mail;
-- reenvio de confirmação;
-- token de verificação com armazenamento por hash;
-- recuperação de senha;
-- token de recuperação de uso único;
-- expiração de tokens;
-- confirmação da nova senha.
-
-## Fase 7 — UX, acessibilidade e desempenho
-
-O front-end recebeu:
-
-- responsividade para desktop e celular;
-- foco visível;
-- navegação por teclado;
-- `aria-live`;
-- `aria-busy`;
-- mensagens de erro associadas aos campos;
-- mostrar/ocultar senha;
-- confirmação de senha;
-- comboboxes/listas de cidade e bairro;
-- skip link para o conteúdo principal;
-- títulos por rota;
-- suporte a `prefers-reduced-motion`;
-- code splitting com `React.lazy`;
-- lazy loading dos mapas.
-
----
-
-# 5. Estado atual
-
-## Implementado
-
-| Funcionalidade | Estado |
-|---|---:|
-| Site React/Vite | ✅ |
-| API Spring Boot | ✅ |
-| PostgreSQL | ✅ |
-| Flyway | ✅ |
-| Cadastro de usuário | ✅ |
-| Login JWT | ✅ |
-| BCrypt | ✅ |
-| Verificação de e-mail | ✅ |
-| Recuperação de senha | ✅ |
-| Consulta pública por cidade/bairro | ✅ |
-| Rotas | ✅ |
-| Áreas atendidas | ✅ |
-| Geometria GeoJSON | ✅ |
-| Cronogramas | ✅ |
-| OpenStreetMap / Leaflet | ✅ |
-| Geolocalização do morador | ✅ |
-| Preferências de notificação | ✅ |
-| SMTP | ✅ |
-| Web Push | ✅ |
-| Histórico de notificações | ✅ |
-| Deduplicação | ✅ |
-| Retry de e-mail | ✅ |
-| Scheduler | ✅ |
-| Painel administrativo | ✅ |
-| Responsividade | ✅ |
-| Melhorias de acessibilidade | ✅ |
-| Code splitting | ✅ |
-| Lazy loading dos mapas | ✅ |
-| Dockerfile do back-end | ✅ |
-| Deploy preparado para Render | ✅ |
-
-## Ainda não implementado neste snapshot
-
-| Funcionalidade | Estado |
-|---|---:|
-| Guia de descarte consciente | ⚠️ Pendente |
-| Aplicativo mobile nativo | 🔮 Futuro |
-| Rastreamento em tempo real do caminhão | 🔮 Futuro |
-| GPS dos veículos | 🔮 Futuro |
-| Alertas por aproximação do caminhão | 🔮 Futuro |
-
-> O rastreamento em tempo real continua propositalmente fora do escopo atual. O mapa existente mostra áreas, geometrias e a localização do próprio usuário; ele não acompanha caminhões.
-
----
-
-# 6. Como o SIMUL funciona
-
-## 6.1 Fluxo da consulta pública
+Cada domínio segue a mesma divisão:
 
 ```text
-Visitante acessa o site
-        ↓
-Front-end carrega as áreas disponíveis
-        ↓
-Usuário escolhe cidade
-        ↓
-Usuário escolhe bairro
-        ↓
-GET /api/rotas/consulta
-        ↓
-Área atendida
-        ↓
-Rota ativa
-        ↓
-Cronogramas ativos
-        ↓
-Dias e horários são exibidos
-        ↓
-Mapa mostra a região
+Controller  →  Service (interface + Impl)  →  Validation / Mapper  →  Repository  →  Model
 ```
 
-Se existir `geometria_geojson` cadastrada no SIMUL, ela é utilizada no mapa.
-
-Quando a geometria própria não está disponível, o front-end pode utilizar a localização/geometria obtida via Nominatim/OpenStreetMap como fallback.
-
-## 6.2 Fluxo de usuário cadastrado
-
-```text
-Cadastro
-   ↓
-Senha criptografada com BCrypt
-   ↓
-Usuário criado como USUARIO
-   ↓
-E-mail ainda não verificado
-   ↓
-Token seguro enviado por e-mail
-   ↓
-Usuário confirma o e-mail
-   ↓
-Login liberado
-   ↓
-JWT emitido
-   ↓
-Minha Conta / Preferências
-```
-
-## 6.3 Fluxo administrativo
-
-```text
-ADMIN faz login
-      ↓
-JWT contém role ADMIN
-      ↓
-Painel administrativo
-      ↓
-Rotas
-Áreas
-Geometrias
-Cronogramas
-```
-
----
-
-# 7. Perfis de acesso
-
-## Visitante
-
-Não precisa de conta.
-
-Pode:
-
-- consultar cidades e bairros atendidos;
-- consultar cronogramas;
-- visualizar a área no mapa.
-
-## USUARIO
-
-Além da consulta pública, pode:
-
-- acessar Minha Conta;
-- configurar uma região para lembretes;
-- ativar/desativar e-mail;
-- ativar/desativar Web Push;
-- definir antecedência;
-- gerenciar a inscrição Web Push do navegador.
-
-## ADMIN
-
-Além das funções de usuário, pode:
-
-- acessar o dashboard administrativo;
-- cadastrar e editar rotas;
-- ativar/desativar rotas;
-- cadastrar e editar áreas;
-- vincular área a rota;
-- desenhar/editar geometria da área;
-- cadastrar e editar cronogramas;
-- ativar/desativar cronogramas.
-
----
-
-# 8. Tecnologias
-
-## Back-end
-
-| Tecnologia | Uso |
+| Camada | Responsabilidade |
 |---|---|
-| Java 21 | Linguagem |
-| Spring Boot 4.1.0 | Framework |
-| Spring Web MVC | API REST |
-| Spring Data JPA | Persistência |
-| Hibernate | ORM/validação de schema |
-| Spring Security | Segurança |
-| OAuth2 Resource Server | Validação de JWT |
-| BCrypt | Hash de senha |
-| Bean Validation | Validação |
-| Spring Mail | SMTP |
-| Flyway | Migrations |
-| Lombok | Redução de boilerplate |
-| PostgreSQL | Banco relacional |
-| Maven | Build/dependências |
+| `controller` | Recebe a requisição HTTP, aplica `@Valid` e a regra de acesso. **Nunca acessa o repositório.** |
+| `dto` | `record`s de entrada e saída, separados. Nunca expõem senha nem hash. |
+| `service` | Regras de negócio. A interface documenta o contrato; a `Impl` implementa. |
+| `validation` | Regras reutilizáveis ("já existe?", "pertence ao usuário?") que lançam exceções de negócio. |
+| `mapper` | Conversão entre entidade e DTO. |
+| `repository` | Spring Data JPA. |
+| `model` | Entidades JPA e enums. |
 
-## Web Push no back-end
+Toda exceção de negócio vive em `core/exception` e é convertida pelo `GlobalExceptionHandler` em um **ProblemDetail** (RFC 9457) com o status certo (400, 401, 403, 404, 409 ou 503). Uma regra de negócio nunca vira erro 500.
 
-| Biblioteca | Versão no projeto |
-|---|---:|
-| `nl.martijndwars:web-push` | `5.1.1` |
-| BouncyCastle | `1.85` |
-| Apache HttpClient | `4.5.14` |
-| Apache HttpAsyncClient | `4.1.5` |
-| jose4j | `0.7.9` |
+### 5.4 Padrão Strategy nas notificações
 
-## Front-end
+Cada canal é uma `NotificacaoStrategy` (`EmailNotificacaoStrategy`, `WebPushNotificacaoStrategy`). O `EnvioNotificacaoService` recebe todas as estratégias e escolhe pela enum `CanalNotificacao`. Para criar um canal novo basta outra classe `@Component` que implemente a interface; o fluxo principal não muda.
 
-| Tecnologia | Versão declarada |
-|---|---:|
-| React | `19.2.8` |
-| React DOM | `19.2.8` |
-| React Router DOM | `7.18.3` |
-| Vite | `8.2.2` |
-| Leaflet | `1.9.4` |
-| React Leaflet | `5.0.0` |
-| Leaflet-Geoman | `2.20.0` |
-| ESLint | `10.9.0` |
-
-## Infraestrutura
-
-- Render;
-- Docker para o back-end;
-- PostgreSQL;
-- OpenStreetMap;
-- Nominatim;
-- Git/GitHub;
-- VS Code.
+O transporte do e-mail também é trocável: a interface `EmailGateway` tem as implementações `SmtpEmailGateway` e `BrevoEmailGateway`, escolhidas pela variável `SIMUL_MAIL_PROVEDOR`.
 
 ---
 
-# 9. Estrutura do repositório
+## 6. Estrutura do repositório
 
 ```text
 simul-system/
+├── .github/workflows/ci.yml      CI: testes do back-end, lint e build do front-end
+├── .editorconfig                 indentação e fim de linha para todos os editores
+├── README.md
 ├── backend/
-│   ├── Dockerfile
+│   ├── Dockerfile                build em duas etapas, executa sem root
 │   ├── pom.xml
-│   ├── mvnw
-│   ├── mvnw.cmd
+│   ├── mvnw, mvnw.cmd, .mvn/     Maven Wrapper (não precisa instalar o Maven)
 │   └── src/
-│       ├── main/
-│       │   ├── java/
-│       │   └── resources/
-│       │       ├── application.properties
-│       │       └── db/
-│       │           ├── migration/
-│       │           └── dev/
-│       └── test/
-│
-├── frontend/
-│   ├── public/
-│   │   └── sw.js
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   │   └── admin/
-│   │   └── services/
-│   ├── .env.example
-│   ├── package.json
-│   └── vite.config.js
-│
-├── mobile/
-│   └── .gitkeep
-│
-├── docs/
-│   └── documentação acadêmica
-│
-├── .vscode/
-├── .gitignore
-└── README.md
+│       ├── main/java/com/simulsystem/backend/
+│       │   ├── business/{usuario,rota,cronograma,notificacao}/
+│       │   └── core/{config,exception,security,status,util}/
+│       ├── main/resources/
+│       │   ├── application.properties
+│       │   └── db/migration/      V1 … V19 (Flyway)
+│       └── test/                  testes JUnit 5 + Mockito
+└── frontend/
+    ├── .prettierrc.json           estilo de formatação do front-end
+    ├── index.html                 aplica o tema salvo antes de o React carregar
+    ├── public/sw.js               service worker que exibe as notificações Web Push
+    └── src/
+        ├── App.jsx                rotas e tratamento de sessão expirada
+        ├── components/            componentes (admin, coleta, form, guia, auth…)
+        ├── hooks/                 tema claro/escuro e cores do mapa
+        ├── pages/                 uma página por rota (admin em pages/admin)
+        ├── services/              ÚNICO lugar que chama a API (via apiRequest)
+        ├── styles/                tokens do design system e CSS por área
+        └── utils/                 funções puras (coleta, cronogramas, áreas, texto, guia)
 ```
-
-A pasta `mobile/` é apenas uma reserva organizacional. Não existe aplicativo mobile implementado nesta entrega.
 
 ---
 
-# 10. Arquitetura do back-end
+## 7. Como o sistema se comporta
 
-Pacote base:
+### 7.1 Consulta pública
 
-```text
-com.simulsystem.backend
-```
+1. A página inicial pede `GET /api/rotas/areas`, que devolve **só cidade e bairro de rotas ativas**.
+2. O morador escolhe a cidade e o bairro (com busca que ignora acentos).
+3. O front pede `GET /api/rotas/consulta?cidade=…&bairro=…` e recebe a rota, os **horários ativos** e o contorno do bairro (se houver).
+4. A tela mostra os dias da semana com coleta, os horários e a **próxima coleta** ("hoje às 18:00", "amanhã às 06:00"…), calculada no navegador a partir dos horários.
+5. O mapa enquadra o **contorno salvo no SIMUL**. Se o bairro ainda não tem contorno, usa o que o **Nominatim** (OpenStreetMap) encontrar. Se nada for encontrado, avisa que não conseguiu localizar a região.
+6. O morador pode mostrar a própria localização no mapa (geolocalização do navegador, só com permissão dele).
 
-Estrutura principal:
+Bairro de **rota inativa** não aparece na lista e a consulta direta responde 404.
 
-```text
-com.simulsystem.backend/
-├── business/
-│   ├── usuario/
-│   ├── rota/
-│   ├── cronograma/
-│   └── notificacao/
-│
-└── core/
-    ├── config/
-    ├── exception/
-    └── security/
-```
+### 7.2 Cadastro e confirmação de e-mail
 
-## Domínio `usuario`
+1. `POST /api/usuarios` cria a conta com perfil **USUARIO**, e-mail em minúsculas e senha em BCrypt (8 a 72 caracteres, o limite do BCrypt).
+2. O sistema gera um **token aleatório de 256 bits**, guarda **apenas o hash SHA-256** e envia o link `…/verificar-email?token=…` (válido por 24 horas, configurável).
+3. Ao abrir o link, `POST /api/usuarios/verificar-email` confirma o e-mail e invalida o token (uso único).
+4. **Só é possível entrar depois de confirmar o e-mail.** Na tela de login, quem ainda não confirmou vê a opção "Reenviar e-mail de confirmação".
+5. Se o envio do e-mail falhar no cadastro, a **conta continua criada**: a pessoa reenvia a confirmação pelo login.
 
-Responsável por:
+### 7.3 Login e sessão
 
-- cadastro;
-- autenticação;
-- perfil;
-- verificação de e-mail;
-- recuperação de senha.
+- `POST /api/auth/login` devolve um **JWT** válido por **1 hora** (configurável). O front guarda o token na `sessionStorage`, então ele some ao fechar a aba.
+- E-mail ou senha errados → 401. E-mail não confirmado → 403 ("E-mail não verificado").
+- Quando o token vence, a primeira chamada recebe 401: o front **encerra a sessão e leva ao login** com o aviso "Sessão encerrada".
 
-## Domínio `rota`
+### 7.4 Recuperação de senha
 
-Responsável por:
+1. `POST /api/usuarios/recuperar-senha` responde **sempre a mesma mensagem neutra**, exista ou não a conta, para não revelar quem é cadastrado.
+2. Se a conta existe e está ativa, um link `…/redefinir-senha?token=…` é enviado (válido por 60 minutos e de uso único; só o mais recente vale).
+3. `POST /api/usuarios/redefinir-senha` troca a senha (com confirmação) e invalida o token.
 
-- rotas;
-- áreas atendidas;
-- geometrias;
-- consulta pública.
+### 7.5 Preferências de lembrete
 
-## Domínio `cronograma`
+- Cada usuário tem **uma** preferência: rota (escolhida pelo bairro), e-mail ligado/desligado, navegador ligado/desligado e antecedência de **0 a 72 horas**.
+- Ligar o canal "navegador" pede permissão de notificação, registra o `sw.js` e inscreve o navegador (`POST /api/notificacoes/push/subscriptions`). Um navegador só pode estar ligado a **uma conta**.
 
-Responsável por:
+### 7.6 Guia de descarte
 
-- dias da semana;
-- horários;
-- cálculo da próxima coleta.
+Página pública e lúdica, com conteúdo todo em `frontend/src/utils/guiaConteudo.js` (a equipe pode revisar o texto sem mexer nos componentes):
 
-## Domínio `notificacao`
+- **"Para onde vai?"**: 8 itens sorteados entre 16. A pessoa toca na lixeira certa (cores da Resolução CONAMA 275/2001), recebe a explicação e, no fim, um nível e o impacto ("7 itens foram para o lugar certo em vez do aterro").
+- **4 passos** para separar.
+- **Cartões dos materiais**, com o que vai e o que não vai em cada lixeira.
+- **Mito ou verdade**: 5 afirmações com explicação.
+- **Missão da semana**: hábitos para marcar, salvos no próprio navegador e reiniciados toda segunda-feira.
 
-Responsável por:
+### 7.7 Painel administrativo
 
-- preferências;
-- SMTP;
-- Web Push;
-- subscriptions;
-- cálculo do lembrete;
-- histórico;
-- deduplicação;
-- retries;
-- processamento em lote;
-- scheduler.
+- **Rotas:** desativar uma rota pede confirmação e explica o efeito. Os bairros dela saem da consulta e quem a escolheu para os lembretes deixa de recebê-los. **Nada é apagado**: ao reativar, tudo volta.
+- **Áreas atendidas:** cidade + bairro são únicos. O contorno é desenhado no mapa (Polygon ou MultiPolygon GeoJSON). Se ainda não existe contorno salvo, o editor parte do que o OpenStreetMap encontrar.
+- **Cronogramas:** só pode haver **um horário ativo por rota e dia**. A grade semanal permite criar vários dias de uma vez (um pedido por dia) e mudar o horário de várias rotas **de uma vez só**: `PUT /api/admin/cronogramas/lote/horario` aplica tudo numa única transação, ou nada se algo falhar.
+- **Visão geral:** indicadores e lista "Precisa de atenção": áreas sem contorno, rotas ativas sem horário, rotas ativas sem bairros e bairros em rotas inativas.
+
+### 7.8 Quando o servidor está "acordando"
+
+Na hospedagem gratuita o back-end dorme depois de 15 minutos sem uso e a primeira resposta pode levar perto de 1 minuto. Quando uma requisição passa de 6 segundos, o site mostra "Conectando ao servidor…". O limite de espera é de 75 segundos; depois disso aparece uma mensagem clara para tentar de novo.
 
 ---
 
-# 11. Arquitetura do front-end
+## 8. Lembretes: como funcionam por dentro
 
-O front-end usa React e React Router.
+### 8.1 O ciclo
 
-Rotas principais:
+O `NotificacaoScheduler` roda **a cada minuto** (cron `0 * * * * *`, fuso `America/Sao_Paulo`) quando `NOTIFICACAO_SCHEDULER_ENABLED=true`. Cada ciclo tem duas etapas independentes; um erro numa não impede a outra:
 
-```text
-/
-├── /cadastro
-├── /login
-├── /verificar-email
-├── /recuperar-senha
-├── /redefinir-senha
-├── /minha-conta
-├── /preferencias
-└── /admin
-    ├── /admin/rotas
-    ├── /admin/areas
-    └── /admin/cronogramas
-```
+1. **Lembretes do minuto** (`ProcessamentoNotificacaoLoteService`)
+2. **Novas tentativas** das falhas (`ProcessamentoRetryNotificacaoService`)
 
-As páginas são carregadas com `React.lazy`, reduzindo o JavaScript inicial.
+### 8.2 Quando um lembrete "vence"
 
-Os mapas também são carregados sob demanda:
+Para cada preferência elegível (usuário ativo, rota ativa e pelo menos um canal ligado):
 
 ```text
-ConsultaPage
-└── MapaColeta → lazy
-
-AreasAdminPage
-└── MapaEdicaoArea → lazy
+coleta alvo = minuto atual (sem segundos) + antecedência
 ```
 
-## Camada de serviços
+O lembrete vence se a rota tem um **cronograma ativo** naquele dia da semana e com aquele **horário de início**.
 
-A comunicação com a API fica em:
+> Exemplo: coleta na quarta às 07:00 e antecedência de 48 h → o lembrete sai na **segunda às 07:00**.
+> Calcular a partir da coleta alvo (e não da "próxima coleta a partir de agora") evita perder o lembrete quando a antecedência é maior que o intervalo entre duas coletas.
 
-```text
-frontend/src/services/
-```
+### 8.3 Sem lembrete duplicado
 
-Exemplos:
+Antes de enviar, o sistema **reserva** o envio em `historico_notificacoes`. Uma restrição única em `(usuario, rota, data_hora_coleta, canal)` garante que, mesmo com o ciclo rodando duas vezes, cada lembrete sai **uma vez por canal**.
 
-```text
-api.js
-authService.js
-usuarioService.js
-rotaService.js
-notificacaoService.js
-webPushService.js
-adminRotaService.js
-adminAreaService.js
-adminCronogramaService.js
-geocodingService.js
-```
+### 8.4 Situações e novas tentativas
 
-`api.js` centraliza:
+| Situação | Significado |
+|---|---|
+| `PENDENTE` | reservado, sendo enviado |
+| `ENVIADO` | entregue ao provedor |
+| `FALHA` | não foi entregue; nova tentativa em **5 minutos**, até **3 tentativas** |
+| `CANCELADO` | não será reenviado: o usuário desligou o canal, trocou de rota, ou a rota/conta foi desativada |
 
-- URL base;
-- headers;
-- JWT;
-- serialização JSON;
-- tratamento de erros.
+A nova tentativa usa o **mesmo canal** da falha (e-mail ou Web Push) e confere a configuração **atual** do usuário antes de reenviar.
+
+### 8.5 Texto
+
+> Assunto: **SIMUL - Lembrete de coleta seletiva**
+> "Olá, Ana! A coleta seletiva da rota Senador Canedo - Diurna (seg, qua e sex) está prevista para 25/11/2026 às 06:00."
+
+No Web Push, o assunto vira o título da notificação e o texto vira o corpo.
 
 ---
 
-# 12. Banco de dados e Flyway
+## 9. Segurança
 
-O PostgreSQL é a fonte persistente do sistema.
+| Proteção | Como |
+|---|---|
+| Senhas | BCrypt (custo 10). Nunca devolvidas pela API. |
+| Autenticação | JWT HS256 sem sessão no servidor. `JWT_SECRET` em Base64 com no mínimo 256 bits; a aplicação não sobe sem ele. |
+| Perfis | `USUARIO` e `ADMIN`, no claim `roles`. Endpoints de admin exigem `hasRole('ADMIN')`. O cadastro público sempre cria `USUARIO`. |
+| Links por e-mail | Token aleatório de 256 bits, guardado só como hash SHA-256, com validade e uso único. |
+| Contas | Resposta neutra em "esqueci minha senha" e "reenviar confirmação". Conta inativa não entra. |
+| Erros | 401/403 em ProblemDetail. Exceções de negócio com status próprio; causas técnicas (como falha de SMTP) ficam só no log. |
+| CORS | Só as origens de `SIMUL_CORS_ALLOWED_ORIGINS`, apenas em `/api/**`. |
+| Segredos | Sempre em variáveis de ambiente; nenhum segredo no repositório. |
+| Banco | Restrições no próprio PostgreSQL (ver [11.3](#113-regras-garantidas-pelo-banco-v17)). |
 
-O Hibernate está configurado com:
+---
 
-```properties
-spring.jpa.hibernate.ddl-auto=validate
+## 10. API
+
+Base local: `http://localhost:8080`. Erros seguem o formato ProblemDetail:
+
+```json
+{ "type": "about:blank", "title": "Dados inválidos", "status": 400,
+  "detail": "A senha deve possuir entre 8 e 72 caracteres.",
+  "erros": { "senha": "A senha deve possuir entre 8 e 72 caracteres." } }
 ```
 
-Portanto, o Hibernate **não deve criar ou alterar o schema**.
+### 10.1 Públicos
 
-Toda alteração estrutural deve ser feita por Flyway.
+| Método | Caminho | O que faz |
+|---|---|---|
+| GET | `/api/status` | Verificação de saúde: `{"status":"ok"}` |
+| GET | `/api/rotas/areas` | Cidades e bairros de rotas ativas |
+| GET | `/api/rotas/consulta?cidade=&bairro=` | Rota, contorno e horários ativos do bairro |
+| POST | `/api/usuarios` | Cadastro |
+| POST | `/api/usuarios/verificar-email` | Confirma o e-mail pelo token |
+| POST | `/api/usuarios/reenviar-verificacao` | Reenvia o link (resposta neutra) |
+| POST | `/api/usuarios/recuperar-senha` | Envia o link de redefinição (resposta neutra) |
+| POST | `/api/usuarios/redefinir-senha` | Troca a senha pelo token |
+| POST | `/api/auth/login` | Devolve o JWT |
+| GET | `/api/notificacoes/push/public-key` | Chave pública VAPID |
 
-As migrations ficam em `backend/src/main/resources/db/migration` e são o **histórico** de como o banco chegou ao estado atual. Elas não são reescritas: cada mudança entra numa versão nova.
+### 10.2 Usuário logado
 
-```text
-V1   usuarios
-V2   rotas + areas_atendidas
-V3   cronogramas
-V4   preferencias_notificacao
-V5   rota em preferencias_notificacao
-V6   Web Push em preferencias
-V7   historico_notificacoes
-V8   retry
-V9   geometria GeoJSON
-V10  push_subscriptions
-V11  email_verificado
-V12  tokens_verificacao_email
-V13  tokens_recuperacao_senha
-V14  horários dos cronogramas sem segundos
-V15  carga acadêmica de Senador Canedo (109 bairros)
-V16  conta admin de teste (legado)
-V17  integridade e índices
-V18  consolidação das rotas de Senador Canedo (109 → 5)
-V19  conta admin fixa do sistema
+| Método | Caminho | O que faz |
+|---|---|---|
+| GET | `/api/usuarios/me` | Dados do usuário logado |
+| GET / POST / PUT | `/api/notificacoes/preferencias` | Ler, criar e alterar a preferência de lembrete |
+| GET / POST | `/api/notificacoes/push/subscriptions` | Listar e inscrever navegadores |
+| DELETE | `/api/notificacoes/push/subscriptions?endpoint=` | Cancelar a inscrição do navegador |
+
+### 10.3 Administrador
+
+| Método | Caminho | O que faz |
+|---|---|---|
+| GET / POST | `/api/admin/rotas` | Listar e criar rotas |
+| PUT | `/api/admin/rotas/{id}` | Editar nome e descrição |
+| PATCH | `/api/admin/rotas/{id}/status?ativo=` | Ativar/desativar |
+| GET / POST | `/api/admin/rotas/areas` | Listar (todas) e criar áreas |
+| PUT | `/api/admin/rotas/areas/{id}` | Editar cidade, bairro e rota |
+| PUT | `/api/admin/rotas/areas/{id}/geometria` | Salvar o contorno GeoJSON |
+| GET / POST | `/api/admin/cronogramas` | Listar e criar horários |
+| PUT | `/api/admin/cronogramas/{id}` | Editar um horário |
+| PATCH | `/api/admin/cronogramas/{id}/status?ativo=` | Ativar/desativar |
+| PUT | `/api/admin/cronogramas/lote/horario` | Mudar início e fim de vários horários (tudo ou nada) |
+| GET | `/api/admin/usuarios/verificar-acesso` | 204 para ADMIN (usado nos testes de segurança) |
+
+Exemplo do lote:
+
+```json
+PUT /api/admin/cronogramas/lote/horario
+{ "ids": [1, 2, 3], "horarioInicio": "19:00", "horarioFim": "23:59" }
 ```
 
-## Integridade garantida pelo banco (V17)
+---
 
-As regras abaixo valem no banco, não apenas no código Java:
+## 11. Banco de dados
+
+### 11.1 Regras gerais
+
+- `spring.jpa.hibernate.ddl-auto=validate`: o Hibernate **só confere** o schema; quem cria e altera é o **Flyway**.
+- Toda mudança estrutural é uma **migration nova**. **Nunca edite uma migration já aplicada**: o Flyway confere o checksum e a aplicação deixa de subir (ver [17](#17-problemas-comuns)).
+
+### 11.2 Migrations
+
+| Versão | Conteúdo |
+|---|---|
+| V1 | `usuarios` |
+| V2 | `rotas` e `areas_atendidas` |
+| V3 | `cronogramas` |
+| V4 | `preferencias_notificacao` |
+| V5 | rota na preferência |
+| V6 | Web Push na preferência |
+| V7 | `historico_notificacoes` |
+| V8 | campos de nova tentativa |
+| V9 | contorno GeoJSON das áreas |
+| V10 | `push_subscriptions` |
+| V11 | `email_verificado` |
+| V12 | `tokens_verificacao_email` |
+| V13 | `tokens_recuperacao_senha` |
+| V14 | horários sem segundos |
+| V15 | carga de Senador Canedo (109 bairros) |
+| V16 | conta admin de teste (legado) |
+| V17 | integridade e índices |
+| V18 | consolidação das rotas de Senador Canedo (109 → 5) |
+| V19 | conta admin fixa do sistema |
+
+### 11.3 Regras garantidas pelo banco (V17)
 
 | Regra | Como |
 |---|---|
@@ -745,779 +420,12 @@ As regras abaixo valem no banco, não apenas no código Java:
 | Um bairro por cidade | índice único em `UPPER(cidade), UPPER(bairro)` |
 | Um cronograma **ativo** por rota e dia | índice único parcial `(rota_id, dia_semana) WHERE ativo` |
 | Antecedência de 0 a 72 horas | `CHECK` |
-| Canal e status de notificação válidos | `CHECK` com os valores dos enums |
-| Início do cronograma diferente do fim | `CHECK` (fim menor que início é permitido: coleta que passa da meia-noite) |
+| Canal e situação da notificação válidos | `CHECK` |
+| Início do cronograma diferente do fim | `CHECK` (fim menor que o início é permitido: coleta que passa da meia-noite) |
 
-Também há índices nas chaves estrangeiras `rota_id`, usadas pela consulta pública e pelo ciclo de lembretes.
+### 11.4 Dados que já vêm no banco
 
-Diagnóstico de duplicidades (cada consulta deve voltar vazia):
-
-```sql
-SELECT UPPER(email), COUNT(*) FROM usuarios GROUP BY 1 HAVING COUNT(*) > 1;
-SELECT UPPER(cidade), UPPER(bairro), COUNT(*) FROM areas_atendidas GROUP BY 1,2 HAVING COUNT(*) > 1;
-SELECT rota_id, dia_semana, COUNT(*) FROM cronogramas WHERE ativo GROUP BY 1,2 HAVING COUNT(*) > 1;
-```
-
-Principais tabelas:
-
-```text
-usuarios
-rotas
-areas_atendidas
-cronogramas
-preferencias_notificacao
-historico_notificacoes
-push_subscriptions
-tokens_verificacao_email
-tokens_recuperacao_senha
-flyway_schema_history
-```
-
-> Nunca altere uma migration `V*.sql` que já tenha sido aplicada em um ambiente compartilhado. Crie uma nova migration.
-
----
-
-# 13. Segurança
-
-O SIMUL utiliza JWT stateless.
-
-```text
-Cliente
-  ↓
-POST /api/auth/login
-  ↓
-Spring Security autentica
-  ↓
-JWT é gerado
-  ↓
-Cliente envia:
-Authorization: Bearer <token>
-```
-
-## Proteções atuais
-
-- BCrypt;
-- JWT HS256;
-- secret em Base64;
-- mínimo de 256 bits para `JWT_SECRET`;
-- DTOs separados;
-- Bean Validation;
-- `@Valid`;
-- `@PreAuthorize`;
-- roles;
-- CORS restrito;
-- segredos por variável de ambiente;
-- API stateless;
-- tratamento padronizado de `401` e `403`;
-- e-mail normalizado;
-- verificação de e-mail antes do login.
-
-## Perfis
-
-```text
-USUARIO
-ADMIN
-```
-
-O cadastro público não permite escolher `ADMIN`.
-
----
-
-# 14. Cadastro, verificação de e-mail e recuperação de senha
-
-## 14.1 Cadastro
-
-O cadastro recebe:
-
-```text
-nome
-email
-senha
-```
-
-A senha é codificada com BCrypt.
-
-O novo usuário é criado com:
-
-```text
-perfil = USUARIO
-email_verificado = false
-```
-
-## 14.2 Verificação de e-mail
-
-Depois do cadastro:
-
-1. o back-end gera 32 bytes aleatórios;
-2. o token bruto é enviado somente no link do e-mail;
-3. o banco armazena apenas SHA-256 do token;
-4. por padrão, o token expira em 24 horas;
-5. depois de usado, é marcado como utilizado;
-6. o usuário passa a possuir `email_verificado = true`.
-
-O login é bloqueado enquanto o e-mail não estiver verificado.
-
-## 14.3 Recuperação de senha
-
-Fluxo:
-
-```text
-Esqueci minha senha
-      ↓
-Usuário informa e-mail
-      ↓
-Resposta neutra
-      ↓
-Token de recuperação
-      ↓
-Link por SMTP
-      ↓
-Nova senha + confirmação
-      ↓
-BCrypt
-      ↓
-Token marcado como utilizado
-```
-
-O token:
-
-- é aleatório;
-- é armazenado somente por hash SHA-256;
-- é de uso único;
-- expira por padrão em 60 minutos.
-
-As respostas da solicitação de recuperação são neutras para reduzir enumeração de usuários.
-
----
-
-# 15. Sistema de notificações
-
-O módulo usa Strategy Pattern.
-
-```text
-NotificacaoStrategy
-├── EmailNotificacaoStrategy
-└── WebPushNotificacaoStrategy
-```
-
-O serviço de envio escolhe a estratégia pelo tipo:
-
-```text
-EMAIL
-WEB_PUSH
-```
-
-## 15.1 Fluxo automático
-
-```text
-Scheduler
-   ↓
-CicloNotificacaoService
-   ↓
-Processamento em lote
-   ↓
-Preferências válidas
-   ↓
-Próxima coleta
-   ↓
-Cálculo da antecedência
-   ↓
-Histórico / reserva da ocorrência
-   ↓
-Strategy
-   ├── SMTP
-   └── Web Push
-```
-
-## 15.2 Deduplicação
-
-A combinação:
-
-```text
-usuario
-+
-rota
-+
-data_hora_coleta
-+
-canal
-```
-
-é única no histórico.
-
-Isso evita enviar duas vezes o mesmo canal para a mesma ocorrência.
-
-## 15.3 Retry
-
-O retry atual foi implementado para o canal de e-mail.
-
-Regra:
-
-```text
-até 3 tentativas totais
-intervalo de 5 minutos
-```
-
-Antes do retry o sistema verifica novamente se a configuração ainda permite o envio.
-
-Se não permitir, o histórico é marcado como cancelado.
-
-## 15.4 Scheduler
-
-Configuração padrão:
-
-```properties
-simul.notificacao.scheduler.enabled=${NOTIFICACAO_SCHEDULER_ENABLED:false}
-simul.notificacao.scheduler.cron=${NOTIFICACAO_SCHEDULER_CRON:0 * * * * *}
-```
-
-Por padrão ele fica desativado localmente.
-
-Para testar lembretes automáticos:
-
-```text
-NOTIFICACAO_SCHEDULER_ENABLED=true
-```
-
-O cron padrão verifica a cada minuto.
-
-> Verificação de e-mail e recuperação de senha usam SMTP diretamente e não dependem desse scheduler.
-
----
-
-# 16. Mapas, geolocalização e geometrias
-
-O SIMUL utiliza:
-
-- Leaflet;
-- React Leaflet;
-- OpenStreetMap;
-- Nominatim;
-- Leaflet-Geoman;
-- GeoJSON.
-
-## Consulta pública
-
-O mapa pode mostrar:
-
-- geometria da área cadastrada pelo SIMUL;
-- localização aproximada da região;
-- posição do próprio usuário, se ele autorizar geolocalização.
-
-## Painel administrativo
-
-O administrador pode:
-
-- abrir o editor de uma área;
-- desenhar um polígono;
-- editar vértices;
-- salvar `Polygon` ou `MultiPolygon` em GeoJSON.
-
-O mapa **não rastreia caminhões**.
-
-```text
-Geolocalização atual
-→ posição do navegador do morador
-
-Geometria atual
-→ área atendida
-
-Rastreamento futuro
-→ posição de veículo
-```
-
-São recursos diferentes.
-
----
-
-# 17. API atual
-
-## Endpoints públicos
-
-| Método | Endpoint | Uso |
-|---|---|---|
-| `POST` | `/api/usuarios` | Cadastro |
-| `POST` | `/api/usuarios/verificar-email` | Confirmar e-mail |
-| `POST` | `/api/usuarios/reenviar-verificacao` | Reenviar confirmação |
-| `POST` | `/api/usuarios/recuperar-senha` | Solicitar recuperação |
-| `POST` | `/api/usuarios/redefinir-senha` | Redefinir senha |
-| `POST` | `/api/auth/login` | Login |
-| `GET` | `/api/rotas/areas` | Cidades/bairros disponíveis |
-| `GET` | `/api/rotas/consulta` | Consulta pública |
-| `GET` | `/api/notificacoes/push/public-key` | Chave pública VAPID |
-
-## Endpoints autenticados
-
-| Método | Endpoint | Uso |
-|---|---|---|
-| `GET` | `/api/usuarios/me` | Dados da conta |
-| `POST` | `/api/notificacoes/preferencias` | Criar preferência |
-| `GET` | `/api/notificacoes/preferencias` | Consultar preferência |
-| `PUT` | `/api/notificacoes/preferencias` | Atualizar preferência |
-| `POST` | `/api/notificacoes/push/subscriptions` | Salvar Web Push |
-| `GET` | `/api/notificacoes/push/subscriptions` | Listar subscriptions |
-| `DELETE` | `/api/notificacoes/push/subscriptions` | Remover subscription |
-
-## Endpoints administrativos
-
-Base de rotas:
-
-```text
-/api/admin/rotas
-```
-
-| Método | Endpoint |
-|---|---|
-| `POST` | `/api/admin/rotas` |
-| `GET` | `/api/admin/rotas` |
-| `PUT` | `/api/admin/rotas/{id}` |
-| `PATCH` | `/api/admin/rotas/{id}/status` |
-| `POST` | `/api/admin/rotas/areas` |
-| `GET` | `/api/admin/rotas/areas` |
-| `PUT` | `/api/admin/rotas/areas/{id}` |
-| `PUT` | `/api/admin/rotas/areas/{id}/geometria` |
-
-Cronogramas:
-
-```text
-/api/admin/cronogramas
-```
-
-| Método | Endpoint |
-|---|---|
-| `POST` | `/api/admin/cronogramas` |
-| `GET` | `/api/admin/cronogramas` |
-| `PUT` | `/api/admin/cronogramas/{id}` |
-| `PATCH` | `/api/admin/cronogramas/{id}/status` |
-
-Teste de autorização administrativa:
-
-```text
-GET /api/admin/usuarios/verificar-acesso
-```
-
----
-
-# 18. Como utilizar o sistema
-
-## Visitante
-
-1. Acesse `/`.
-2. Selecione uma cidade.
-3. Selecione um bairro.
-4. Aguarde a consulta automática.
-5. Veja dias/horários.
-6. Consulte o mapa.
-
-## Criar conta
-
-1. Acesse `/cadastro`.
-2. Informe nome, e-mail, senha e confirmação.
-3. Abra o e-mail enviado pelo SIMUL.
-4. Clique no link de verificação.
-5. Aguarde a confirmação.
-6. Faça login.
-
-## Login
-
-1. Acesse `/login`.
-2. Informe e-mail e senha.
-3. O e-mail precisa estar confirmado.
-4. Depois do login, o usuário é redirecionado para Minha Conta.
-
-## Esqueci minha senha
-
-1. Clique em **Esqueci minha senha**.
-2. Informe o e-mail.
-3. Abra a mensagem recebida.
-4. Acesse o link.
-5. Informe a nova senha.
-6. Confirme a nova senha.
-7. Volte ao login.
-
-## Preferências
-
-1. Faça login.
-2. Abra **Notificações**.
-3. Escolha cidade e bairro.
-4. Selecione a região.
-5. Ative e-mail e/ou Web Push.
-6. Defina a antecedência.
-7. Salve.
-
-## Painel administrativo
-
-O usuário precisa possuir perfil `ADMIN`.
-
-Acesse:
-
-```text
-/admin
-```
-
-Use as seções:
-
-```text
-Visão geral
-Rotas
-Áreas atendidas
-Cronogramas
-```
-
----
-
-# 19. Executando localmente em outro computador
-
-Esta seção descreve a instalação do zero.
-
-## 19.1 Pré-requisitos
-
-Instale:
-
-### Obrigatórios
-
-- Git;
-- JDK 21;
-- Node.js;
-- PostgreSQL.
-
-### Recomendados
-
-- pgAdmin;
-- Visual Studio Code.
-
-### Versões recomendadas para reproduzir o ambiente
-
-```text
-Java: 21
-PostgreSQL: 18
-Node: 22 LTS
-```
-
-O `package-lock.json` atual do projeto exige, por causa do Vite:
-
-```text
-Node ^20.19.0 ou >=22.12.0
-```
-
-Por simplicidade, use Node 22 atualizado.
-
-Verifique:
-
-```powershell
-java -version
-javac -version
-node --version
-npm --version
-```
-
----
-
-## 19.2 Obter o projeto
-
-### Usando Git
-
-```powershell
-git clone https://github.com/SIMUL-System/simul-system.git
-cd simul-system
-```
-
-Se o repositório exigir autenticação, faça login no GitHub antes.
-
-### Usando ZIP
-
-1. Extraia o ZIP.
-2. Abra a pasta `simul-system`.
-3. Abra essa pasta no VS Code.
-
----
-
-## 19.3 Criar o banco local
-
-No pgAdmin ou `psql`, crie:
-
-```sql
-CREATE DATABASE simul;
-```
-
-Exemplo de conexão:
-
-```text
-Host: localhost
-Port: 5432
-Database: simul
-Username: postgres
-Password: <sua senha local>
-```
-
-A URL JDBC será:
-
-```text
-jdbc:postgresql://localhost:5432/simul
-```
-
----
-
-## 19.4 Gerar um JWT_SECRET
-
-O projeto exige um secret:
-
-- Base64 válido;
-- pelo menos 256 bits.
-
-### PowerShell
-
-```powershell
-$bytes = New-Object byte[] 32
-$rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
-$rng.GetBytes($bytes)
-$jwtSecret = [Convert]::ToBase64String($bytes)
-$rng.Dispose()
-$jwtSecret
-```
-
-Copie a saída e use como `JWT_SECRET`.
-
-### Linux/macOS com OpenSSL
-
-```bash
-openssl rand -base64 32
-```
-
-Não faça commit do valor.
-
----
-
-## 19.5 Gerar chaves VAPID
-
-O back-end atual exige chave pública, chave privada e subject VAPID para inicializar o Web Push.
-
-Se a equipe já possui um par VAPID de desenvolvimento armazenado com segurança, use-o.
-
-Para gerar um novo par de desenvolvimento, uma opção é:
-
-```powershell
-npx web-push generate-vapid-keys
-```
-
-O comando é apenas um utilitário de geração; o pacote `web-push` não precisa ser adicionado às dependências do front-end.
-
-Exemplo de subject:
-
-```text
-mailto:seu-email@exemplo.com
-```
-
-Nunca publique a chave privada VAPID.
-
----
-
-## 19.6 Configurar SMTP
-
-O sistema usa SMTP para:
-
-- confirmação de e-mail;
-- recuperação de senha;
-- lembretes por e-mail.
-
-Você precisa de uma conta/servidor SMTP válido.
-
-Exemplo genérico:
-
-```text
-SMTP_HOST=<host smtp>
-SMTP_PORT=587
-SMTP_USERNAME=<usuario>
-SMTP_PASSWORD=<senha ou app password>
-SMTP_FROM=<email remetente>
-```
-
-Se utilizar um provedor que exige senha de aplicativo, use a senha de aplicativo em vez da senha comum da conta.
-
----
-
-## 19.7 Configurar variáveis do back-end — Windows PowerShell
-
-Abra um terminal na pasta do projeto e execute:
-
-```powershell
-$env:DB_URL="jdbc:postgresql://localhost:5432/simul"
-$env:DB_USERNAME="postgres"
-$env:DB_PASSWORD="<SENHA_LOCAL_DO_POSTGRES>"
-
-$env:JWT_SECRET="<JWT_SECRET_BASE64>"
-$env:JWT_EXPIRATION_SECONDS="3600"
-
-$env:SMTP_HOST="<SMTP_HOST>"
-$env:SMTP_PORT="587"
-$env:SMTP_USERNAME="<SMTP_USERNAME>"
-$env:SMTP_PASSWORD="<SMTP_PASSWORD>"
-$env:SMTP_FROM="<SMTP_FROM>"
-
-$env:SIMUL_TIME_ZONE="America/Sao_Paulo"
-
-$env:NOTIFICACAO_SCHEDULER_ENABLED="false"
-$env:NOTIFICACAO_SCHEDULER_CRON="0 * * * * *"
-
-$env:SIMUL_CORS_ALLOWED_ORIGINS="http://localhost:5173"
-
-$env:WEB_PUSH_VAPID_PUBLIC_KEY="<VAPID_PUBLIC_KEY>"
-$env:WEB_PUSH_VAPID_PRIVATE_KEY="<VAPID_PRIVATE_KEY>"
-$env:WEB_PUSH_VAPID_SUBJECT="mailto:<SEU_EMAIL>"
-
-$env:EMAIL_VERIFICATION_EXPIRATION_HOURS="24"
-$env:PASSWORD_RECOVERY_EXPIRATION_MINUTES="60"
-
-$env:SIMUL_FRONTEND_URL="http://localhost:5173"
-```
-
-Essas variáveis valem apenas para a sessão atual do PowerShell.
-
-> O back-end não carrega automaticamente um arquivo `.env`. Ele lê variáveis do ambiente do processo.
-
----
-
-## 19.8 Configurar variáveis do back-end — Linux/macOS
-
-```bash
-export DB_URL="jdbc:postgresql://localhost:5432/simul"
-export DB_USERNAME="postgres"
-export DB_PASSWORD="<SENHA_LOCAL_DO_POSTGRES>"
-
-export JWT_SECRET="<JWT_SECRET_BASE64>"
-export JWT_EXPIRATION_SECONDS="3600"
-
-export SMTP_HOST="<SMTP_HOST>"
-export SMTP_PORT="587"
-export SMTP_USERNAME="<SMTP_USERNAME>"
-export SMTP_PASSWORD="<SMTP_PASSWORD>"
-export SMTP_FROM="<SMTP_FROM>"
-
-export SIMUL_TIME_ZONE="America/Sao_Paulo"
-
-export NOTIFICACAO_SCHEDULER_ENABLED="false"
-export NOTIFICACAO_SCHEDULER_CRON="0 * * * * *"
-
-export SIMUL_CORS_ALLOWED_ORIGINS="http://localhost:5173"
-
-export WEB_PUSH_VAPID_PUBLIC_KEY="<VAPID_PUBLIC_KEY>"
-export WEB_PUSH_VAPID_PRIVATE_KEY="<VAPID_PRIVATE_KEY>"
-export WEB_PUSH_VAPID_SUBJECT="mailto:<SEU_EMAIL>"
-
-export EMAIL_VERIFICATION_EXPIRATION_HOURS="24"
-export PASSWORD_RECOVERY_EXPIRATION_MINUTES="60"
-
-export SIMUL_FRONTEND_URL="http://localhost:5173"
-```
-
----
-
-## 19.9 Executar o back-end
-
-### Windows
-
-```powershell
-cd backend
-.\mvnw.cmd clean test
-.\mvnw.cmd spring-boot:run
-```
-
-### Linux/macOS
-
-```bash
-cd backend
-chmod +x mvnw
-./mvnw clean test
-./mvnw spring-boot:run
-```
-
-Na primeira execução, o Maven Wrapper pode precisar baixar o Maven e as dependências.
-
-O back-end ficará em:
-
-```text
-http://localhost:8080
-```
-
-O Flyway executará automaticamente as migrations.
-
-Nos logs, verifique:
-
-```text
-Flyway
-HikariPool
-Tomcat
-Started BackendApplication
-```
-
----
-
-## 19.10 Configurar o front-end
-
-Abra outro terminal:
-
-```powershell
-cd frontend
-```
-
-**Não é necessário criar `.env.local` para executar localmente.** O Vite encaminha automaticamente as chamadas `/api` para `http://localhost:8080`, onde o Spring Boot fica disponível por padrão.
-
-Opcionalmente, se quiser apontar o front-end diretamente para outra API durante o desenvolvimento, crie `frontend/.env.local` com:
-
-```env
-VITE_API_URL=http://localhost:8080
-```
-
-Esse arquivo é opcional e não deve ser versionado. Em produção, a URL pública do back-end deve ser configurada como `VITE_API_URL` no serviço de hospedagem do front-end, antes de gerar o build.
-
----
-
-## 19.11 Instalar e executar o front-end
-
-```powershell
-npm ci
-npm run dev
-```
-
-Abra:
-
-```text
-http://localhost:5173
-```
-
-Para validar o código:
-
-```powershell
-npm run lint
-npm run build
-```
-
-Para visualizar o build local:
-
-```powershell
-npm run preview
-```
-
----
-
-## 19.12 Ordem recomendada para iniciar o ambiente
-
-```text
-1. PostgreSQL
-2. Back-end Spring Boot
-3. Carga acadêmica, se necessária
-4. Front-end Vite
-5. Navegador
-```
-
----
-
-# 20. Carga acadêmica de Senador Canedo
-
-A carga é aplicada **automaticamente** pelo Flyway:
-
-1. **V15** cadastra os 109 bairros de Senador Canedo, inicialmente com uma rota por bairro.
-2. **V18** agrupa os bairros que têm os mesmos dias e horários, resultando em **5 rotas e 18 cronogramas**:
+**Senador Canedo (V15 + V18):** 109 bairros agrupados em 5 rotas e 18 cronogramas.
 
 | Rota | Bairros | Dias | Horário |
 |---|---:|---|---|
@@ -1527,385 +435,306 @@ A carga é aplicada **automaticamente** pelo Flyway:
 | Senador Canedo - Noturna (ter, qui e sáb) | 6 | ter, qui, sáb | 18:00 – 23:59 |
 | Senador Canedo - Noturna (seg a sáb) | 2 | seg a sáb | 18:00 – 23:59 |
 
-A rota é o **grupo de dias e horários** da coleta e não representa a trajetória física do caminhão. Para mudar o horário de um bairro, basta associá-lo a outra rota no painel administrativo. Para mudar o horário de um grupo inteiro, edite o cronograma da rota.
+A rota é o **grupo de dias e horários**; ela não representa o trajeto do caminhão. Para mudar o horário de um bairro, ligue-o a outra rota. Para mudar o horário de um grupo, edite os cronogramas da rota (ou use a alteração em massa).
 
-Os scripts em `backend/src/main/resources/db/dev/` (`popular-coleta-senador-canedo.sql` e `limpar-dados-coleta.sql`) são **legado** e não devem ser executados: a carga já vem das migrations. Se forem executados, as restrições da V17 impedem bairros duplicados.
+**Conta administrativa (V19):** `simul.sistema@gmail.com`, com senha combinada com a equipe (só o hash BCrypt fica no banco). Troque a senha pelo "Esqueci minha senha" depois da apresentação.
+
+Para promover outra conta a admin (localmente):
+
+```sql
+UPDATE usuarios SET perfil = 'ADMIN' WHERE email = 'pessoa@exemplo.com';
+```
+
+Depois, saia e entre de novo para receber um JWT com o perfil novo.
 
 ---
 
-# 21. Criando um administrador local
+## 12. Front-end
 
-## Conta administrativa fixa (V19)
+### 12.1 Rotas
 
-Todo banco criado pelas migrations já tem uma conta ADMIN:
+| Caminho | Acesso | Página |
+|---|---|---|
+| `/` | público | Consulta da coleta |
+| `/guia-de-descarte` | público | Guia interativo |
+| `/cadastro`, `/login` | público | Criar conta e entrar |
+| `/verificar-email`, `/recuperar-senha`, `/redefinir-senha` | público | Links enviados por e-mail |
+| `/minha-conta`, `/preferencias` | logado (`RotaProtegida`) | Conta e lembretes |
+| `/admin`, `/admin/rotas`, `/admin/areas`, `/admin/cronogramas` | ADMIN (`RotaAdmin`) | Painel |
 
-```text
-E-mail: simul.sistema@gmail.com
-Senha:  combinada com a equipe (não fica no repositório)
-```
+Todas as páginas são carregadas sob demanda (`React.lazy`), e o mapa só é baixado quando aparece.
 
-A senha fica gravada apenas em BCrypt. Depois da apresentação, troque-a pelo fluxo **Esqueci minha senha**.
+### 12.2 Camada de serviços
 
-## Promover outra conta
+As páginas **nunca** chamam `fetch` diretamente. Tudo passa por `src/services/*`, que usa `apiRequest` (`services/api.js`). Ele cuida de:
 
-O cadastro público sempre cria `USUARIO`.
+- JSON e cabeçalho `Authorization: Bearer …`;
+- mensagens de erro legíveis (lê o `detail` do ProblemDetail);
+- tempo-limite de 75 segundos e o aviso "Conectando ao servidor…" depois de 6 segundos;
+- evento de **sessão expirada** quando uma chamada autenticada recebe 401.
 
-A forma recomendada para desenvolvimento é:
+### 12.3 Design system e acessibilidade
 
-1. cadastrar normalmente pelo site;
-2. verificar o e-mail;
-3. promover a conta pelo banco local.
-
-```sql
-UPDATE usuarios
-SET perfil = 'ADMIN'
-WHERE email = 'admin@exemplo.com';
-```
-
-Depois:
-
-1. faça logout;
-2. faça login novamente;
-3. um novo JWT será emitido com a role `ADMIN`.
-
-## Atalho somente para desenvolvimento
-
-Se você estiver montando um ambiente local sem SMTP funcional e precisar apenas testar telas, pode marcar manualmente:
-
-```sql
-UPDATE usuarios
-SET email_verificado = TRUE
-WHERE email = 'usuario@exemplo.com';
-```
-
-Não use esse atalho em produção.
+- **Identidade:** azul institucional `#0b5cad`, verde `#1a7a43` e amarelo de destaque `#f2b705`; fonte Public Sans; **tema claro e escuro** (salvo no navegador e aplicado antes do React, sem piscar).
+- **Tokens** em `src/styles/tokens.css`; componentes reutilizáveis como `Alerta`, `CampoTexto`, `CampoSenha`, `Interruptor`, `DialogoConfirmacao` e `PainelLateral`.
+- **Acessibilidade:** contraste mínimo de 4,5:1 no texto, foco visível, navegação por teclado, áreas de toque de 44 px, `aria-live` nas mensagens, link "Pular para o conteúdo", diálogos modais nativos (`<dialog>`) e respeito a "reduzir movimento".
+- **Responsivo** a partir de 360 px de largura.
 
 ---
 
-# 22. Testes e qualidade
+## 13. Executando localmente
 
-O snapshot analisado possui:
+### 13.1 Pré-requisitos
 
-```text
-19 classes de teste
-86 métodos anotados com @Test
+- Git, **JDK 21**, **Node 22** (o Vite exige Node ^20.19 ou ≥ 22.12) e **PostgreSQL**.
+- Recomendados: VS Code e pgAdmin.
+
+### 13.2 Banco
+
+```sql
+CREATE DATABASE simul;
 ```
 
-Os testes cobrem áreas como:
+O Flyway cria as tabelas e carrega os dados na primeira execução do back-end.
 
-- contexto Spring;
-- cronogramas;
-- cálculo de coleta;
-- cálculo de notificação;
-- decisão do lembrete;
-- histórico;
-- deduplicação;
-- retries;
-- scheduler;
-- preferências;
-- rota;
-- áreas;
-- usuários;
-- autenticação;
-- BCrypt;
-- CORS;
-- ProblemDetail;
-- segurança HTTP;
-- autorização administrativa.
+### 13.3 Segredos de desenvolvimento
 
-## Back-end
+**JWT_SECRET** (Base64, mínimo 256 bits):
 
 ```powershell
+# PowerShell (Windows)
+$bytes = New-Object byte[] 32
+$rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+$rng.GetBytes($bytes)
+[Convert]::ToBase64String($bytes)
+```
+
+```bash
+# Linux/macOS
+openssl rand -base64 32
+```
+
+**Chaves VAPID** (Web Push):
+
+```bash
+npx web-push generate-vapid-keys
+```
+
+O pacote `web-push` só é usado para gerar as chaves; ele não entra nas dependências do projeto. Nunca publique a chave privada.
+
+**E-mail local:** use um SMTP de desenvolvimento (Gmail com senha de aplicativo, Mailtrap etc.) ou o Brevo (ver [15.3](#153-e-mail-na-render-brevo)).
+
+### 13.4 Variáveis do back-end
+
+O back-end lê **variáveis de ambiente** (não carrega `.env`). PowerShell:
+
+```powershell
+$env:DB_URL="jdbc:postgresql://localhost:5432/simul"
+$env:DB_USERNAME="postgres"
+$env:DB_PASSWORD="<senha do postgres>"
+$env:JWT_SECRET="<JWT_SECRET>"
+$env:SMTP_HOST="smtp.gmail.com"
+$env:SMTP_PORT="587"
+$env:SMTP_USERNAME="<usuario>"
+$env:SMTP_PASSWORD="<senha de aplicativo>"
+$env:SMTP_FROM="<remetente>"
+$env:WEB_PUSH_VAPID_PUBLIC_KEY="<chave pública>"
+$env:WEB_PUSH_VAPID_PRIVATE_KEY="<chave privada>"
+$env:WEB_PUSH_VAPID_SUBJECT="mailto:<seu e-mail>"
+$env:NOTIFICACAO_SCHEDULER_ENABLED="true"
+```
+
+Linux/macOS: as mesmas variáveis com `export NOME="valor"`. Os demais valores têm padrão adequado para uso local (ver [16](#16-variáveis-de-ambiente)).
+
+### 13.5 Subir
+
+```bash
+# Terminal 1 — back-end (http://localhost:8080)
 cd backend
-.\mvnw.cmd clean test
+./mvnw spring-boot:run          # Windows: .\mvnw.cmd spring-boot:run
+
+# Terminal 2 — front-end (http://localhost:5173)
+cd frontend
+npm ci
+npm run dev
 ```
 
-Antes de consolidar uma alteração:
+O Vite encaminha `/api` para `http://localhost:8080`, então **não é preciso** criar `.env.local` no front. Ordem: PostgreSQL → back-end → front-end → navegador.
 
-```text
-Failures: 0
-Errors: 0
-BUILD SUCCESS
+### 13.6 Atalho de desenvolvimento
+
+Sem e-mail configurado, dá para liberar uma conta manualmente (nunca em produção):
+
+```sql
+UPDATE usuarios SET email_verificado = TRUE WHERE email = 'pessoa@exemplo.com';
 ```
 
-## Front-end
+---
 
-```powershell
+## 14. Testes e integração contínua
+
+### 14.1 Back-end
+
+24 classes de teste (JUnit 5 + Mockito), com 107 testes e 2 testes parametrizados. Cobrem:
+
+- cálculo e decisão do lembrete, histórico, deduplicação, novas tentativas (e-mail e Web Push) e agendador;
+- cronogramas (inclusive a alteração em massa), rotas e áreas;
+- usuários, login, BCrypt e envio pelo Brevo;
+- segurança HTTP (401/403, perfis), CORS e o formato ProblemDetail.
+
+```bash
+cd backend
+./mvnw clean test        # esperado: BUILD SUCCESS, Failures: 0, Errors: 0
+```
+
+O teste de contexto (`BackendApplicationTests`) sobe a aplicação inteira e precisa de um PostgreSQL e das variáveis de ambiente, como no CI.
+
+### 14.2 Front-end
+
+```bash
 cd frontend
 npm run lint
 npm run build
 ```
 
-## Integração contínua (GitHub Actions)
+### 14.3 GitHub Actions
 
-O arquivo `.github/workflows/ci.yml` roda automaticamente em todo push e pull request para a `main`:
+`.github/workflows/ci.yml` roda em todo push e pull request para a `main`:
 
 | Job | O que faz |
 |---|---|
-| Back-end | sobe um PostgreSQL 16 temporário, gera `JWT_SECRET` e chaves VAPID descartáveis e executa `./mvnw clean test` |
-| Front-end | `npm ci`, `npm run lint` e `npm run build` |
+| Back-end | PostgreSQL 16 temporário, `JWT_SECRET` e chaves VAPID descartáveis, `./mvnw clean test` |
+| Front-end | `npm ci`, `npm run lint`, `npm run build` |
 
-Nenhum segredo real é usado no CI. O resultado aparece na aba **Actions** do GitHub e ao lado de cada commit.
-
----
-
-# 23. Deploy na Render
-
-## 23.1 Back-end
-
-O repositório possui:
-
-```text
-backend/Dockerfile
-```
-
-O Dockerfile usa build em duas etapas:
-
-```text
-eclipse-temurin:21-jdk
-        ↓
-Maven package
-        ↓
-eclipse-temurin:21-jre
-        ↓
-java -jar app.jar
-```
-
-A porta usa:
-
-```properties
-server.port=${PORT:8080}
-```
-
-### Configuração típica na Render
-
-```text
-Root Directory: backend
-Runtime: Docker
-Auto-Deploy: After CI Checks Pass
-```
-
-Com **After CI Checks Pass**, a Render só publica um commit depois que os jobs do GitHub Actions passarem. Um push com teste quebrado não chega ao ar.
-
-O Dockerfile baixa as dependências numa camada separada (builds mais rápidos quando só o código muda), executa a aplicação sem root e limita o heap da JVM com `JAVA_OPTS` (`-XX:MaxRAMPercentage=70`), porque a instância gratuita tem 512 MB de RAM.
-
-Cadastre todas as variáveis de ambiente necessárias.
-
-## 23.2 Front-end
-
-O front-end gera os arquivos estáticos em:
-
-```text
-frontend/dist
-```
-
-Configuração típica:
-
-```text
-Root Directory: frontend
-Build Command: npm ci && npm run build
-Publish Directory: dist
-```
-
-Configure no serviço do front-end:
-
-```text
-VITE_API_URL=https://<URL_PUBLICA_DO_BACKEND>
-```
-
-Essa variável é incorporada ao JavaScript durante o build do Vite. Depois de adicioná-la ou alterá-la, escolha **Save, rebuild, and deploy** na Render (ou execute um novo deploy que refaça o build). Não é necessário configurar nada nos computadores dos usuários que apenas acessam o site publicado.
-
-Como o projeto usa `BrowserRouter`, a hospedagem precisa redirecionar rotas do SPA para `index.html`.
-
-## 23.3 Produção
-
-Em produção:
-
-- use HTTPS;
-- restrinja CORS ao domínio do front-end;
-- não use secrets hardcoded;
-- configure SMTP;
-- configure VAPID;
-- avalie se o scheduler precisa ficar ativo;
-- monitore logs;
-- preserve backups do PostgreSQL.
+Nenhum segredo real é usado no CI.
 
 ---
 
-# 24. Variáveis de ambiente
+## 15. Deploy na Render
 
-## Back-end
+### 15.1 Back-end (Web Service)
 
-| Variável | Obrigatória para o ambiente atual | Padrão |
-|---|---:|---|
-| `PORT` | Não | `8080` |
-| `DB_URL` | Sim | — |
-| `DB_USERNAME` | Sim | — |
-| `DB_PASSWORD` | Sim | — |
-| `JWT_SECRET` | Sim | — |
-| `JWT_EXPIRATION_SECONDS` | Não | `3600` |
-| `SIMUL_MAIL_PROVEDOR` | Não (na Render: **sim**, `brevo`) | `smtp` |
-| `BREVO_API_KEY` | Com `brevo` | vazio |
-| `SIMUL_MAIL_NOME_REMETENTE` | Não | `SIMUL` |
-| `SMTP_FROM` | Sim (remetente nos dois provedores) | — |
-| `SMTP_HOST` | Com `smtp` | vazio |
-| `SMTP_PORT` | Não | `587` |
-| `SMTP_USERNAME` | Com `smtp` | vazio |
-| `SMTP_PASSWORD` | Com `smtp` | vazio |
-| `SIMUL_TIME_ZONE` | Não | `America/Sao_Paulo` |
-| `NOTIFICACAO_SCHEDULER_ENABLED` | Não | `false` |
-| `NOTIFICACAO_SCHEDULER_CRON` | Não | `0 * * * * *` |
-| `SIMUL_CORS_ALLOWED_ORIGINS` | Não | `http://localhost:5173` |
-| `WEB_PUSH_VAPID_PUBLIC_KEY` | **Na prática, sim** | vazio |
-| `WEB_PUSH_VAPID_PRIVATE_KEY` | **Na prática, sim** | vazio |
-| `WEB_PUSH_VAPID_SUBJECT` | **Na prática, sim** | vazio |
-| `EMAIL_VERIFICATION_EXPIRATION_HOURS` | Não | `24` |
-| `PASSWORD_RECOVERY_EXPIRATION_MINUTES` | Não | `60` |
-| `SIMUL_FRONTEND_URL` | Não | `http://localhost:5173` |
+| Configuração | Valor |
+|---|---|
+| Root Directory | `backend` |
+| Runtime | Docker (usa o `backend/Dockerfile`) |
+| Health Check Path | `/api/status` |
+| Auto-Deploy | **After CI Checks Pass** (só publica se o CI passar) |
 
-> **E-mail na Render.** Desde setembro de 2025 a Render gratuita bloqueia as portas SMTP (25, 465 e 587), então o envio por Gmail/SMTP falha lá. Em produção use `SIMUL_MAIL_PROVEDOR=brevo`, que envia pela API HTTPS do Brevo (plano gratuito: 300 e-mails/dia). Passos: criar conta em brevo.com → *Senders, Domains & Dedicated IPs* → cadastrar e confirmar o remetente (o mesmo e-mail de `SMTP_FROM`) → *SMTP & API* → *API Keys* → gerar a chave e colocá-la em `BREVO_API_KEY`. Localmente, o SMTP continua sendo o padrão.
+O Dockerfile compila com JDK 21, executa com JRE 21 **sem root** e limita o heap (`-XX:MaxRAMPercentage=70`), porque a instância gratuita tem 512 MB.
 
-> **Front-end na Render (rotas como `/login`).** O front é um *Static Site*: sem regra de reescrita, abrir `/login` direto ou dar F5 numa página interna devolve "Not Found". No painel do Static Site → *Redirects/Rewrites* → adicionar: Source `/*`, Destination `/index.html`, Action **Rewrite**. A regra só vale quando não existe arquivo no caminho, então CSS, JS e imagens continuam normais.
+Cadastre as variáveis da seção [16](#16-variáveis-de-ambiente), com `NOTIFICACAO_SCHEDULER_ENABLED=true` e `SIMUL_FRONTEND_URL` apontando para o site.
 
-> **Servidor "dormindo".** O web service gratuito para após 15 minutos sem acesso; a primeira requisição depois disso leva até ~1 minuto, e enquanto ele dorme o agendador dos lembretes também para. Para a demonstração e para os lembretes: em *Settings → Health Check Path* use `/api/status`, e cadastre num serviço de ping gratuito (cron-job.org ou UptimeRobot) um GET em `https://<back-end>.onrender.com/api/status` a cada 10 minutos. O front mostra o aviso "Conectando ao servidor…" quando uma resposta passa de 6 segundos.
+### 15.2 Front-end (Static Site)
 
-> Embora as propriedades VAPID tenham fallback vazio no `application.properties`, `WebPushConfig` rejeita valores vazios durante a inicialização. Portanto, configure as três variáveis no ambiente atual.
+| Configuração | Valor |
+|---|---|
+| Root Directory | `frontend` |
+| Build Command | `npm ci && npm run build` |
+| Publish Directory | `dist` |
+| Variável | `VITE_API_URL=https://<back-end>.onrender.com` |
+| **Redirects/Rewrites** | Source `/*` → Destination `/index.html` → Action **Rewrite** |
 
-## Front-end
+- **Rewrite obrigatório:** sem ele, abrir `/login` direto ou recarregar uma página interna mostra "Not Found". A regra só vale quando não existe arquivo no caminho, então CSS, JS e imagens continuam normais.
+- **`VITE_API_URL`:** entra no JavaScript no momento do build. Depois de alterá-la, faça **Save, rebuild, and deploy**.
 
-```env
-VITE_API_URL=http://localhost:8080
-```
+### 15.3 E-mail na Render (Brevo)
 
----
+Desde setembro de 2025, os web services **gratuitos** da Render **bloqueiam as portas SMTP** (25, 465 e 587), então o envio pelo Gmail via SMTP não funciona lá. Use a API HTTPS do Brevo (plano gratuito de 300 e-mails por dia):
 
-# 25. Problemas comuns
+1. Crie a conta em brevo.com.
+2. Em *Senders, Domains & Dedicated IPs*, cadastre e confirme o remetente (o mesmo e-mail de `SMTP_FROM`).
+3. Em *SMTP & API → API Keys*, gere uma chave.
+4. Na Render: `SIMUL_MAIL_PROVEDOR=brevo` e `BREVO_API_KEY=<chave>`.
 
-## `JWT_SECRET deve estar em Base64 válido`
+Como o remetente é um Gmail enviando por outro serviço, os primeiros e-mails podem cair no **spam**.
 
-Gere um novo secret Base64.
+### 15.4 Manter o servidor acordado
 
-## `JWT_SECRET deve possuir pelo menos 256 bits`
+O web service gratuito para depois de 15 minutos sem acesso. Enquanto dorme, **o agendador dos lembretes também para**. Cadastre um ping gratuito (cron-job.org ou UptimeRobot) fazendo `GET https://<back-end>.onrender.com/api/status` **a cada 10 minutos**. Um único serviço ligado o mês todo cabe nas horas gratuitas.
 
-Use pelo menos 32 bytes aleatórios antes de converter para Base64.
+### 15.5 Banco gratuito
 
-## Back-end não inicia por VAPID
-
-Confira:
-
-```text
-WEB_PUSH_VAPID_PUBLIC_KEY
-WEB_PUSH_VAPID_PRIVATE_KEY
-WEB_PUSH_VAPID_SUBJECT
-```
-
-## `password authentication failed`
-
-Confira:
-
-```text
-DB_USERNAME
-DB_PASSWORD
-DB_URL
-```
-
-## `Connection refused` no PostgreSQL
-
-Verifique:
-
-- serviço PostgreSQL ativo;
-- porta 5432;
-- banco `simul`;
-- firewall;
-- credenciais.
-
-## Flyway acusa schema incompatível
-
-Não use `ddl-auto=create`.
-
-Confirme:
-
-```properties
-spring.jpa.hibernate.ddl-auto=validate
-```
-
-Confira `flyway_schema_history`.
-
-## Front-end mostra erro de API
-
-Confira:
-
-```env
-VITE_API_URL=http://localhost:8080
-```
-
-Depois reinicie o Vite.
-
-## CORS
-
-Em desenvolvimento:
-
-```text
-SIMUL_CORS_ALLOWED_ORIGINS=http://localhost:5173
-```
-
-Se a porta do Vite mudar, atualize a origem.
-
-## Web Push não ativa
-
-Confirme:
-
-- navegador compatível;
-- permissão de notificações;
-- VAPID correto;
-- usuário autenticado;
-- Service Worker `/sw.js`;
-- HTTPS em produção.
-
-`localhost` é aceito pelos navegadores como contexto apropriado para desenvolvimento de Service Workers.
-
-## Cadastro funciona, mas login é bloqueado
-
-O e-mail ainda pode estar não verificado.
-
-Use o link enviado por SMTP.
-
-## Token de recuperação retorna 400
-
-Se o token já foi usado, expirou ou está inválido, o back-end retorna erro de requisição e o front-end mostra a mensagem correspondente.
+O PostgreSQL gratuito da Render tem **prazo de expiração**: confira a data no painel e planeje o backup antes da apresentação.
 
 ---
 
-# 26. Funcionalidades ainda não implementadas
+## 16. Variáveis de ambiente
 
-## Guia de descarte consciente
+### 16.1 Back-end
 
-O guia continua no escopo acadêmico/documental, porém **não existe uma página ou domínio funcional de descarte no snapshot atual do código**.
+| Variável | Obrigatória | Padrão | Uso |
+|---|---|---|---|
+| `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | sim | — | Conexão com o PostgreSQL |
+| `JWT_SECRET` | sim | — | Chave HS256 em Base64 (≥ 256 bits) |
+| `JWT_EXPIRATION_SECONDS` | não | `3600` | Validade do token |
+| `SMTP_FROM` | sim | — | Remetente dos e-mails (nos dois provedores) |
+| `SIMUL_MAIL_PROVEDOR` | não (Render: **sim**) | `smtp` | `smtp` ou `brevo` |
+| `BREVO_API_KEY` | com `brevo` | vazio | Chave da API do Brevo |
+| `SIMUL_MAIL_NOME_REMETENTE` | não | `SIMUL` | Nome exibido no e-mail (Brevo) |
+| `SMTP_HOST`, `SMTP_USERNAME`, `SMTP_PASSWORD` | com `smtp` | vazio | Servidor SMTP |
+| `SMTP_PORT` | não | `587` | Porta SMTP |
+| `WEB_PUSH_VAPID_PUBLIC_KEY`, `WEB_PUSH_VAPID_PRIVATE_KEY`, `WEB_PUSH_VAPID_SUBJECT` | **sim** | — | Web Push; a aplicação não sobe sem elas |
+| `NOTIFICACAO_SCHEDULER_ENABLED` | não | `false` | Liga o envio automático de lembretes |
+| `NOTIFICACAO_SCHEDULER_CRON` | não | `0 * * * * *` | Frequência do ciclo |
+| `SIMUL_TIME_ZONE` | não | `America/Sao_Paulo` | Fuso dos horários de coleta |
+| `SIMUL_CORS_ALLOWED_ORIGINS` | não | `http://localhost:5173` | Origens do front (separadas por vírgula) |
+| `SIMUL_FRONTEND_URL` | não | `http://localhost:5173` | Base dos links enviados por e-mail |
+| `EMAIL_VERIFICATION_EXPIRATION_HOURS` | não | `24` | Validade do link de confirmação |
+| `PASSWORD_RECOVERY_EXPIRATION_MINUTES` | não | `60` | Validade do link de recuperação |
+| `PORT` | não | `8080` | Porta HTTP (a Render define) |
 
-Portanto, ele não deve ser apresentado como implementado até que a funcionalidade seja adicionada.
+### 16.2 Front-end
 
-## Rastreamento de caminhão
-
-Continua fora do escopo atual.
-
-Não existem nesta versão:
-
-- GPS do caminhão;
-- WebSocket de rastreamento;
-- posição do veículo em tempo real;
-- previsão por aproximação do caminhão.
-
-A arquitetura pode evoluir posteriormente, mas essa funcionalidade não deve ser confundida com a geolocalização atual do morador.
-
-## Aplicativo mobile
-
-A pasta `mobile/` é apenas um placeholder.
-
-A entrega atual é um site responsivo.
+| Variável | Quando | Uso |
+|---|---|---|
+| `VITE_API_URL` | produção (build) | URL pública do back-end. Localmente não é necessária. |
 
 ---
 
-# 27. Equipe
+## 17. Problemas comuns
+
+| Sintoma | Causa e solução |
+|---|---|
+| `JWT_SECRET deve estar em Base64 válido` / `pelo menos 256 bits` | Gere de novo com os comandos de [13.3](#133-segredos-de-desenvolvimento). |
+| Back-end não sobe por VAPID | As três variáveis `WEB_PUSH_VAPID_*` são obrigatórias. |
+| `Migration checksum mismatch for migration version N` | Uma migration já aplicada foi editada. Volte o arquivo ao conteúdo original (`git log` / `git checkout <commit> -- <arquivo>`) e crie uma migration nova para a mudança. Use `flyway repair` só se a alteração foi apenas de comentário/formatação e a equipe concordar. |
+| `password authentication failed` / `Connection refused` | Confira `DB_*` e se o PostgreSQL está rodando. |
+| E-mail não chega e o console mostra 503 "E-mail não enviado" | Na Render, use o Brevo ([15.3](#153-e-mail-na-render-brevo)). Localmente, confira as variáveis `SMTP_*` e a senha de aplicativo. Olhe também a caixa de spam. |
+| "Not Found" ao abrir `/login` direto ou ao recarregar | Falta o rewrite do Static Site ([15.2](#152-front-end-static-site)). |
+| Primeira requisição demora quase 1 minuto | Servidor gratuito acordando; configure o ping ([15.4](#154-manter-o-servidor-acordado)). |
+| "Sessão encerrada" na tela de login | O JWT venceu (1 hora); entre de novo. |
+| Cadastro funcionou, mas o login é bloqueado | O e-mail ainda não foi confirmado; use "Reenviar e-mail de confirmação". |
+| Erro de CORS no navegador | Inclua a URL do front em `SIMUL_CORS_ALLOWED_ORIGINS`. |
+| Front mostra erro de API em produção | Confira `VITE_API_URL` e refaça o build do Static Site. |
+| Web Push não ativa | O navegador precisa permitir notificações e o site precisa estar em HTTPS (ou `localhost`). |
+| Lembretes não saem | Confira `NOTIFICACAO_SCHEDULER_ENABLED=true`, a preferência com um canal ligado, se a rota tem cronograma ativo e se o servidor não estava dormindo. |
+
+---
+
+## 18. Padrões de código
+
+- **Java:** 4 espaços, até 120 colunas, um Javadoc curto em cada classe e nos métodos públicos das interfaces, validações, mappers, repositórios e controllers. As classes `Impl` herdam a documentação da interface. Imports em grupos: pacote do SIMUL, bibliotecas, `java.*` e `import static`.
+- **JavaScript/React:** 2 espaços, sem ponto e vírgula, aspas simples, até 100 colunas (`frontend/.prettierrc.json`). Formatar com `npx prettier --write src`.
+- **Todos os editores:** `.editorconfig` na raiz.
+- **Commits:** Conventional Commits (`feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`), por exemplo `fix(notificacao): reenvia Web Push pelo mesmo canal`.
+- **Banco:** só por migration nova (`V20__descricao.sql`, `V21__…`).
+
+---
+
+## 19. Fora do escopo e próximos passos
+
+Não fazem parte desta entrega: rastreamento do caminhão em tempo real, GPS de veículos, alerta por aproximação e aplicativo nativo. A arquitetura permite evoluir nessa direção depois, sem confundir essas funções com a geolocalização atual, que é a do **morador**.
+
+Melhorias possíveis:
+
+- tela de histórico de envios no painel admin;
+- importação de bairros e horários por planilha;
+- domínio próprio de e-mail (melhor entrega que o remetente Gmail).
+
+---
+
+## 20. Equipe
 
 - Caio Vinicius Souza Martins
 - Davi Martins Alexandre
@@ -1913,33 +742,5 @@ A entrega atual é um site responsivo.
 - Fernando Papacosta Porta Pereira
 - Renato Borges Campos
 
----
-
-## Projeto acadêmico
-
 **SIMUL — Sistema Integrado de Monitoramento Urbano de Limpeza**
-
-Faculdade SENAI FATESG  
-Curso Superior de Tecnologia em Análise e Desenvolvimento de Sistemas  
-Goiânia — 2026
-
----
-
-## Observação final
-
-Este README descreve o **snapshot atual do código analisado**, e não somente o planejamento inicial.
-
-Sempre que uma nova funcionalidade relevante for implementada, atualize:
-
-1. a tabela de estado atual;
-2. as variáveis de ambiente;
-3. os endpoints;
-4. as migrations;
-5. o procedimento de execução local;
-6. as funcionalidades pendentes.
-
-Sugestão de commit para esta atualização:
-
-```text
-docs: update project README with architecture and setup guide
-```
+Faculdade SENAI FATESG · Curso Superior de Tecnologia em Análise e Desenvolvimento de Sistemas · Goiânia, 2026

@@ -1,6 +1,7 @@
 package com.simulsystem.backend.business.notificacao.scheduler;
 
 import com.simulsystem.backend.business.notificacao.service.CicloNotificacaoService;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -18,44 +19,27 @@ import java.time.temporal.ChronoUnit;
         havingValue = "true",
         matchIfMissing = true
 )
+/** Dispara o ciclo de lembretes a cada minuto (ligado por NOTIFICACAO_SCHEDULER_ENABLED). */
 public class NotificacaoScheduler {
 
-    private static final Logger LOGGER =
-            LoggerFactory.getLogger(
-                    NotificacaoScheduler.class
-            );
+    private static final Logger LOGGER = LoggerFactory.getLogger(NotificacaoScheduler.class);
 
     private final CicloNotificacaoService cicloNotificacaoService;
     private final Clock clock;
 
-    public NotificacaoScheduler(
-            CicloNotificacaoService cicloNotificacaoService,
-            Clock clock
-    ) {
-        this.cicloNotificacaoService =
-                cicloNotificacaoService;
-
+    public NotificacaoScheduler(CicloNotificacaoService cicloNotificacaoService, Clock clock) {
+        this.cicloNotificacaoService = cicloNotificacaoService;
         this.clock = clock;
     }
 
-    @Scheduled(
-            cron = "${simul.notificacao.scheduler.cron}",
-            zone = "${simul.time-zone}"
-    )
+    /** Roda um ciclo com o minuto atual (sem segundos) como referência. */
+    @Scheduled(cron = "${simul.notificacao.scheduler.cron}", zone = "${simul.time-zone}")
     public void executar() {
-        LocalDateTime referencia =
-                LocalDateTime.now(clock)
-                        .truncatedTo(
-                                ChronoUnit.MINUTES
-                        );
+        LocalDateTime referencia = LocalDateTime.now(clock)
+                        .truncatedTo(ChronoUnit.MINUTES);
 
-        LOGGER.debug(
-                "Iniciando ciclo de notificações. referencia={}",
-                referencia
-        );
+        LOGGER.debug("Iniciando ciclo de notificações. referencia={}", referencia);
 
-        cicloNotificacaoService.executar(
-                referencia
-        );
+        cicloNotificacaoService.executar(referencia);
     }
 }

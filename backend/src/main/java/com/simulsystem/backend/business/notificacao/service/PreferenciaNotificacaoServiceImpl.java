@@ -3,6 +3,7 @@ package com.simulsystem.backend.business.notificacao.service;
 import com.simulsystem.backend.business.notificacao.dto.PreferenciaNotificacaoRequestDTO;
 import com.simulsystem.backend.business.notificacao.dto.PreferenciaNotificacaoResponseDTO;
 import com.simulsystem.backend.business.notificacao.mapper.PreferenciaNotificacaoMapper;
+import com.simulsystem.backend.business.notificacao.model.CanalNotificacao;
 import com.simulsystem.backend.business.notificacao.model.PreferenciaNotificacao;
 import com.simulsystem.backend.business.notificacao.repository.PreferenciaNotificacaoRepository;
 import com.simulsystem.backend.business.notificacao.validation.PreferenciaNotificacaoValidation;
@@ -10,15 +11,15 @@ import com.simulsystem.backend.business.rota.model.Rota;
 import com.simulsystem.backend.business.rota.validation.RotaValidation;
 import com.simulsystem.backend.business.usuario.model.Usuario;
 import com.simulsystem.backend.business.usuario.service.UsuarioService;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
+/** Implementação de PreferenciaNotificacaoService. */
 @Service
 public class PreferenciaNotificacaoServiceImpl
         implements PreferenciaNotificacaoService {
-
     private final PreferenciaNotificacaoRepository repository;
     private final PreferenciaNotificacaoMapper mapper;
     private final PreferenciaNotificacaoValidation validation;
@@ -44,52 +45,26 @@ public class PreferenciaNotificacaoServiceImpl
             String emailUsuario,
             PreferenciaNotificacaoRequestDTO requestDTO
     ) {
-        Usuario usuario =
-                usuarioService.buscarEntidadePorEmail(
-                        emailUsuario
-                );
+        Usuario usuario = usuarioService.buscarEntidadePorEmail(emailUsuario);
 
-        validation.validarPreferenciaNaoCadastrada(
-                usuario.getId()
-        );
+        validation.validarPreferenciaNaoCadastrada(usuario.getId());
 
-        Rota rota =
-                rotaValidation.buscarRotaExistente(
-                        requestDTO.rotaId()
-                );
+        Rota rota = rotaValidation.buscarRotaExistente(requestDTO.rotaId());
 
-        PreferenciaNotificacao preferencia =
-                mapper.toEntity(
-                        requestDTO,
-                        usuario,
-                        rota
-                );
+        PreferenciaNotificacao preferencia = mapper.toEntity(requestDTO, usuario, rota);
 
-        PreferenciaNotificacao preferenciaSalva =
-                repository.save(preferencia);
+        PreferenciaNotificacao preferenciaSalva = repository.save(preferencia);
 
-        return mapper.toResponseDTO(
-                preferenciaSalva
-        );
+        return mapper.toResponseDTO(preferenciaSalva);
     }
 
     @Override
-    public PreferenciaNotificacaoResponseDTO buscar(
-            String emailUsuario
-    ) {
-        Usuario usuario =
-                usuarioService.buscarEntidadePorEmail(
-                        emailUsuario
-                );
+    public PreferenciaNotificacaoResponseDTO buscar(String emailUsuario) {
+        Usuario usuario = usuarioService.buscarEntidadePorEmail(emailUsuario);
 
-        PreferenciaNotificacao preferencia =
-                validation.buscarPreferenciaExistente(
-                        usuario.getId()
-                );
+        PreferenciaNotificacao preferencia = validation.buscarPreferenciaExistente(usuario.getId());
 
-        return mapper.toResponseDTO(
-                preferencia
-        );
+        return mapper.toResponseDTO(preferencia);
     }
 
     @Override
@@ -97,33 +72,17 @@ public class PreferenciaNotificacaoServiceImpl
             String emailUsuario,
             PreferenciaNotificacaoRequestDTO requestDTO
     ) {
-        Usuario usuario =
-                usuarioService.buscarEntidadePorEmail(
-                        emailUsuario
-                );
+        Usuario usuario = usuarioService.buscarEntidadePorEmail(emailUsuario);
 
-        PreferenciaNotificacao preferencia =
-                validation.buscarPreferenciaExistente(
-                        usuario.getId()
-                );
+        PreferenciaNotificacao preferencia = validation.buscarPreferenciaExistente(usuario.getId());
 
-        Rota rota =
-                rotaValidation.buscarRotaExistente(
-                        requestDTO.rotaId()
-                );
+        Rota rota = rotaValidation.buscarRotaExistente(requestDTO.rotaId());
 
-        mapper.atualizarEntity(
-                preferencia,
-                requestDTO,
-                rota
-        );
+        mapper.atualizarEntity(preferencia, requestDTO, rota);
 
-        PreferenciaNotificacao preferenciaAtualizada =
-                repository.save(preferencia);
+        PreferenciaNotificacao preferenciaAtualizada = repository.save(preferencia);
 
-        return mapper.toResponseDTO(
-                preferenciaAtualizada
-        );
+        return mapper.toResponseDTO(preferenciaAtualizada);
     }
 
     @Override
@@ -132,57 +91,26 @@ public class PreferenciaNotificacaoServiceImpl
     }
 
     @Override
-    public boolean podeReceberEmail(
-            Long usuarioId,
-            Long rotaId
-    ) {
-        if (usuarioId == null || rotaId == null) {
+    public boolean podeReceber(Long usuarioId, Long rotaId, CanalNotificacao canal) {
+        if (usuarioId == null || rotaId == null || canal == null) {
             return false;
         }
 
-        Optional<PreferenciaNotificacao> preferenciaOptional =
-                repository.findByUsuarioId(
-                        usuarioId
-                );
+        PreferenciaNotificacao preferencia = repository.findByUsuarioId(usuarioId).orElse(null);
 
-        if (preferenciaOptional.isEmpty()) {
+        // Sem preferência, ou o usuário trocou de rota depois da falha.
+        if (preferencia == null || !rotaId.equals(preferencia.getRota().getId())) {
             return false;
         }
 
-        PreferenciaNotificacao preferencia =
-                preferenciaOptional.orElseThrow();
-
-        if (preferencia.getUsuario() == null
-                || preferencia.getRota() == null) {
+        if (!Boolean.TRUE.equals(preferencia.getUsuario().getAtivo())
+                || !Boolean.TRUE.equals(preferencia.getRota().getAtivo())) {
             return false;
         }
 
-        if (!usuarioId.equals(
-                preferencia.getUsuario().getId()
-        )) {
-            return false;
-        }
-
-        if (!rotaId.equals(
-                preferencia.getRota().getId()
-        )) {
-            return false;
-        }
-
-        if (!Boolean.TRUE.equals(
-                preferencia.getUsuario().getAtivo()
-        )) {
-            return false;
-        }
-
-        if (!Boolean.TRUE.equals(
-                preferencia.getRota().getAtivo()
-        )) {
-            return false;
-        }
-
-        return Boolean.TRUE.equals(
-                preferencia.getEmailAtivo()
-        );
+        return switch (canal) {
+            case EMAIL -> Boolean.TRUE.equals(preferencia.getEmailAtivo());
+            case WEB_PUSH -> Boolean.TRUE.equals(preferencia.getWebPushAtivo());
+        };
     }
 }

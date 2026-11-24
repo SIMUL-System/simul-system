@@ -15,81 +15,50 @@ import 'leaflet/dist/leaflet.css'
 
 import { useCoresTema } from '../hooks/useCoresTema'
 
-const TOKENS_MAPA = [
-  'brand-blue',
-  'brand-green',
-  'surface-raised',
-]
+const TOKENS_MAPA = ['brand-blue', 'brand-green', 'surface-raised']
 
-function ControlarVisualizacaoMapa({
-  latitude,
-  longitude,
-  geometriaArea,
-  limitesArea,
-}) {
+/** Enquadra o mapa no contorno do bairro ou, sem contorno, no ponto encontrado. */
+function ControlarVisualizacaoMapa({ latitude, longitude, geometriaArea, limitesArea }) {
   const map = useMap()
 
   useEffect(() => {
     if (geometriaArea) {
-      const camada =
-        L.geoJSON(geometriaArea)
+      const camada = L.geoJSON(geometriaArea)
 
-      const limites =
-        camada.getBounds()
+      const limites = camada.getBounds()
 
       if (limites.isValid()) {
-        map.fitBounds(
-          limites,
-          {
-            padding: [30, 30],
-            maxZoom: 16,
-            animate: true,
-          },
-        )
+        map.fitBounds(limites, {
+          padding: [30, 30],
+          maxZoom: 16,
+          animate: true,
+        })
 
         return
       }
     }
 
-    if (
-      Array.isArray(limitesArea) &&
-      limitesArea.length === 2
-    ) {
-      map.fitBounds(
-        limitesArea,
-        {
-          padding: [30, 30],
-          maxZoom: 16,
-          animate: true,
-        },
-      )
+    if (Array.isArray(limitesArea) && limitesArea.length === 2) {
+      map.fitBounds(limitesArea, {
+        padding: [30, 30],
+        maxZoom: 16,
+        animate: true,
+      })
 
       return
     }
 
-    if (
-      latitude != null &&
-      longitude != null
-    ) {
-      map.setView(
-        [latitude, longitude],
-        15,
-        {
-          animate: true,
-        },
-      )
+    if (latitude != null && longitude != null) {
+      map.setView([latitude, longitude], 15, {
+        animate: true,
+      })
     }
-  }, [
-    latitude,
-    longitude,
-    geometriaArea,
-    limitesArea,
-    map,
-  ])
+  }, [latitude, longitude, geometriaArea, limitesArea, map])
 
   return null
 }
 
+/** Mapa OpenStreetMap da consulta, com o contorno do bairro e a localização do morador. */
 function MapaColeta({
   latitude,
   longitude,
@@ -106,77 +75,46 @@ function MapaColeta({
 }) {
   const cores = useCoresTema(TOKENS_MAPA)
 
-  const centroInicial = [
-    -16.708,
-    -49.093,
-  ]
+  const centroInicial = [-16.708, -49.093]
 
-  const possuiCoordenadasUsuario =
-    latitudeUsuario != null &&
-    longitudeUsuario != null
+  const possuiCoordenadasUsuario = latitudeUsuario != null && longitudeUsuario != null
 
   const localizacaoConfiavel =
-    statusLocalizacaoUsuario ===
-      'precisa' ||
-    statusLocalizacaoUsuario ===
-      'aproximada'
+    statusLocalizacaoUsuario === 'precisa' || statusLocalizacaoUsuario === 'aproximada'
 
-  const localizacaoImprecisa =
-    statusLocalizacaoUsuario ===
-      'imprecisa'
+  const localizacaoImprecisa = statusLocalizacaoUsuario === 'imprecisa'
 
-  const mostrarPinUsuario =
-    possuiCoordenadasUsuario &&
-    localizacaoConfiavel
+  const mostrarPinUsuario = possuiCoordenadasUsuario && localizacaoConfiavel
 
-  const mostrarMargemImprecisa =
-    possuiCoordenadasUsuario &&
-    localizacaoImprecisa
+  const mostrarMargemImprecisa = possuiCoordenadasUsuario && localizacaoImprecisa
 
-  const possuiAreaSelecionada =
-    latitude != null &&
-    longitude != null
+  const possuiAreaSelecionada = latitude != null && longitude != null
 
-  const latitudeCentral =
-    possuiAreaSelecionada
-      ? latitude
-      : mostrarPinUsuario
-        ? latitudeUsuario
-        : null
+  const latitudeCentral = possuiAreaSelecionada
+    ? latitude
+    : mostrarPinUsuario
+      ? latitudeUsuario
+      : null
 
-  const longitudeCentral =
-    possuiAreaSelecionada
-      ? longitude
-      : mostrarPinUsuario
-        ? longitudeUsuario
-        : null
+  const longitudeCentral = possuiAreaSelecionada
+    ? longitude
+    : mostrarPinUsuario
+      ? longitudeUsuario
+      : null
 
   return (
-    <section
-      className="mapa"
-      aria-labelledby="titulo-mapa"
-    >
+    <section className="mapa" aria-labelledby="titulo-mapa">
       <div className="mapa__cabecalho">
-        <h2
-          id="titulo-mapa"
-          className="titulo-cartao"
-        >
+        <h2 id="titulo-mapa" className="titulo-cartao">
           Mapa da área atendida
         </h2>
 
-        <p
-          className="mapa__status"
-          role="status"
-          aria-live="polite"
-        >
+        <p className="mapa__status" role="status" aria-live="polite">
           {carregandoLocalizacao ? (
             'Localizando a região selecionada…'
           ) : nomeArea ? (
             <>
-              Mostrando{' '}
-              <strong>
-                {nomeArea}
-              </strong>
+              Mostrando <strong>{nomeArea}</strong>
             </>
           ) : mostrarPinUsuario ? (
             'Sua localização aparece no mapa. Escolha o bairro para ver a área.'
@@ -189,27 +127,15 @@ function MapaColeta({
 
         {mostrarMargemImprecisa && (
           <p className="mapa__aviso">
-            O dispositivo informou uma
-            margem de erro de cerca de{' '}
-            <strong>
-              {Math.round(
-                precisaoUsuario,
-              )}{' '}
-              metros
-            </strong>
-            , então o SIMUL não marca esse
+            O dispositivo informou uma margem de erro de cerca de{' '}
+            <strong>{Math.round(precisaoUsuario)} metros</strong>, então o SIMUL não marca esse
             ponto como “Você está aqui”.
           </p>
         )}
       </div>
 
       <div className="mapa__container">
-        <MapContainer
-          center={centroInicial}
-          zoom={13}
-          scrollWheelZoom
-          className="mapa__leaflet"
-        >
+        <MapContainer center={centroInicial} zoom={13} scrollWheelZoom className="mapa__leaflet">
           <TileLayer
             attribution="&copy; OpenStreetMap contributors"
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -224,10 +150,7 @@ function MapaColeta({
 
           {geometriaArea && (
             <GeoJSON
-              key={
-                JSON.stringify(geometriaArea) +
-                cores['brand-blue']
-              }
+              key={JSON.stringify(geometriaArea) + cores['brand-blue']}
               data={geometriaArea}
               style={{
                 color: cores['brand-blue'],
@@ -238,9 +161,7 @@ function MapaColeta({
             >
               {nomeArea && (
                 <Popup>
-                  <strong>
-                    Área consultada
-                  </strong>
+                  <strong>Área consultada</strong>
 
                   <br />
 
@@ -254,10 +175,7 @@ function MapaColeta({
             <>
               {precisaoUsuario > 0 && (
                 <Circle
-                  center={[
-                    latitudeUsuario,
-                    longitudeUsuario,
-                  ]}
+                  center={[latitudeUsuario, longitudeUsuario]}
                   radius={precisaoUsuario}
                   pathOptions={{
                     color: cores['brand-blue'],
@@ -269,10 +187,7 @@ function MapaColeta({
               )}
 
               <CircleMarker
-                center={[
-                  latitudeUsuario,
-                  longitudeUsuario,
-                ]}
+                center={[latitudeUsuario, longitudeUsuario]}
                 radius={8}
                 pathOptions={{
                   color: cores['surface-raised'],
@@ -283,8 +198,7 @@ function MapaColeta({
               >
                 <Popup>
                   <strong>
-                    {statusLocalizacaoUsuario ===
-                    'precisa'
+                    {statusLocalizacaoUsuario === 'precisa'
                       ? 'Você está aqui'
                       : 'Localização aproximada'}
                   </strong>
@@ -292,12 +206,7 @@ function MapaColeta({
                   {precisaoUsuario > 0 && (
                     <>
                       <br />
-
-                      Precisão estimada:{' '}
-                      {Math.round(
-                        precisaoUsuario,
-                      )}{' '}
-                      metros
+                      Precisão estimada: {Math.round(precisaoUsuario)} metros
                     </>
                   )}
                 </Popup>
@@ -305,42 +214,26 @@ function MapaColeta({
             </>
           )}
 
-          {mostrarMargemImprecisa &&
-            precisaoUsuario > 0 && (
-              <Circle
-                center={[
-                  latitudeUsuario,
-                  longitudeUsuario,
-                ]}
-                radius={precisaoUsuario}
-                pathOptions={{
-                  color: cores['brand-blue'],
-                  fillColor: cores['brand-blue'],
-                  fillOpacity: 0.04,
-                  weight: 1,
-                }}
-              >
-                <Popup>
-                  <strong>
-                    Localização imprecisa
-                  </strong>
-
-                  <br />
-
-                  Margem de erro estimada:{' '}
-                  {Math.round(
-                    precisaoUsuario,
-                  )}{' '}
-                  metros.
-
-                  <br />
-
-                  Selecione sua cidade e
-                  bairro manualmente para
-                  consultar a coleta.
-                </Popup>
-              </Circle>
-            )}
+          {mostrarMargemImprecisa && precisaoUsuario > 0 && (
+            <Circle
+              center={[latitudeUsuario, longitudeUsuario]}
+              radius={precisaoUsuario}
+              pathOptions={{
+                color: cores['brand-blue'],
+                fillColor: cores['brand-blue'],
+                fillOpacity: 0.04,
+                weight: 1,
+              }}
+            >
+              <Popup>
+                <strong>Localização imprecisa</strong>
+                <br />
+                Margem de erro estimada: {Math.round(precisaoUsuario)} metros.
+                <br />
+                Selecione sua cidade e bairro manualmente para consultar a coleta.
+              </Popup>
+            </Circle>
+          )}
         </MapContainer>
       </div>
     </section>

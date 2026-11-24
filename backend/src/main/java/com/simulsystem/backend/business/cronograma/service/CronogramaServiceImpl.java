@@ -10,11 +10,11 @@ import com.simulsystem.backend.business.cronograma.repository.CronogramaReposito
 import com.simulsystem.backend.business.cronograma.validation.CronogramaValidation;
 import com.simulsystem.backend.business.rota.model.Rota;
 import com.simulsystem.backend.business.rota.validation.RotaValidation;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
@@ -22,6 +22,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
+/** Implementação de CronogramaService. */
 @Service
 public class CronogramaServiceImpl implements CronogramaService {
 
@@ -43,37 +44,18 @@ public class CronogramaServiceImpl implements CronogramaService {
     }
 
     @Override
-    public CronogramaResponseDTO cadastrar(
-            CronogramaRequestDTO requestDTO
-    ) {
+    public CronogramaResponseDTO cadastrar(CronogramaRequestDTO requestDTO) {
+        Rota rota = rotaValidation.buscarRotaExistente(requestDTO.rotaId());
 
-        Rota rota =
-                rotaValidation.buscarRotaExistente(
-                        requestDTO.rotaId()
-                );
+        cronogramaValidation.validarCronogramaNaoDuplicado(requestDTO.rotaId(), requestDTO.diaSemana());
 
-        cronogramaValidation.validarCronogramaNaoDuplicado(
-                requestDTO.rotaId(),
-                requestDTO.diaSemana()
-        );
+        cronogramaValidation.validarHorarios(requestDTO.horarioInicio(), requestDTO.horarioFim());
 
-        cronogramaValidation.validarHorarios(
-                requestDTO.horarioInicio(),
-                requestDTO.horarioFim()
-        );
+        Cronograma cronograma = cronogramaMapper.toEntity(requestDTO, rota);
 
-        Cronograma cronograma =
-                cronogramaMapper.toEntity(
-                        requestDTO,
-                        rota
-                );
+        Cronograma cronogramaSalvo = cronogramaRepository.save(cronograma);
 
-        Cronograma cronogramaSalvo =
-                cronogramaRepository.save(cronograma);
-
-        return cronogramaMapper.toResponseDTO(
-                cronogramaSalvo
-        );
+        return cronogramaMapper.toResponseDTO(cronogramaSalvo);
     }
 
     @Override
@@ -86,70 +68,35 @@ public class CronogramaServiceImpl implements CronogramaService {
     }
 
     @Override
-    public CronogramaResponseDTO atualizar(
-            Long id,
-            CronogramaRequestDTO requestDTO
-    ) {
+    public CronogramaResponseDTO atualizar(Long id, CronogramaRequestDTO requestDTO) {
+        Cronograma cronograma = cronogramaValidation.buscarCronogramaExistente(id);
 
-        Cronograma cronograma =
-                cronogramaValidation
-                        .buscarCronogramaExistente(id);
-
-        Rota rota =
-                rotaValidation.buscarRotaExistente(
-                        requestDTO.rotaId()
-                );
+        Rota rota = rotaValidation.buscarRotaExistente(requestDTO.rotaId());
 
         cronogramaValidation
-                .validarCronogramaNaoDuplicadoNaAtualizacao(
-                        id,
-                        requestDTO.rotaId(),
-                        requestDTO.diaSemana()
-                );
+                .validarCronogramaNaoDuplicadoNaAtualizacao(id, requestDTO.rotaId(), requestDTO.diaSemana());
 
-        cronogramaValidation.validarHorarios(
-                requestDTO.horarioInicio(),
-                requestDTO.horarioFim()
-        );
+        cronogramaValidation.validarHorarios(requestDTO.horarioInicio(), requestDTO.horarioFim());
 
-        cronogramaMapper.atualizarEntity(
-                cronograma,
-                requestDTO,
-                rota
-        );
+        cronogramaMapper.atualizarEntity(cronograma, requestDTO, rota);
 
-        Cronograma cronogramaAtualizado =
-                cronogramaRepository.save(cronograma);
+        Cronograma cronogramaAtualizado = cronogramaRepository.save(cronograma);
 
-        return cronogramaMapper.toResponseDTO(
-                cronogramaAtualizado
-        );
+        return cronogramaMapper.toResponseDTO(cronogramaAtualizado);
     }
 
     @Override
     @Transactional
-    public List<CronogramaResponseDTO> alterarHorariosEmLote(
-            CronogramaHorarioLoteRequestDTO requestDTO
-    ) {
-
-        LocalTime horarioInicio =
-                requestDTO.horarioInicio()
+    public List<CronogramaResponseDTO> alterarHorariosEmLote(CronogramaHorarioLoteRequestDTO requestDTO) {
+        LocalTime horarioInicio = requestDTO.horarioInicio()
                         .truncatedTo(ChronoUnit.MINUTES);
 
-        LocalTime horarioFim =
-                requestDTO.horarioFim()
+        LocalTime horarioFim = requestDTO.horarioFim()
                         .truncatedTo(ChronoUnit.MINUTES);
 
-        cronogramaValidation.validarHorarios(
-                horarioInicio,
-                horarioFim
-        );
+        cronogramaValidation.validarHorarios(horarioInicio, horarioFim);
 
-        List<Cronograma> cronogramas =
-                cronogramaValidation
-                        .buscarCronogramasExistentes(
-                                requestDTO.ids()
-                        );
+        List<Cronograma> cronogramas = cronogramaValidation.buscarCronogramasExistentes(requestDTO.ids());
 
         cronogramas.forEach(cronograma -> {
             cronograma.setHorarioInicio(horarioInicio);
@@ -164,88 +111,41 @@ public class CronogramaServiceImpl implements CronogramaService {
     }
 
     @Override
-    public CronogramaResponseDTO alterarStatus(
-            Long id,
-            boolean ativo
-    ) {
-
-        Cronograma cronograma =
-                cronogramaValidation
-                        .buscarCronogramaExistente(id);
+    public CronogramaResponseDTO alterarStatus(Long id, boolean ativo) {
+        Cronograma cronograma = cronogramaValidation.buscarCronogramaExistente(id);
 
         cronograma.setAtivo(ativo);
 
-        Cronograma cronogramaAtualizado =
-                cronogramaRepository.save(cronograma);
+        Cronograma cronogramaAtualizado = cronogramaRepository.save(cronograma);
 
-        return cronogramaMapper.toResponseDTO(
-                cronogramaAtualizado
-        );
+        return cronogramaMapper.toResponseDTO(cronogramaAtualizado);
     }
 
     @Override
-    public List<Cronograma> buscarAtivosPorRota(
-            Long rotaId
-    ) {
+    public List<Cronograma> buscarAtivosPorRota(Long rotaId) {
         rotaValidation.buscarRotaExistente(rotaId);
 
         return cronogramaRepository
                 .findByRotaIdAndAtivoTrue(rotaId)
                 .stream()
-                .sorted(
-                        Comparator.comparingInt(
-                                cronograma ->
-                                        cronograma
-                                                .getDiaSemana()
-                                                .ordinal()
-                        )
-                )
+                .sorted(Comparator.comparingInt(cronograma -> cronograma.getDiaSemana().ordinal()))
                 .toList();
     }
 
     @Override
-    public Optional<LocalDateTime> calcularProximaColeta(
-            Long rotaId,
-            LocalDateTime referencia
-    ) {
-        List<Cronograma> cronogramas =
-                buscarAtivosPorRota(rotaId);
-
-        return cronogramas
-                .stream()
-                .map(cronograma ->
-                        calcularProximaOcorrencia(
-                                cronograma,
-                                referencia
-                        )
-                )
-                .min(LocalDateTime::compareTo);
-    }
-
-    @Override
-    public Optional<LocalDateTime> buscarColetaNoHorario(
-            Long rotaId,
-            LocalDateTime dataHora
-    ) {
+    public Optional<LocalDateTime> buscarColetaNoHorario(Long rotaId, LocalDateTime dataHora) {
         if (dataHora == null) {
-            throw new IllegalArgumentException(
-                    "A data e hora da coleta são obrigatórias."
-            );
+            throw new IllegalArgumentException("A data e hora da coleta são obrigatórias.");
         }
 
-        LocalDateTime dataHoraPorMinuto =
-                dataHora.truncatedTo(ChronoUnit.MINUTES);
+        LocalDateTime dataHoraPorMinuto = dataHora.truncatedTo(ChronoUnit.MINUTES);
 
-        LocalTime horario =
-                dataHoraPorMinuto.toLocalTime();
+        LocalTime horario = dataHoraPorMinuto.toLocalTime();
 
-        boolean existeColetaNoHorario =
-                buscarAtivosPorRota(rotaId)
+        boolean existeColetaNoHorario = buscarAtivosPorRota(rotaId)
                         .stream()
                         .anyMatch(cronograma ->
-                                converterDiaSemana(
-                                        cronograma.getDiaSemana()
-                                ) == dataHoraPorMinuto.getDayOfWeek()
+                                converterDiaSemana(cronograma.getDiaSemana()) == dataHoraPorMinuto.getDayOfWeek()
                                 && cronograma
                                         .getHorarioInicio()
                                         .truncatedTo(ChronoUnit.MINUTES)
@@ -257,46 +157,7 @@ public class CronogramaServiceImpl implements CronogramaService {
                 : Optional.empty();
     }
 
-    private LocalDateTime calcularProximaOcorrencia(
-            Cronograma cronograma,
-            LocalDateTime referencia
-    ) {
-        DayOfWeek diaCronograma =
-                converterDiaSemana(
-                        cronograma.getDiaSemana()
-                );
-
-        int diasAteColeta =
-                (
-                        diaCronograma.getValue()
-                                - referencia
-                                .getDayOfWeek()
-                                .getValue()
-                                + 7
-                ) % 7;
-
-        LocalDate dataColeta =
-                referencia
-                        .toLocalDate()
-                        .plusDays(diasAteColeta);
-
-        LocalDateTime proximaOcorrencia =
-                LocalDateTime.of(
-                        dataColeta,
-                        cronograma.getHorarioInicio()
-                );
-
-        if (proximaOcorrencia.isBefore(referencia)) {
-            proximaOcorrencia =
-                    proximaOcorrencia.plusWeeks(1);
-        }
-
-        return proximaOcorrencia;
-    }
-
-    private DayOfWeek converterDiaSemana(
-            DiaSemana diaSemana
-    ) {
+    private DayOfWeek converterDiaSemana(DiaSemana diaSemana) {
         return switch (diaSemana) {
             case SEGUNDA -> DayOfWeek.MONDAY;
             case TERCA -> DayOfWeek.TUESDAY;

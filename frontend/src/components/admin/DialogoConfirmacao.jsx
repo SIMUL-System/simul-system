@@ -58,26 +58,15 @@ function DialogoConfirmacao({
     >
       {aberto && (
         <div className="dialogo__conteudo">
-          <span
-            className={`dialogo__icone ${perigo ? 'dialogo__icone--perigo' : ''}`}
-          >
-            <Icone
-              nome="aviso"
-              tamanho={22}
-            />
+          <span className={`dialogo__icone ${perigo ? 'dialogo__icone--perigo' : ''}`}>
+            <Icone nome="aviso" tamanho={22} />
           </span>
 
-          <h2
-            id={idTitulo}
-            className="dialogo__titulo"
-          >
+          <h2 id={idTitulo} className="dialogo__titulo">
             {titulo}
           </h2>
 
-          <div
-            id={idDescricao}
-            className="dialogo__texto"
-          >
+          <div id={idDescricao} className="dialogo__texto">
             {children}
           </div>
 

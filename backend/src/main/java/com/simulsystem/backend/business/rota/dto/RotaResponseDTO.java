@@ -2,6 +2,7 @@ package com.simulsystem.backend.business.rota.dto;
 
 import java.time.LocalDateTime;
 
+/** Rota devolvida ao painel admin. */
 public record RotaResponseDTO(
         Long id,
         String nome,

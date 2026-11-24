@@ -1,7 +1,4 @@
-import {
-  useEffect,
-  useState,
-} from 'react'
+import { useEffect, useState } from 'react'
 
 import Icone from '../Icone'
 
@@ -23,6 +20,7 @@ function semanaAtual() {
   return `${data.getUTCFullYear()}-W${semana}`
 }
 
+/** Marcações salvas neste navegador; recomeçam a cada semana. */
 function lerMissao() {
   const semana = semanaAtual()
 
@@ -76,10 +74,7 @@ function MissaoSemana() {
   return (
     <div className="missao">
       <div className="missao__topo">
-        <p
-          className="missao__contagem"
-          aria-live="polite"
-        >
+        <p className="missao__contagem" aria-live="polite">
           <strong>
             {concluidas} de {total}
           </strong>{' '}
@@ -104,43 +99,24 @@ function MissaoSemana() {
           const feita = missao.feitas.includes(indice)
 
           return (
-            <li
-              key={texto}
-              className={
-                feita
-                  ? 'missao__item missao__item--feita'
-                  : 'missao__item'
-              }
-            >
-              <input
-                id={id}
-                type="checkbox"
-                checked={feita}
-                onChange={() => alternar(indice)}
-              />
+            <li key={texto} className={feita ? 'missao__item missao__item--feita' : 'missao__item'}>
+              <input id={id} type="checkbox" checked={feita} onChange={() => alternar(indice)} />
 
-              <label htmlFor={id}>
-                {texto}
-              </label>
+              <label htmlFor={id}>{texto}</label>
             </li>
           )
         })}
       </ul>
 
       {completa && (
-        <p
-          className="missao__parabens"
-          role="status"
-        >
+        <p className="missao__parabens" role="status">
           <Icone nome="sucesso" />
-          Missão cumprida! Sua casa fez a coleta seletiva
-          funcionar nesta semana.
+          Missão cumprida! Sua casa fez a coleta seletiva funcionar nesta semana.
         </p>
       )}
 
       <p className="missao__nota">
-        Suas marcações ficam salvas só neste navegador e
-        recomeçam toda segunda-feira.
+        Suas marcações ficam salvas só neste navegador e recomeçam toda segunda-feira.
       </p>
     </div>
   )

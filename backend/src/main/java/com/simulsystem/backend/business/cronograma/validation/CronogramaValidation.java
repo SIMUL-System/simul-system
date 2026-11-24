@@ -6,6 +6,7 @@ import com.simulsystem.backend.business.cronograma.repository.CronogramaReposito
 import com.simulsystem.backend.core.exception.CronogramaJaCadastradoException;
 import com.simulsystem.backend.core.exception.CronogramaNaoEncontradoException;
 import com.simulsystem.backend.core.exception.HorarioCronogramaInvalidoException;
+
 import org.springframework.stereotype.Component;
 
 import java.time.LocalTime;
@@ -14,58 +15,37 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/** Regras de validação dos cronogramas (existência, duplicidade e horários). */
 @Component
 public class CronogramaValidation {
 
     private final CronogramaRepository cronogramaRepository;
 
-    public CronogramaValidation(
-            CronogramaRepository cronogramaRepository
-    ) {
+    public CronogramaValidation(CronogramaRepository cronogramaRepository) {
         this.cronogramaRepository = cronogramaRepository;
     }
 
-    public Cronograma buscarCronogramaExistente(
-            Long cronogramaId
-    ) {
+    /** Cronograma pelo id ou 404. */
+    public Cronograma buscarCronogramaExistente(Long cronogramaId) {
         return cronogramaRepository.findById(cronogramaId)
                 .orElseThrow(() ->
-                        new CronogramaNaoEncontradoException(
-                                "O cronograma informado não existe."
-                        )
+                        new CronogramaNaoEncontradoException("O cronograma informado não existe.")
                 );
     }
 
-    public void validarCronogramaNaoDuplicado(
-            Long rotaId,
-            DiaSemana diaSemana
-    ) {
-        boolean existe =
-                cronogramaRepository
-                        .existsByRotaIdAndDiaSemanaAndAtivoTrue(
-                                rotaId,
-                                diaSemana
-                        );
+    /** Impede dois horários ativos na mesma rota e dia. */
+    public void validarCronogramaNaoDuplicado(Long rotaId, DiaSemana diaSemana) {
+        boolean existe = cronogramaRepository.existsByRotaIdAndDiaSemanaAndAtivoTrue(rotaId, diaSemana);
 
         if (existe) {
-            throw new CronogramaJaCadastradoException(
-                    "Já existe um cronograma ativo para esta rota e dia da semana."
-            );
+            throw new CronogramaJaCadastradoException("Já existe um cronograma ativo para esta rota e dia da semana.");
         }
     }
 
-    public void validarCronogramaNaoDuplicadoNaAtualizacao(
-            Long cronogramaId,
-            Long rotaId,
-            DiaSemana diaSemana
-    ) {
-        boolean existe =
-                cronogramaRepository
-                        .existsByRotaIdAndDiaSemanaAndAtivoTrueAndIdNot(
-                                rotaId,
-                                diaSemana,
-                                cronogramaId
-                        );
+    /** Mesma regra na edição, ignorando o próprio registro. */
+    public void validarCronogramaNaoDuplicadoNaAtualizacao(Long cronogramaId, Long rotaId, DiaSemana diaSemana) {
+        boolean existe = cronogramaRepository
+                        .existsByRotaIdAndDiaSemanaAndAtivoTrueAndIdNot(rotaId, diaSemana, cronogramaId);
 
         if (existe) {
             throw new CronogramaJaCadastradoException(
@@ -74,10 +54,8 @@ public class CronogramaValidation {
         }
     }
 
-    public void validarHorarios(
-            LocalTime horarioInicio,
-            LocalTime horarioFim
-    ) {
+    /** Início e fim não podem ser iguais (fim antes do início vale para coleta que vira a noite). */
+    public void validarHorarios(LocalTime horarioInicio, LocalTime horarioFim) {
         if (horarioInicio.equals(horarioFim)) {
             throw new HorarioCronogramaInvalidoException(
                     "O horário de início e o horário de fim não podem ser iguais."
@@ -90,30 +68,22 @@ public class CronogramaValidation {
      * lança exceção listando os identificadores ausentes, para que
      * nenhuma alteração em lote seja aplicada pela metade.
      */
-    public List<Cronograma> buscarCronogramasExistentes(
-            List<Long> cronogramaIds
-    ) {
-        Set<Long> idsUnicos =
-                new LinkedHashSet<>(cronogramaIds);
+    public List<Cronograma> buscarCronogramasExistentes(List<Long> cronogramaIds) {
+        Set<Long> idsUnicos = new LinkedHashSet<>(cronogramaIds);
 
-        List<Cronograma> cronogramas =
-                cronogramaRepository.findAllById(idsUnicos);
+        List<Cronograma> cronogramas = cronogramaRepository.findAllById(idsUnicos);
 
         if (cronogramas.size() != idsUnicos.size()) {
-            Set<Long> encontrados =
-                    cronogramas.stream()
+            Set<Long> encontrados = cronogramas.stream()
                             .map(Cronograma::getId)
                             .collect(Collectors.toSet());
 
-            String ausentes =
-                    idsUnicos.stream()
+            String ausentes = idsUnicos.stream()
                             .filter(id -> !encontrados.contains(id))
                             .map(String::valueOf)
                             .collect(Collectors.joining(", "));
 
-            throw new CronogramaNaoEncontradoException(
-                    "Os seguintes cronogramas não existem: " + ausentes + "."
-            );
+            throw new CronogramaNaoEncontradoException("Os seguintes cronogramas não existem: " + ausentes + ".");
         }
 
         return cronogramas;

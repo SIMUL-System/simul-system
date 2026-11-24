@@ -7,344 +7,126 @@ import com.simulsystem.backend.business.usuario.model.Usuario;
 import com.simulsystem.backend.business.usuario.repository.TokenVerificacaoEmailRepository;
 import com.simulsystem.backend.business.usuario.repository.UsuarioRepository;
 import com.simulsystem.backend.business.usuario.validation.UsuarioValidation;
+import com.simulsystem.backend.core.config.LinkFrontend;
+import com.simulsystem.backend.core.security.TokenSeguro;
+import com.simulsystem.backend.core.util.Textos;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
+import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.Base64;
-import java.util.HexFormat;
-import java.util.Locale;
 import java.util.Optional;
 
+/** Implementação de VerificacaoEmailService. */
 @Service
-public class VerificacaoEmailServiceImpl
-        implements VerificacaoEmailService {
-
-    private static final int TOKEN_BYTES = 32;
+public class VerificacaoEmailServiceImpl implements VerificacaoEmailService {
 
     private final TokenVerificacaoEmailRepository tokenRepository;
     private final UsuarioRepository usuarioRepository;
     private final UsuarioValidation usuarioValidation;
     private final EmailNotificacaoStrategy emailNotificacaoStrategy;
-
-    private final SecureRandom secureRandom;
-
+    private final TokenSeguro tokenSeguro;
+    private final LinkFrontend linkFrontend;
+    private final Clock clock;
     private final long expiracaoHoras;
-    private final String frontendUrl;
 
     public VerificacaoEmailServiceImpl(
             TokenVerificacaoEmailRepository tokenRepository,
             UsuarioRepository usuarioRepository,
             UsuarioValidation usuarioValidation,
             EmailNotificacaoStrategy emailNotificacaoStrategy,
-            @Value("${simul.email-verification.expiration-hours:24}")
-            long expiracaoHoras,
-            @Value("${simul.frontend.url}")
-            String frontendUrl
-    ) {
-        this.tokenRepository =
-                tokenRepository;
-
-        this.usuarioRepository =
-                usuarioRepository;
-
-        this.usuarioValidation =
-                usuarioValidation;
-
-        this.emailNotificacaoStrategy =
-                emailNotificacaoStrategy;
-
-        this.expiracaoHoras =
-                expiracaoHoras;
-
-        this.frontendUrl =
-                removerBarraFinal(
-                        frontendUrl
-                );
-
-        this.secureRandom =
-                new SecureRandom();
+            TokenSeguro tokenSeguro,
+            LinkFrontend linkFrontend,
+            Clock clock,
+            @Value("${simul.email-verification.expiration-hours:24}") long expiracaoHoras) {
+        this.tokenRepository = tokenRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.usuarioValidation = usuarioValidation;
+        this.emailNotificacaoStrategy = emailNotificacaoStrategy;
+        this.tokenSeguro = tokenSeguro;
+        this.linkFrontend = linkFrontend;
+        this.clock = clock;
+        this.expiracaoHoras = expiracaoHoras;
     }
 
     @Override
     @Transactional
-    public void enviarVerificacao(
-            Usuario usuario
-    ) {
-        if (
-                usuarioValidation
-                        .emailJaVerificado(
-                                usuario
-                        )
-        ) {
+    public void enviarVerificacao(Usuario usuario) {
+        if (usuarioValidation.emailJaVerificado(usuario)) {
             return;
         }
 
-        tokenRepository
-                .deleteByUsuarioId(
-                        usuario.getId()
-                );
+        // Só o link mais recente vale.
+        tokenRepository.deleteByUsuarioId(usuario.getId());
 
-        String token =
-                gerarTokenSeguro();
+        String token = tokenSeguro.gerar();
 
-        String tokenHash =
-                gerarHashToken(
-                        token
-                );
+        TokenVerificacaoEmail entidade = new TokenVerificacaoEmail();
+        entidade.setUsuario(usuario);
+        entidade.setTokenHash(tokenSeguro.hash(token));
+        entidade.setDataExpiracao(LocalDateTime.now(clock).plusHours(expiracaoHoras));
+        entidade.setUtilizado(false);
+        tokenRepository.save(entidade);
 
-        TokenVerificacaoEmail entidade =
-                new TokenVerificacaoEmail();
-
-        entidade.setUsuario(
-                usuario
-        );
-
-        entidade.setTokenHash(
-                tokenHash
-        );
-
-        entidade.setDataExpiracao(
-                LocalDateTime.now()
-                        .plusHours(
-                                expiracaoHoras
-                        )
-        );
-
-        entidade.setUtilizado(
-                false
-        );
-
-        tokenRepository.save(
-                entidade
-        );
-
-        String link =
-                frontendUrl
-                        + "/verificar-email?token="
-                        + token;
-
-        String assunto =
-                "Confirme seu e-mail no SIMUL";
-
-        String mensagem =
-                criarMensagemVerificacao(
-                        usuario,
-                        link
-                );
+        String link = linkFrontend.para("/verificar-email?token=" + token);
 
         emailNotificacaoStrategy.enviar(
-                usuario.getEmail(),
-                assunto,
-                mensagem
-        );
+                usuario.getEmail(), "Confirme seu e-mail no SIMUL", criarMensagem(usuario, link));
     }
 
     @Override
     @Transactional
-    public VerificacaoEmailResponseDTO verificarEmail(
-            String token
-    ) {
-        if (
-                token == null ||
-                token.isBlank()
-        ) {
-            return new VerificacaoEmailResponseDTO(
-                    false,
-                    "O token de verificação é inválido."
-            );
+    public VerificacaoEmailResponseDTO verificarEmail(String token) {
+        if (token == null || token.isBlank()) {
+            return new VerificacaoEmailResponseDTO(false, "O token de verificação é inválido.");
         }
-
-        String tokenHash =
-                gerarHashToken(
-                        token.trim()
-                );
 
         Optional<TokenVerificacaoEmail> tokenOptional =
-                tokenRepository
-                        .findByTokenHashAndUtilizadoFalse(
-                                tokenHash
-                        );
+                tokenRepository.findByTokenHashAndUtilizadoFalse(tokenSeguro.hash(token.trim()));
 
         if (tokenOptional.isEmpty()) {
-            return new VerificacaoEmailResponseDTO(
-                    false,
-                    "O link de verificação é inválido ou já foi utilizado."
-            );
+            return new VerificacaoEmailResponseDTO(false, "O link de verificação é inválido ou já foi utilizado.");
         }
 
-        TokenVerificacaoEmail tokenVerificacao =
-                tokenOptional.get();
+        TokenVerificacaoEmail tokenVerificacao = tokenOptional.get();
+        LocalDateTime agora = LocalDateTime.now(clock);
 
-        if (
-                tokenVerificacao
-                        .getDataExpiracao()
-                        .isBefore(
-                                LocalDateTime.now()
-                        )
-        ) {
+        if (tokenVerificacao.getDataExpiracao().isBefore(agora)) {
             return new VerificacaoEmailResponseDTO(
-                    false,
-                    "O link de verificação expirou. Solicite um novo e-mail de confirmação."
-            );
+                    false, "O link de verificação expirou. Solicite um novo e-mail de confirmação.");
         }
 
-        Usuario usuario =
-                tokenVerificacao
-                        .getUsuario();
+        Usuario usuario = tokenVerificacao.getUsuario();
+        boolean jaEstavaConfirmado = usuarioValidation.emailJaVerificado(usuario);
 
-        if (
-                usuarioValidation
-                        .emailJaVerificado(
-                                usuario
-                        )
-        ) {
-            tokenVerificacao.setUtilizado(
-                    true
-            );
-
-            tokenVerificacao.setDataUtilizacao(
-                    LocalDateTime.now()
-            );
-
-            tokenRepository.save(
-                    tokenVerificacao
-            );
-
-            return new VerificacaoEmailResponseDTO(
-                    true,
-                    "Este e-mail já está confirmado."
-            );
+        if (!jaEstavaConfirmado) {
+            usuario.setEmailVerificado(true);
+            usuarioRepository.save(usuario);
         }
 
-        usuario.setEmailVerificado(
-                true
-        );
-
-        usuarioRepository.save(
-                usuario
-        );
-
-        tokenVerificacao.setUtilizado(
-                true
-        );
-
-        tokenVerificacao.setDataUtilizacao(
-                LocalDateTime.now()
-        );
-
-        tokenRepository.save(
-                tokenVerificacao
-        );
+        tokenVerificacao.setUtilizado(true);
+        tokenVerificacao.setDataUtilizacao(agora);
+        tokenRepository.save(tokenVerificacao);
 
         return new VerificacaoEmailResponseDTO(
-                true,
-                "E-mail confirmado com sucesso."
-        );
+                true, jaEstavaConfirmado ? "Este e-mail já está confirmado." : "E-mail confirmado com sucesso.");
     }
 
     @Override
     @Transactional
-    public void reenviarVerificacao(
-            String email
-    ) {
-        if (
-                email == null ||
-                email.isBlank()
-        ) {
+    public void reenviarVerificacao(String email) {
+        if (email == null || email.isBlank()) {
             return;
         }
 
-        String emailNormalizado =
-                normalizarEmail(
-                        email
-                );
-
-        Optional<Usuario> usuarioOptional =
-                usuarioRepository
-                        .findByEmailIgnoreCase(
-                                emailNormalizado
-                        );
-
-        if (usuarioOptional.isEmpty()) {
-            return;
-        }
-
-        Usuario usuario =
-                usuarioOptional.get();
-
-        if (
-                usuarioValidation
-                        .emailJaVerificado(
-                                usuario
-                        )
-        ) {
-            return;
-        }
-
-        enviarVerificacao(
-                usuario
-        );
+        usuarioRepository.findByEmailIgnoreCase(Textos.normalizarEmail(email))
+                .filter(usuario -> !usuarioValidation.emailJaVerificado(usuario))
+                .ifPresent(this::enviarVerificacao);
     }
 
-    private String gerarTokenSeguro() {
-        byte[] bytes =
-                new byte[
-                        TOKEN_BYTES
-                ];
-
-        secureRandom.nextBytes(
-                bytes
-        );
-
-        return Base64
-                .getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(
-                        bytes
-                );
-    }
-
-    private String gerarHashToken(
-            String token
-    ) {
-        try {
-            MessageDigest digest =
-                    MessageDigest
-                            .getInstance(
-                                    "SHA-256"
-                            );
-
-            byte[] hash =
-                    digest.digest(
-                            token.getBytes(
-                                    StandardCharsets.UTF_8
-                            )
-                    );
-
-            return HexFormat
-                    .of()
-                    .formatHex(
-                            hash
-                    );
-
-        } catch (NoSuchAlgorithmException exception) {
-            throw new IllegalStateException(
-                    "Não foi possível gerar o hash do token de verificação.",
-                    exception
-            );
-        }
-    }
-
-    private String criarMensagemVerificacao(
-            Usuario usuario,
-            String link
-    ) {
+    private String criarMensagem(Usuario usuario, String link) {
         return """
                 Olá, %s.
 
@@ -360,39 +142,6 @@ public class VerificacaoEmailServiceImpl
 
                 SIMUL
                 Sistema Integrado de Monitoramento Urbano de Limpeza
-                """
-                .formatted(
-                        usuario.getNome(),
-                        link,
-                        expiracaoHoras
-                );
-    }
-
-    private String normalizarEmail(
-            String email
-    ) {
-        return email
-                .trim()
-                .toLowerCase(
-                        Locale.ROOT
-                );
-    }
-
-    private String removerBarraFinal(
-            String url
-    ) {
-        if (
-                url == null ||
-                url.isBlank()
-        ) {
-            throw new IllegalArgumentException(
-                    "A URL do frontend não foi configurada."
-            );
-        }
-
-        return url.replaceAll(
-                "/+$",
-                ""
-        );
+                """.formatted(usuario.getNome(), link, expiracaoHoras);
     }
 }

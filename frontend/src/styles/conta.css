@@ -122,7 +122,9 @@
   border-radius: var(--radius-full);
   background: var(--surface-sunken);
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .interruptor__controle::after {
@@ -134,7 +136,9 @@
   height: 20px;
   border-radius: 50%;
   background: var(--ink-muted);
-  transition: transform 0.15s ease, background-color 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease;
 }
 
 .interruptor__controle:checked {

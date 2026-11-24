@@ -2,11 +2,7 @@ import { useState } from 'react'
 
 import Icone from '../../Icone'
 import CamposHorario from './CamposHorario'
-import {
-  DIAS_SEMANA,
-  horaCurta,
-  nomeDia,
-} from '../../../utils/cronogramas'
+import { DIAS_SEMANA, horaCurta, nomeDia } from '../../../utils/cronogramas'
 
 /**
  * Edita um horário existente e liga/desliga o seu status.
@@ -28,11 +24,12 @@ function FormEditarCronograma({
   const [erro, setErro] = useState('')
 
   // Outro horário ativo no mesmo dia e rota impede salvar ou reativar.
-  const conflito = cronogramas.find((item) =>
-    item.id !== cronograma.id
-    && item.ativo
-    && item.rotaId === Number(rotaId)
-    && item.diaSemana === diaSemana,
+  const conflito = cronogramas.find(
+    (item) =>
+      item.id !== cronograma.id &&
+      item.ativo &&
+      item.rotaId === Number(rotaId) &&
+      item.diaSemana === diaSemana,
   )
 
   function handleSubmit(event) {
@@ -57,11 +54,7 @@ function FormEditarCronograma({
   }
 
   return (
-    <form
-      className="painel-form"
-      onSubmit={handleSubmit}
-      noValidate
-    >
+    <form className="painel-form" onSubmit={handleSubmit} noValidate>
       <p className="painel-form__situacao">
         <span className={`selo ${cronograma.ativo ? 'selo--ativo' : 'selo--inativo'}`}>
           {cronograma.ativo ? 'Ativo' : 'Inativo'}
@@ -72,10 +65,7 @@ function FormEditarCronograma({
       </p>
 
       <div className="campo-ds">
-        <label
-          className="campo-ds__rotulo"
-          htmlFor="editar-cronograma-rota"
-        >
+        <label className="campo-ds__rotulo" htmlFor="editar-cronograma-rota">
           Rota
         </label>
 
@@ -90,10 +80,7 @@ function FormEditarCronograma({
           disabled={salvando}
         >
           {rotas.map((rota) => (
-            <option
-              key={rota.id}
-              value={rota.id}
-            >
+            <option key={rota.id} value={rota.id}>
               {rota.nome}
               {rota.ativo ? '' : ' (inativa)'}
             </option>
@@ -102,10 +89,7 @@ function FormEditarCronograma({
       </div>
 
       <div className="campo-ds">
-        <label
-          className="campo-ds__rotulo"
-          htmlFor="editar-cronograma-dia"
-        >
+        <label className="campo-ds__rotulo" htmlFor="editar-cronograma-dia">
           Dia da semana
         </label>
 
@@ -120,10 +104,7 @@ function FormEditarCronograma({
           disabled={salvando}
         >
           {DIAS_SEMANA.map((dia) => (
-            <option
-              key={dia.valor}
-              value={dia.valor}
-            >
+            <option key={dia.valor} value={dia.valor}>
               {dia.longo}
             </option>
           ))}
@@ -142,14 +123,8 @@ function FormEditarCronograma({
       />
 
       {erro && (
-        <p
-          className="campo-ds__erro"
-          role="alert"
-        >
-          <Icone
-            nome="erro"
-            tamanho={16}
-          />
+        <p className="campo-ds__erro" role="alert">
+          <Icone nome="erro" tamanho={16} />
           {erro}
         </p>
       )}

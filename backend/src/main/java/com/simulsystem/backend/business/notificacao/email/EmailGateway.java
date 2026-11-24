@@ -11,9 +11,5 @@ public interface EmailGateway {
      * @throws com.simulsystem.backend.core.exception.EnvioEmailException
      *         quando o provedor recusa ou não responde.
      */
-    void enviar(
-            String destinatario,
-            String assunto,
-            String texto
-    );
+    void enviar(String destinatario, String assunto, String texto);
 }

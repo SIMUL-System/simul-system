@@ -10,8 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class StatusControllerTest {
 
-    private final MockMvc mockMvc =
-            MockMvcBuilders.standaloneSetup(new StatusController()).build();
+    private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new StatusController()).build();
 
     @Test
     void deveResponderOk() throws Exception {

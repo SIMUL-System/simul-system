@@ -1,6 +1,7 @@
 package com.simulsystem.backend.business.cronograma.model;
 
 import com.simulsystem.backend.business.rota.model.Rota;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -21,6 +22,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
+/** Horário de coleta de uma rota em um dia da semana (só um ativo por rota e dia). */
 @Entity
 @Table(name = "cronogramas")
 @Getter
@@ -55,6 +57,7 @@ public class Cronograma {
     @Column(name = "data_atualizacao", nullable = false)
     private LocalDateTime dataAtualizacao;
 
+    /** Preenche as datas (e os padrões) antes de inserir. */
     @PrePersist
     private void prePersist() {
         LocalDateTime agora = LocalDateTime.now();
@@ -67,6 +70,7 @@ public class Cronograma {
         }
     }
 
+    /** Atualiza a data de alteração. */
     @PreUpdate
     private void preUpdate() {
         this.dataAtualizacao = LocalDateTime.now();

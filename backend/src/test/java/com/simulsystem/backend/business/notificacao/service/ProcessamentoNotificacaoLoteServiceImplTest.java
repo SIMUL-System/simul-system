@@ -1,6 +1,7 @@
 package com.simulsystem.backend.business.notificacao.service;
 
 import com.simulsystem.backend.business.notificacao.model.PreferenciaNotificacao;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,225 +30,111 @@ class ProcessamentoNotificacaoLoteServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service =
-                new ProcessamentoNotificacaoLoteServiceImpl(
+        service = new ProcessamentoNotificacaoLoteServiceImpl(
                         preferenciaNotificacaoService,
                         processamentoNotificacaoService
                 );
 
-        referencia =
-                LocalDateTime.of(
-                        2026,
-                        9,
-                        7,
-                        19,
-                        30
-                );
+        referencia = LocalDateTime.of(2026, 9, 7, 19, 30);
     }
 
     @Test
     void deveProcessarTodasAsPreferenciasElegiveis() {
-        PreferenciaNotificacao preferencia1 =
-                new PreferenciaNotificacao();
+        PreferenciaNotificacao preferencia1 = new PreferenciaNotificacao();
 
         preferencia1.setId(1L);
 
-        PreferenciaNotificacao preferencia2 =
-                new PreferenciaNotificacao();
+        PreferenciaNotificacao preferencia2 = new PreferenciaNotificacao();
 
         preferencia2.setId(2L);
 
-        when(
-                preferenciaNotificacaoService
-                        .buscarElegiveisParaProcessamento()
-        )
-                .thenReturn(
-                        List.of(
-                                preferencia1,
-                                preferencia2
-                        )
-                );
+        when(preferenciaNotificacaoService.buscarElegiveisParaProcessamento())
+                .thenReturn(List.of(preferencia1, preferencia2));
 
-        service.processar(
-                referencia
-        );
+        service.processar(referencia);
 
-        verify(
-                processamentoNotificacaoService
-        )
-                .processar(
-                        preferencia1,
-                        referencia
-                );
+        verify(processamentoNotificacaoService)
+                .processar(preferencia1, referencia);
 
-        verify(
-                processamentoNotificacaoService
-        )
-                .processar(
-                        preferencia2,
-                        referencia
-                );
+        verify(processamentoNotificacaoService)
+                .processar(preferencia2, referencia);
     }
 
     @Test
     void deveManterOrdemDasPreferenciasDoLote() {
-        PreferenciaNotificacao preferencia1 =
-                new PreferenciaNotificacao();
+        PreferenciaNotificacao preferencia1 = new PreferenciaNotificacao();
 
         preferencia1.setId(1L);
 
-        PreferenciaNotificacao preferencia2 =
-                new PreferenciaNotificacao();
+        PreferenciaNotificacao preferencia2 = new PreferenciaNotificacao();
 
         preferencia2.setId(2L);
 
-        when(
-                preferenciaNotificacaoService
-                        .buscarElegiveisParaProcessamento()
-        )
-                .thenReturn(
-                        List.of(
-                                preferencia1,
-                                preferencia2
-                        )
-                );
+        when(preferenciaNotificacaoService.buscarElegiveisParaProcessamento())
+                .thenReturn(List.of(preferencia1, preferencia2));
 
-        service.processar(
-                referencia
-        );
+        service.processar(referencia);
 
-        InOrder inOrder =
-                inOrder(
-                        processamentoNotificacaoService
-                );
+        InOrder inOrder = inOrder(processamentoNotificacaoService);
 
-        inOrder.verify(
-                processamentoNotificacaoService
-        )
-                .processar(
-                        preferencia1,
-                        referencia
-                );
+        inOrder.verify(processamentoNotificacaoService)
+                .processar(preferencia1, referencia);
 
-        inOrder.verify(
-                processamentoNotificacaoService
-        )
-                .processar(
-                        preferencia2,
-                        referencia
-                );
+        inOrder.verify(processamentoNotificacaoService)
+                .processar(preferencia2, referencia);
     }
 
     @Test
     void naoDeveFalharLoteQuandoUmaPreferenciaGerarErro() {
-        PreferenciaNotificacao preferencia1 =
-                new PreferenciaNotificacao();
+        PreferenciaNotificacao preferencia1 = new PreferenciaNotificacao();
 
         preferencia1.setId(1L);
 
-        PreferenciaNotificacao preferencia2 =
-                new PreferenciaNotificacao();
+        PreferenciaNotificacao preferencia2 = new PreferenciaNotificacao();
 
         preferencia2.setId(2L);
 
-        when(
-                preferenciaNotificacaoService
-                        .buscarElegiveisParaProcessamento()
-        )
-                .thenReturn(
-                        List.of(
-                                preferencia1,
-                                preferencia2
-                        )
-                );
+        when(preferenciaNotificacaoService.buscarElegiveisParaProcessamento())
+                .thenReturn(List.of(preferencia1, preferencia2));
 
-        doThrow(
-                new RuntimeException(
-                        "Falha de teste"
-                )
-        )
-                .when(
-                        processamentoNotificacaoService
-                )
-                .processar(
-                        preferencia1,
-                        referencia
-                );
+        doThrow(new RuntimeException("Falha de teste"))
+                .when(processamentoNotificacaoService)
+                .processar(preferencia1, referencia);
 
-        service.processar(
-                referencia
-        );
+        service.processar(referencia);
 
-        verify(
-                processamentoNotificacaoService
-        )
-                .processar(
-                        preferencia1,
-                        referencia
-                );
+        verify(processamentoNotificacaoService)
+                .processar(preferencia1, referencia);
 
-        verify(
-                processamentoNotificacaoService
-        )
-                .processar(
-                        preferencia2,
-                        referencia
-                );
+        verify(processamentoNotificacaoService)
+                .processar(preferencia2, referencia);
     }
 
     @Test
     void naoDeveProcessarQuandoNaoExistiremPreferenciasElegiveis() {
-        when(
-                preferenciaNotificacaoService
-                        .buscarElegiveisParaProcessamento()
-        )
-                .thenReturn(
-                        List.of()
-                );
+        when(preferenciaNotificacaoService.buscarElegiveisParaProcessamento())
+                .thenReturn(List.of());
 
-        service.processar(
-                referencia
-        );
+        service.processar(referencia);
 
-        verifyNoInteractions(
-                processamentoNotificacaoService
-        );
+        verifyNoInteractions(processamentoNotificacaoService);
     }
 
     @Test
     void deveBuscarPreferenciasElegiveisUmaUnicaVez() {
-        when(
-                preferenciaNotificacaoService
-                        .buscarElegiveisParaProcessamento()
-        )
-                .thenReturn(
-                        List.of()
-                );
+        when(preferenciaNotificacaoService.buscarElegiveisParaProcessamento())
+                .thenReturn(List.of());
 
-        service.processar(
-                referencia
-        );
+        service.processar(referencia);
 
-        verify(
-                preferenciaNotificacaoService,
-                times(1)
-        )
+        verify(preferenciaNotificacaoService, times(1))
                 .buscarElegiveisParaProcessamento();
     }
 
     @Test
     void deveLancarErroQuandoReferenciaForNula() {
-        assertThrows(
-                IllegalArgumentException.class,
-                () ->
-                        service.processar(
-                                null
-                        )
-        );
+        assertThrows(IllegalArgumentException.class, () -> service.processar(null));
 
-        verifyNoInteractions(
-                preferenciaNotificacaoService,
-                processamentoNotificacaoService
-        );
+        verifyNoInteractions(preferenciaNotificacaoService, processamentoNotificacaoService);
     }
 }

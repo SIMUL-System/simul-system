@@ -3,6 +3,7 @@ package com.simulsystem.backend.business.rota.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+/** Corpo para criar ou editar uma rota (nome e descrição). */
 public record RotaRequestDTO(
 
         @NotBlank(message = "O nome da rota é obrigatório.")

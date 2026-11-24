@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
-import {
-  Navigate,
-  Outlet,
-} from 'react-router-dom'
+import { Navigate, Outlet } from 'react-router-dom'
 
 import { obterUsuarioAtual } from '../services/usuarioService'
 
+/** Só deixa passar quem tem perfil ADMIN (confere em /api/usuarios/me). */
 function RotaAdmin() {
   const [usuario, setUsuario] = useState(null)
   const [carregando, setCarregando] = useState(true)
@@ -32,21 +30,11 @@ function RotaAdmin() {
   }
 
   if (erro) {
-    return (
-      <Navigate
-        to="/login"
-        replace
-      />
-    )
+    return <Navigate to="/login" replace />
   }
 
   if (usuario?.perfil !== 'ADMIN') {
-    return (
-      <Navigate
-        to="/minha-conta"
-        replace
-      />
-    )
+    return <Navigate to="/minha-conta" replace />
   }
 
   return <Outlet />

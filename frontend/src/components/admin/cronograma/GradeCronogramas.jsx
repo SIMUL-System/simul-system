@@ -1,8 +1,4 @@
-import {
-  DIAS_SEMANA,
-  ehNoturno,
-  horaCurta,
-} from '../../../utils/cronogramas'
+import { DIAS_SEMANA, ehNoturno, horaCurta } from '../../../utils/cronogramas'
 
 /**
  * Grade semanal: uma linha por rota, uma coluna por dia.
@@ -25,18 +21,12 @@ function GradeCronogramas({
 
         <thead>
           <tr>
-            <th
-              scope="col"
-              className="grade-cronogramas__rota"
-            >
+            <th scope="col" className="grade-cronogramas__rota">
               Rota
             </th>
 
             {DIAS_SEMANA.map((dia) => (
-              <th
-                key={dia.valor}
-                scope="col"
-              >
+              <th key={dia.valor} scope="col">
                 <abbr title={dia.longo}>{dia.curto}</abbr>
               </th>
             ))}
@@ -48,14 +38,8 @@ function GradeCronogramas({
             const idCaixa = `selecionar-rota-${rota.id}`
 
             return (
-              <tr
-                key={rota.id}
-                className={rota.ativo ? '' : 'grade-cronogramas__linha--inativa'}
-              >
-                <th
-                  scope="row"
-                  className="grade-cronogramas__rota"
-                >
+              <tr key={rota.id} className={rota.ativo ? '' : 'grade-cronogramas__linha--inativa'}>
+                <th scope="row" className="grade-cronogramas__rota">
                   <div className="grade-cronogramas__rota-conteudo">
                     <input
                       id={idCaixa}
@@ -67,9 +51,7 @@ function GradeCronogramas({
                     />
 
                     <label htmlFor={idCaixa}>
-                      <span className="grade-cronogramas__nome">
-                        {rota.nome}
-                      </span>
+                      <span className="grade-cronogramas__nome">{rota.nome}</span>
 
                       <span className="grade-cronogramas__meta">
                         {ativos.length === 1
@@ -92,9 +74,7 @@ function GradeCronogramas({
                             ? 'horario-chip--noturno'
                             : 'horario-chip--diurno',
                           cronograma.ativo ? '' : 'horario-chip--inativo',
-                          cronogramaAberto === cronograma.id
-                            ? 'horario-chip--aberto'
-                            : '',
+                          cronogramaAberto === cronograma.id ? 'horario-chip--aberto' : '',
                         ].join(' ')}
                         onClick={() => onAbrirCronograma(cronograma)}
                         aria-label={`Editar ${rota.nome}, ${dia.longo}, ${horaCurta(cronograma.horarioInicio)} às ${horaCurta(cronograma.horarioFim)}${cronograma.ativo ? '' : ', inativo'}`}

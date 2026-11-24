@@ -1,12 +1,6 @@
-import {
-  useEffect,
-  useState,
-} from 'react'
+import { useEffect, useState } from 'react'
 
-import {
-  consultarColeta,
-  listarAreasDisponiveis,
-} from '../services/rotaService'
+import { consultarColeta, listarAreasDisponiveis } from '../services/rotaService'
 
 import {
   atualizarPreferencia,
@@ -31,208 +25,96 @@ import Interruptor from '../components/form/Interruptor'
 
 import {
   calcularProximaColeta,
+  descreverAntecedencia,
   formatarData,
   formatarHora,
   ordenarCronogramas,
 } from '../utils/coleta'
+import { ordenarTexto } from '../utils/texto'
 
 const ATALHOS_ANTECEDENCIA = [1, 3, 12, 24, 48]
 
-function formatarHoras(horas) {
-  if (horas === 0) {
-    return 'no horário da coleta'
-  }
-
-  return horas === 1
-    ? '1 hora antes'
-    : `${horas} horas antes`
-}
-
-function ordenarTexto(a, b) {
-  return a.localeCompare(
-    b,
-    'pt-BR',
-    {
-      sensitivity: 'base',
-    },
-  )
-}
-
+/** Meus lembretes: bairro, canais (e-mail e navegador) e antecedência. */
 function PreferenciasPage() {
-  const [
-    preferencia,
-    setPreferencia,
-  ] = useState(null)
-
-  const [areas, setAreas] =
-    useState([])
-
-  const [cidade, setCidade] =
-    useState('')
-
-  const [bairro, setBairro] =
-    useState('')
-
-  const [
-    rotaSelecionada,
-    setRotaSelecionada,
-  ] = useState(null)
-
-  const [
-    emailAtivo,
-    setEmailAtivo,
-  ] = useState(true)
-
-  const [
-    webPushAtivo,
-    setWebPushAtivo,
-  ] = useState(false)
-
-  const [
-    navegadorInscrito,
-    setNavegadorInscrito,
-  ] = useState(false)
-
-  const [
-    alterandoWebPush,
-    setAlterandoWebPush,
-  ] = useState(false)
-
-  const [
-    webPushDisponivel,
-    setWebPushDisponivel,
-  ] = useState(true)
-
-  const [
-    antecedenciaHoras,
-    setAntecedenciaHoras,
-  ] = useState(3)
-
-  const [
-    mostrarErroAntecedencia,
-    setMostrarErroAntecedencia,
-  ] = useState(false)
-
-  const [
-    carregando,
-    setCarregando,
-  ] = useState(true)
-
-  const [
-    carregandoAreas,
-    setCarregandoAreas,
-  ] = useState(true)
-
-  const [
-    consultandoRota,
-    setConsultandoRota,
-  ] = useState(false)
-
-  const [
-    salvando,
-    setSalvando,
-  ] = useState(false)
-
-  const [erro, setErro] =
-    useState('')
-
-  const [sucesso, setSucesso] =
-    useState('')
+  const [preferencia, setPreferencia] = useState(null)
+  const [areas, setAreas] = useState([])
+  const [cidade, setCidade] = useState('')
+  const [bairro, setBairro] = useState('')
+  const [rotaSelecionada, setRotaSelecionada] = useState(null)
+  const [emailAtivo, setEmailAtivo] = useState(true)
+  const [webPushAtivo, setWebPushAtivo] = useState(false)
+  const [navegadorInscrito, setNavegadorInscrito] = useState(false)
+  const [alterandoWebPush, setAlterandoWebPush] = useState(false)
+  const [webPushDisponivel, setWebPushDisponivel] = useState(true)
+  const [antecedenciaHoras, setAntecedenciaHoras] = useState(3)
+  const [mostrarErroAntecedencia, setMostrarErroAntecedencia] = useState(false)
+  const [carregando, setCarregando] = useState(true)
+  const [carregandoAreas, setCarregandoAreas] = useState(true)
+  const [consultandoRota, setConsultandoRota] = useState(false)
+  const [salvando, setSalvando] = useState(false)
+  const [erro, setErro] = useState('')
+  const [sucesso, setSucesso] = useState('')
 
   // Momento de referência da prévia do lembrete (fora do render).
-  const [agora, setAgora] =
-    useState(() => new Date())
+  const [agora, setAgora] = useState(() => new Date())
 
   useEffect(() => {
     let componenteAtivo = true
 
     async function carregarDados() {
       try {
-        const [
-          dadosAreas,
-          dadosPreferencia,
-        ] = await Promise.all([
+        const [dadosAreas, dadosPreferencia] = await Promise.all([
           listarAreasDisponiveis(),
 
-          obterPreferencia().catch(
-            (error) => {
-              if (
-                error.status === 404
-              ) {
-                return null
-              }
+          obterPreferencia().catch((error) => {
+            if (error.status === 404) {
+              return null
+            }
 
-              throw error
-            },
-          ),
+            throw error
+          }),
         ])
 
         if (!componenteAtivo) {
           return
         }
 
-        setAreas(
-          Array.isArray(dadosAreas)
-            ? dadosAreas
-            : [],
-        )
+        setAreas(Array.isArray(dadosAreas) ? dadosAreas : [])
 
-        const suportado =
-          webPushSuportado()
+        const suportado = webPushSuportado()
 
-        setWebPushDisponivel(
-          suportado,
-        )
+        setWebPushDisponivel(suportado)
 
         if (suportado) {
-          const subscription =
-            await obterSubscriptionAtual()
+          const subscription = await obterSubscriptionAtual()
 
           if (!componenteAtivo) {
             return
           }
 
-          setNavegadorInscrito(
-            Boolean(subscription),
-          )
+          setNavegadorInscrito(Boolean(subscription))
         }
 
         if (dadosPreferencia) {
-          setPreferencia(
-            dadosPreferencia,
-          )
+          setPreferencia(dadosPreferencia)
 
           setRotaSelecionada({
-            rotaId:
-              dadosPreferencia.rotaId,
-            nomeRota:
-              dadosPreferencia.nomeRota,
+            rotaId: dadosPreferencia.rotaId,
+            nomeRota: dadosPreferencia.nomeRota,
           })
 
-          setEmailAtivo(
-            dadosPreferencia
-              .emailAtivo ?? true,
-          )
+          setEmailAtivo(dadosPreferencia.emailAtivo ?? true)
 
-          setWebPushAtivo(
-            dadosPreferencia
-              .webPushAtivo ?? false,
-          )
+          setWebPushAtivo(dadosPreferencia.webPushAtivo ?? false)
 
-          setAntecedenciaHoras(
-            dadosPreferencia
-              .antecedenciaHoras ?? 3,
-          )
+          setAntecedenciaHoras(dadosPreferencia.antecedenciaHoras ?? 3)
         }
       } catch (error) {
         if (!componenteAtivo) {
           return
         }
 
-        setErro(
-          error.message ||
-            'Não foi possível carregar suas preferências.',
-        )
+        setErro(error.message || 'Não foi possível carregar suas preferências.')
       } finally {
         if (componenteAtivo) {
           setCarregando(false)
@@ -248,63 +130,38 @@ function PreferenciasPage() {
     }
   }, [])
 
-  const cidades = [
-    ...new Set(
-      areas
-        .map(
-          (area) =>
-            area.cidade?.trim(),
-        )
-        .filter(Boolean),
-    ),
-  ].sort(ordenarTexto)
+  const cidades = [...new Set(areas.map((area) => area.cidade?.trim()).filter(Boolean))].sort(
+    ordenarTexto,
+  )
 
   const bairros = cidade
     ? [
         ...new Set(
           areas
-            .filter(
-              (area) =>
-                area.cidade?.trim() ===
-                cidade,
-            )
-            .map(
-              (area) =>
-                area.bairro?.trim(),
-            )
+            .filter((area) => area.cidade?.trim() === cidade)
+            .map((area) => area.bairro?.trim())
             .filter(Boolean),
         ),
       ].sort(ordenarTexto)
     : []
 
-  const antecedencia =
-    Number(antecedenciaHoras)
+  const antecedencia = Number(antecedenciaHoras)
 
   const antecedenciaValida =
-    String(
-      antecedenciaHoras,
-    ).trim() !== '' &&
-    Number.isInteger(
-      antecedencia,
-    ) &&
+    String(antecedenciaHoras).trim() !== '' &&
+    Number.isInteger(antecedencia) &&
     antecedencia >= 0 &&
     antecedencia <= 72
 
-  const operacaoEmAndamento =
-    salvando ||
-    consultandoRota ||
-    alterandoWebPush
+  const operacaoEmAndamento = salvando || consultandoRota || alterandoWebPush
 
   function limparMensagens() {
     setErro('')
     setSucesso('')
   }
 
-  function handleCidadeChange(
-    event,
-  ) {
-    const novaCidade =
-      event.target.value
+  function handleCidadeChange(event) {
+    const novaCidade = event.target.value
 
     setCidade(novaCidade)
     setBairro('')
@@ -313,11 +170,8 @@ function PreferenciasPage() {
     limparMensagens()
   }
 
-  function handleBairroChange(
-    event,
-  ) {
-    const novoBairro =
-      event.target.value
+  function handleBairroChange(event) {
+    const novoBairro = event.target.value
 
     setBairro(novoBairro)
     setRotaSelecionada(null)
@@ -329,32 +183,19 @@ function PreferenciasPage() {
     }
   }
 
-  function handleAntecedenciaChange(
-    event,
-  ) {
-    setAntecedenciaHoras(
-      event.target.value,
-    )
+  function handleAntecedenciaChange(event) {
+    setAntecedenciaHoras(event.target.value)
 
-    setMostrarErroAntecedencia(
-      false,
-    )
+    setMostrarErroAntecedencia(false)
 
     limparMensagens()
   }
 
-  async function buscarRota(
-    cidadeEscolhida,
-    bairroEscolhido,
-  ) {
+  async function buscarRota(cidadeEscolhida, bairroEscolhido) {
     try {
       setConsultandoRota(true)
 
-      const dados =
-        await consultarColeta(
-          cidadeEscolhida,
-          bairroEscolhido,
-        )
+      const dados = await consultarColeta(cidadeEscolhida, bairroEscolhido)
 
       setAgora(new Date())
 
@@ -363,17 +204,12 @@ function PreferenciasPage() {
         nomeRota: dados.nomeRota,
         cidade: dados.cidade,
         bairro: dados.bairro,
-        cronogramas: ordenarCronogramas(
-          dados.cronogramas,
-        ),
+        cronogramas: ordenarCronogramas(dados.cronogramas),
       })
     } catch (error) {
       setRotaSelecionada(null)
 
-      setErro(
-        error.message ||
-          'Não foi possível localizar a rota deste bairro.',
-      )
+      setErro(error.message || 'Não foi possível localizar a rota deste bairro.')
     } finally {
       setConsultandoRota(false)
     }
@@ -383,9 +219,7 @@ function PreferenciasPage() {
     limparMensagens()
 
     if (!webPushDisponivel) {
-      setErro(
-        'Este navegador não oferece suporte a Web Push.',
-      )
+      setErro('Este navegador não oferece suporte a Web Push.')
 
       return
     }
@@ -402,10 +236,7 @@ function PreferenciasPage() {
         'Web Push ativado neste navegador. Salve as preferências para concluir a configuração.',
       )
     } catch (error) {
-      setErro(
-        error.message ||
-          'Não foi possível ativar o Web Push.',
-      )
+      setErro(error.message || 'Não foi possível ativar o Web Push.')
     } finally {
       setAlterandoWebPush(false)
     }
@@ -426,10 +257,7 @@ function PreferenciasPage() {
         'Web Push desativado neste navegador. Salve as preferências para atualizar a configuração.',
       )
     } catch (error) {
-      setErro(
-        error.message ||
-          'Não foi possível desativar o Web Push.',
-      )
+      setErro(error.message || 'Não foi possível desativar o Web Push.')
     } finally {
       setAlterandoWebPush(false)
     }
@@ -439,71 +267,49 @@ function PreferenciasPage() {
     limparMensagens()
 
     if (!rotaSelecionada?.rotaId) {
-      setErro(
-        'Escolha o bairro antes de salvar.',
-      )
+      setErro('Escolha o bairro antes de salvar.')
 
       return
     }
 
     if (!antecedenciaValida) {
-      setMostrarErroAntecedencia(
-        true,
-      )
+      setMostrarErroAntecedencia(true)
 
-      setErro(
-        'A antecedência deve ser um número inteiro de 0 a 72 horas.',
-      )
+      setErro('A antecedência deve ser um número inteiro de 0 a 72 horas.')
 
       return
     }
 
-    if (
-      webPushAtivo &&
-      !navegadorInscrito
-    ) {
-      setErro(
-        'Ative o Web Push neste navegador antes de salvar essa opção.',
-      )
+    if (webPushAtivo && !navegadorInscrito) {
+      setErro('Ative o Web Push neste navegador antes de salvar essa opção.')
 
       return
     }
 
     const dados = {
-      rotaId:
-        rotaSelecionada.rotaId,
+      rotaId: rotaSelecionada.rotaId,
       emailAtivo,
       webPushAtivo,
-      antecedenciaHoras:
-        antecedencia,
+      antecedenciaHoras: antecedencia,
     }
 
     try {
       setSalvando(true)
 
-      const jaPossuiaPreferencia =
-        Boolean(preferencia)
+      const jaPossuiaPreferencia = Boolean(preferencia)
 
-      const resposta =
-        jaPossuiaPreferencia
-          ? await atualizarPreferencia(
-              dados,
-            )
-          : await criarPreferencia(
-              dados,
-            )
+      const resposta = jaPossuiaPreferencia
+        ? await atualizarPreferencia(dados)
+        : await criarPreferencia(dados)
 
       setPreferencia(
         resposta || {
           ...dados,
-          nomeRota:
-            rotaSelecionada.nomeRota,
+          nomeRota: rotaSelecionada.nomeRota,
         },
       )
 
-      setMostrarErroAntecedencia(
-        false,
-      )
+      setMostrarErroAntecedencia(false)
 
       setSucesso(
         jaPossuiaPreferencia
@@ -511,56 +317,32 @@ function PreferenciasPage() {
           : 'Preferências cadastradas com sucesso.',
       )
     } catch (error) {
-      setErro(
-        error.message ||
-          'Não foi possível salvar as preferências.',
-      )
+      setErro(error.message || 'Não foi possível salvar as preferências.')
     } finally {
       setSalvando(false)
     }
   }
 
-  const proximaColeta =
-    rotaSelecionada?.cronogramas?.length
-      ? calcularProximaColeta(
-          rotaSelecionada.cronogramas,
-          agora,
-        )
-      : null
+  const proximaColeta = rotaSelecionada?.cronogramas?.length
+    ? calcularProximaColeta(rotaSelecionada.cronogramas, agora)
+    : null
 
   const horarioLembrete =
     proximaColeta && antecedenciaValida
-      ? new Date(
-          proximaColeta.inicio.getTime() -
-            antecedencia * 60 * 60 * 1000,
-        )
+      ? new Date(proximaColeta.inicio.getTime() - antecedencia * 60 * 60 * 1000)
       : null
 
-  const lembreteJaPassou =
-    horarioLembrete &&
-    horarioLembrete <= agora
+  const lembreteJaPassou = horarioLembrete && horarioLembrete <= agora
 
-  const algumCanal =
-    emailAtivo || webPushAtivo
+  const algumCanal = emailAtivo || webPushAtivo
 
   if (carregando) {
     return (
-      <main
-        className="conta-pagina"
-        aria-busy="true"
-      >
-        <h1 className="visualmente-oculto">
-          Meus lembretes
-        </h1>
+      <main className="conta-pagina" aria-busy="true">
+        <h1 className="visualmente-oculto">Meus lembretes</h1>
 
-        <p
-          className="carregando"
-          role="status"
-        >
-          <span
-            className="carregando__spinner"
-            aria-hidden="true"
-          />
+        <p className="carregando" role="status">
+          <span className="carregando__spinner" aria-hidden="true" />
           Carregando suas preferências…
         </p>
       </main>
@@ -574,70 +356,48 @@ function PreferenciasPage() {
       aria-busy={operacaoEmAndamento}
     >
       <header className="conta-cabecalho">
-        <p className="sobretitulo">
-          Lembretes da coleta
-        </p>
+        <p className="sobretitulo">Lembretes da coleta</p>
 
-        <h1
-          id="titulo-preferencias"
-          className="conta-cabecalho__titulo"
-        >
+        <h1 id="titulo-preferencias" className="conta-cabecalho__titulo">
           Meus lembretes
         </h1>
 
         <p className="conta-cabecalho__texto">
-          Escolha o bairro, como quer ser
-          avisado e com quanta antecedência.
+          Escolha o bairro, como quer ser avisado e com quanta antecedência.
         </p>
       </header>
 
       {preferencia ? (
         <div className="resumo-lembrete">
-          <span
-            className="resumo-lembrete__icone"
-            aria-hidden="true"
-          >
+          <span className="resumo-lembrete__icone" aria-hidden="true">
             <Icone nome="sino" />
           </span>
 
           <p>
             <strong>
-              {preferencia.emailAtivo ||
-              preferencia.webPushAtivo
+              {preferencia.emailAtivo || preferencia.webPushAtivo
                 ? 'Lembrete ativo'
                 : 'Lembrete pausado'}
             </strong>
             {preferencia.nomeRota}
             {' · '}
-            {formatarHoras(
-              preferencia.antecedenciaHoras,
-            )}
+            {descreverAntecedencia(preferencia.antecedenciaHoras)}
           </p>
         </div>
       ) : (
-        <Alerta
-          tipo="info"
-          titulo="Você ainda não tem lembrete"
-        >
-          Preencha os três passos abaixo e
-          salve para começar a receber.
+        <Alerta tipo="info" titulo="Você ainda não tem lembrete">
+          Preencha os três passos abaixo e salve para começar a receber.
         </Alerta>
       )}
 
       {erro && (
-        <Alerta
-          tipo="erro"
-          titulo="Atenção"
-        >
+        <Alerta tipo="erro" titulo="Atenção">
           {erro}
         </Alerta>
       )}
 
       {sucesso && (
-        <Alerta
-          tipo="sucesso"
-          titulo="Pronto"
-        >
+        <Alerta tipo="sucesso" titulo="Pronto">
           {sucesso}
         </Alerta>
       )}
@@ -648,27 +408,18 @@ function PreferenciasPage() {
         aria-busy={consultandoRota}
       >
         <div className="passo__cabecalho">
-          <span
-            className="passo__numero"
-            aria-hidden="true"
-          >
+          <span className="passo__numero" aria-hidden="true">
             1
           </span>
 
-          <h2
-            id="titulo-localizar-rota"
-            className="titulo-cartao"
-          >
+          <h2 id="titulo-localizar-rota" className="titulo-cartao">
             Onde: seu bairro
           </h2>
         </div>
 
         <div className="passo__campos">
           <div className="campo-ds">
-            <label
-              className="campo-ds__rotulo"
-              htmlFor="cidade"
-            >
+            <label className="campo-ds__rotulo" htmlFor="cidade">
               Cidade
             </label>
 
@@ -677,23 +428,14 @@ function PreferenciasPage() {
               className="campo-ds__controle"
               value={cidade}
               onChange={handleCidadeChange}
-              disabled={
-                carregandoAreas ||
-                cidades.length === 0 ||
-                operacaoEmAndamento
-              }
+              disabled={carregandoAreas || cidades.length === 0 || operacaoEmAndamento}
             >
               <option value="">
-                {cidades.length === 0
-                  ? 'Nenhuma cidade disponível'
-                  : 'Selecione a cidade'}
+                {cidades.length === 0 ? 'Nenhuma cidade disponível' : 'Selecione a cidade'}
               </option>
 
               {cidades.map((nomeCidade) => (
-                <option
-                  key={nomeCidade}
-                  value={nomeCidade}
-                >
+                <option key={nomeCidade} value={nomeCidade}>
                   {nomeCidade}
                 </option>
               ))}
@@ -701,10 +443,7 @@ function PreferenciasPage() {
           </div>
 
           <div className="campo-ds">
-            <label
-              className="campo-ds__rotulo"
-              htmlFor="bairro"
-            >
+            <label className="campo-ds__rotulo" htmlFor="bairro">
               Bairro
             </label>
 
@@ -713,11 +452,7 @@ function PreferenciasPage() {
               className="campo-ds__controle"
               value={bairro}
               onChange={handleBairroChange}
-              disabled={
-                !cidade ||
-                bairros.length === 0 ||
-                operacaoEmAndamento
-              }
+              disabled={!cidade || bairros.length === 0 || operacaoEmAndamento}
               aria-describedby="ajuda-bairro-preferencia"
             >
               <option value="">
@@ -729,19 +464,13 @@ function PreferenciasPage() {
               </option>
 
               {bairros.map((nomeBairro) => (
-                <option
-                  key={nomeBairro}
-                  value={nomeBairro}
-                >
+                <option key={nomeBairro} value={nomeBairro}>
                   {nomeBairro}
                 </option>
               ))}
             </select>
 
-            <p
-              id="ajuda-bairro-preferencia"
-              className="campo-ds__dica"
-            >
+            <p id="ajuda-bairro-preferencia" className="campo-ds__dica">
               {preferencia && !rotaSelecionada?.cronogramas
                 ? 'Escolha de novo só se quiser trocar de bairro.'
                 : 'A rota do bairro é encontrada automaticamente.'}
@@ -750,51 +479,29 @@ function PreferenciasPage() {
         </div>
 
         {rotaSelecionada && (
-          <div
-            className="passo__resultado"
-            role="status"
-          >
+          <div className="passo__resultado" role="status">
             <p className="passo__rota">
-              <Icone
-                nome="local"
-                tamanho={18}
-              />
+              <Icone nome="local" tamanho={18} />
               <span>
-                {rotaSelecionada.bairro
-                  ? `${rotaSelecionada.bairro}: `
-                  : 'Rota atual: '}
-                <strong>
-                  {rotaSelecionada.nomeRota}
-                </strong>
+                {rotaSelecionada.bairro ? `${rotaSelecionada.bairro}: ` : 'Rota atual: '}
+                <strong>{rotaSelecionada.nomeRota}</strong>
               </span>
             </p>
 
             {rotaSelecionada.cronogramas?.length > 0 && (
-              <DiasSemana
-                cronogramas={rotaSelecionada.cronogramas}
-                hoje={agora}
-              />
+              <DiasSemana cronogramas={rotaSelecionada.cronogramas} hoje={agora} />
             )}
           </div>
         )}
       </section>
 
-      <section
-        className="cartao passo"
-        aria-labelledby="titulo-canais"
-      >
+      <section className="cartao passo" aria-labelledby="titulo-canais">
         <div className="passo__cabecalho">
-          <span
-            className="passo__numero"
-            aria-hidden="true"
-          >
+          <span className="passo__numero" aria-hidden="true">
             2
           </span>
 
-          <h2
-            id="titulo-canais"
-            className="titulo-cartao"
-          >
+          <h2 id="titulo-canais" className="titulo-cartao">
             Como: canais de aviso
           </h2>
         </div>
@@ -827,28 +534,17 @@ function PreferenciasPage() {
               setWebPushAtivo(event.target.checked)
               limparMensagens()
             }}
-            disabled={
-              operacaoEmAndamento ||
-              !webPushDisponivel ||
-              !navegadorInscrito
-            }
+            disabled={operacaoEmAndamento || !webPushDisponivel || !navegadorInscrito}
           />
 
           {webPushDisponivel && (
             <button
               type="button"
               className="botao botao--secundario botao--pequeno"
-              onClick={
-                navegadorInscrito
-                  ? handleDesativarWebPush
-                  : handleAtivarWebPush
-              }
+              onClick={navegadorInscrito ? handleDesativarWebPush : handleAtivarWebPush}
               disabled={operacaoEmAndamento}
             >
-              <Icone
-                nome="navegador"
-                tamanho={18}
-              />
+              <Icone nome="navegador" tamanho={18} />
               {alterandoWebPush
                 ? 'Aguarde…'
                 : navegadorInscrito
@@ -859,52 +555,30 @@ function PreferenciasPage() {
         </div>
 
         {!algumCanal && (
-          <p className="campo-ds__dica">
-            Com os dois canais desligados, o
-            lembrete fica pausado.
-          </p>
+          <p className="campo-ds__dica">Com os dois canais desligados, o lembrete fica pausado.</p>
         )}
       </section>
 
-      <section
-        className="cartao passo"
-        aria-labelledby="titulo-antecedencia"
-      >
+      <section className="cartao passo" aria-labelledby="titulo-antecedencia">
         <div className="passo__cabecalho">
-          <span
-            className="passo__numero"
-            aria-hidden="true"
-          >
+          <span className="passo__numero" aria-hidden="true">
             3
           </span>
 
-          <h2
-            id="titulo-antecedencia"
-            className="titulo-cartao"
-          >
+          <h2 id="titulo-antecedencia" className="titulo-cartao">
             Quando: antecedência
           </h2>
         </div>
 
-        <div
-          className="atalhos"
-          role="group"
-          aria-label="Antecedências mais usadas"
-        >
+        <div className="atalhos" role="group" aria-label="Antecedências mais usadas">
           {ATALHOS_ANTECEDENCIA.map((horas) => (
             <button
               key={horas}
               type="button"
               className={
-                antecedencia === horas &&
-                antecedenciaValida
-                  ? 'atalho atalho--ativo'
-                  : 'atalho'
+                antecedencia === horas && antecedenciaValida ? 'atalho atalho--ativo' : 'atalho'
               }
-              aria-pressed={
-                antecedencia === horas &&
-                antecedenciaValida
-              }
+              aria-pressed={antecedencia === horas && antecedenciaValida}
               onClick={() => {
                 setAntecedenciaHoras(horas)
                 setMostrarErroAntecedencia(false)
@@ -918,10 +592,7 @@ function PreferenciasPage() {
         </div>
 
         <div className="campo-ds campo-antecedencia">
-          <label
-            className="campo-ds__rotulo"
-            htmlFor="antecedenciaHoras"
-          >
+          <label className="campo-ds__rotulo" htmlFor="antecedenciaHoras">
             Ou digite as horas (0 a 72)
           </label>
 
@@ -935,37 +606,19 @@ function PreferenciasPage() {
             inputMode="numeric"
             value={antecedenciaHoras}
             onChange={handleAntecedenciaChange}
-            onBlur={() =>
-              setMostrarErroAntecedencia(
-                !antecedenciaValida,
-              )
-            }
-            aria-invalid={
-              mostrarErroAntecedencia &&
-              !antecedenciaValida
-            }
+            onBlur={() => setMostrarErroAntecedencia(!antecedenciaValida)}
+            aria-invalid={mostrarErroAntecedencia && !antecedenciaValida}
             aria-describedby="ajuda-antecedencia"
             disabled={operacaoEmAndamento}
           />
 
-          {mostrarErroAntecedencia &&
-          !antecedenciaValida ? (
-            <p
-              id="ajuda-antecedencia"
-              className="campo-ds__erro"
-              role="alert"
-            >
-              <Icone
-                nome="erro"
-                tamanho={16}
-              />
+          {mostrarErroAntecedencia && !antecedenciaValida ? (
+            <p id="ajuda-antecedencia" className="campo-ds__erro" role="alert">
+              <Icone nome="erro" tamanho={16} />
               Use um número inteiro de 0 a 72.
             </p>
           ) : (
-            <p
-              id="ajuda-antecedencia"
-              className="campo-ds__dica"
-            >
+            <p id="ajuda-antecedencia" className="campo-ds__dica">
               0 avisa no próprio horário da coleta.
             </p>
           )}
@@ -973,32 +626,27 @@ function PreferenciasPage() {
 
         {horarioLembrete && (
           <p className="previa-lembrete">
-            <Icone
-              nome="relogio"
-              tamanho={18}
-            />
+            <Icone nome="relogio" tamanho={18} />
             <span>
               Próxima coleta:{' '}
               <strong>
                 {formatarData(proximaColeta.inicio)}, às{' '}
-                {formatarHora(
-                  proximaColeta.cronograma.horarioInicio,
-                )}
+                {formatarHora(proximaColeta.cronograma.horarioInicio)}
               </strong>
               .{' '}
-              {lembreteJaPassou
-                ? 'Para esta coleta o horário do lembrete já passou; as próximas seguem a antecedência escolhida.'
-                : (
-                  <>
-                    O lembrete chega{' '}
-                    <strong>
-                      {formatarData(horarioLembrete)}, às{' '}
-                      {String(horarioLembrete.getHours()).padStart(2, '0')}:
-                      {String(horarioLembrete.getMinutes()).padStart(2, '0')}
-                    </strong>
-                    .
-                  </>
-                )}
+              {lembreteJaPassou ? (
+                'Para esta coleta o horário do lembrete já passou; as próximas seguem a antecedência escolhida.'
+              ) : (
+                <>
+                  O lembrete chega{' '}
+                  <strong>
+                    {formatarData(horarioLembrete)}, às{' '}
+                    {String(horarioLembrete.getHours()).padStart(2, '0')}:
+                    {String(horarioLembrete.getMinutes()).padStart(2, '0')}
+                  </strong>
+                  .
+                </>
+              )}
             </span>
           </p>
         )}
@@ -1007,7 +655,7 @@ function PreferenciasPage() {
       <div className="barra-salvar">
         <p className="barra-salvar__texto">
           {rotaSelecionada
-            ? `${rotaSelecionada.nomeRota} · ${antecedenciaValida ? formatarHoras(antecedencia) : 'antecedência inválida'}`
+            ? `${rotaSelecionada.nomeRota} · ${antecedenciaValida ? descreverAntecedencia(antecedencia) : 'antecedência inválida'}`
             : 'Escolha o bairro para salvar.'}
         </p>
 
@@ -1017,11 +665,7 @@ function PreferenciasPage() {
           onClick={handleSalvar}
           disabled={operacaoEmAndamento}
         >
-          {salvando
-            ? 'Salvando…'
-            : preferencia
-              ? 'Salvar alterações'
-              : 'Ativar lembrete'}
+          {salvando ? 'Salvando…' : preferencia ? 'Salvar alterações' : 'Ativar lembrete'}
         </button>
       </div>
     </main>

@@ -9,6 +9,7 @@ import com.simulsystem.backend.business.cronograma.validation.CronogramaValidati
 import com.simulsystem.backend.business.notificacao.model.PreferenciaNotificacao;
 import com.simulsystem.backend.business.rota.model.Rota;
 import com.simulsystem.backend.business.rota.validation.RotaValidation;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,18 +62,14 @@ class DecisaoNotificacaoServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        CronogramaServiceImpl cronogramaService =
-                new CronogramaServiceImpl(
+        CronogramaServiceImpl cronogramaService = new CronogramaServiceImpl(
                         cronogramaRepository,
                         cronogramaMapper,
                         cronogramaValidation,
                         rotaValidation
                 );
 
-        service = new DecisaoNotificacaoServiceImpl(
-                cronogramaService,
-                new CalculoNotificacaoServiceImpl()
-        );
+        service = new DecisaoNotificacaoServiceImpl(cronogramaService, new CalculoNotificacaoServiceImpl());
 
         Rota rota = new Rota();
         rota.setId(ROTA_ID);
@@ -114,11 +111,7 @@ class DecisaoNotificacaoServiceImplTest {
     ) {
         preferencia.setAntecedenciaHoras(antecedenciaHoras);
 
-        Optional<LocalDateTime> resultado =
-                service.buscarColetaParaLembrete(
-                        preferencia,
-                        referencia
-                );
+        Optional<LocalDateTime> resultado = service.buscarColetaParaLembrete(preferencia, referencia);
 
         assertTrue(resultado.isPresent());
         assertEquals(coletaEsperada, resultado.orElseThrow());
@@ -134,17 +127,10 @@ class DecisaoNotificacaoServiceImplTest {
             // 24 h antes de terça (sem coleta)
             "24, 2026-11-23T07:00"
     })
-    void naoDeveRetornarColetaForaDoHorarioDoLembrete(
-            int antecedenciaHoras,
-            LocalDateTime referencia
-    ) {
+    void naoDeveRetornarColetaForaDoHorarioDoLembrete(int antecedenciaHoras, LocalDateTime referencia) {
         preferencia.setAntecedenciaHoras(antecedenciaHoras);
 
-        Optional<LocalDateTime> resultado =
-                service.buscarColetaParaLembrete(
-                        preferencia,
-                        referencia
-                );
+        Optional<LocalDateTime> resultado = service.buscarColetaParaLembrete(preferencia, referencia);
 
         assertTrue(resultado.isEmpty());
     }
@@ -156,8 +142,7 @@ class DecisaoNotificacaoServiceImplTest {
 
         preferencia.setAntecedenciaHoras(0);
 
-        Optional<LocalDateTime> resultado =
-                service.buscarColetaParaLembrete(
+        Optional<LocalDateTime> resultado = service.buscarColetaParaLembrete(
                         preferencia,
                         LocalDateTime.of(2026, 11, 23, 7, 0)
                 );
@@ -169,10 +154,7 @@ class DecisaoNotificacaoServiceImplTest {
     void deveLancarErroQuandoPreferenciaForNula() {
         assertThrows(
                 IllegalArgumentException.class,
-                () -> service.buscarColetaParaLembrete(
-                        null,
-                        LocalDateTime.of(2026, 11, 23, 7, 0)
-                )
+                () -> service.buscarColetaParaLembrete(null, LocalDateTime.of(2026, 11, 23, 7, 0))
         );
     }
 
@@ -180,13 +162,7 @@ class DecisaoNotificacaoServiceImplTest {
     void deveLancarErroQuandoReferenciaForNula() {
         preferencia.setAntecedenciaHoras(3);
 
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> service.buscarColetaParaLembrete(
-                        preferencia,
-                        null
-                )
-        );
+        assertThrows(IllegalArgumentException.class, () -> service.buscarColetaParaLembrete(preferencia, null));
     }
 
     @Test
@@ -195,10 +171,7 @@ class DecisaoNotificacaoServiceImplTest {
 
         assertThrows(
                 IllegalArgumentException.class,
-                () -> service.buscarColetaParaLembrete(
-                        preferencia,
-                        LocalDateTime.of(2026, 11, 23, 7, 0)
-                )
+                () -> service.buscarColetaParaLembrete(preferencia, LocalDateTime.of(2026, 11, 23, 7, 0))
         );
     }
 

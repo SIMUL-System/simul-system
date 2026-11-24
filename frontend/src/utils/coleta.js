@@ -49,17 +49,14 @@ export const DIAS_SEMANA = [
   },
 ]
 
-const POR_CHAVE = Object.fromEntries(
-  DIAS_SEMANA.map((dia) => [
-    dia.chave,
-    dia,
-  ]),
-)
+const POR_CHAVE = Object.fromEntries(DIAS_SEMANA.map((dia) => [dia.chave, dia]))
 
-export function obterDia(chave) {
+/** Dados do dia da semana pela chave da API (SEGUNDA, TERCA…). */
+function obterDia(chave) {
   return POR_CHAVE[chave] || null
 }
 
+/** Nome do dia por extenso. */
 export function rotuloDia(chave) {
   return obterDia(chave)?.longo || chave
 }
@@ -69,10 +66,9 @@ export function formatarHora(hora) {
   return hora ? String(hora).slice(0, 5) : ''
 }
 
+/** Junta uma data e um horário "HH:MM:SS" num Date. */
 function combinar(data, hora) {
-  const [h, m] = formatarHora(hora)
-    .split(':')
-    .map(Number)
+  const [h, m] = formatarHora(hora).split(':').map(Number)
 
   const resultado = new Date(data)
 
@@ -81,6 +77,7 @@ function combinar(data, hora) {
   return resultado
 }
 
+/** As duas datas caem no mesmo dia? */
 function mesmoDia(a, b) {
   return (
     a.getFullYear() === b.getFullYear() &&
@@ -95,11 +92,8 @@ export function ordenarCronogramas(cronogramas = []) {
 
   return [...cronogramas].sort(
     (a, b) =>
-      ordem.indexOf(a.diaSemana) -
-        ordem.indexOf(b.diaSemana) ||
-      formatarHora(a.horarioInicio).localeCompare(
-        formatarHora(b.horarioInicio),
-      ),
+      ordem.indexOf(a.diaSemana) - ordem.indexOf(b.diaSemana) ||
+      formatarHora(a.horarioInicio).localeCompare(formatarHora(b.horarioInicio)),
   )
 }
 
@@ -108,10 +102,7 @@ export function ordenarCronogramas(cronogramas = []) {
  * Uma coleta em andamento (início <= agora < fim) conta como a próxima.
  * Horário de fim menor que o de início significa que termina no dia seguinte.
  */
-export function calcularProximaColeta(
-  cronogramas = [],
-  agora,
-) {
+export function calcularProximaColeta(cronogramas = [], agora) {
   let melhor = null
 
   for (const cronograma of cronogramas) {
@@ -171,9 +162,7 @@ export function calcularProximaColeta(
   inicioDoDia.setHours(0, 0, 0, 0)
 
   const diasAte = Math.round(
-    (new Date(melhor.inicio).setHours(0, 0, 0, 0) -
-      inicioDoDia.getTime()) /
-      (24 * 60 * 60 * 1000),
+    (new Date(melhor.inicio).setHours(0, 0, 0, 0) - inicioDoDia.getTime()) / (24 * 60 * 60 * 1000),
   )
 
   return {
@@ -218,4 +207,13 @@ export function descreverQuando(proxima) {
   }
 
   return `Em ${proxima.diasAte} dias`
+}
+
+/** 0 → "no horário da coleta"; 1 → "1 hora antes"; 3 → "3 horas antes". */
+export function descreverAntecedencia(horas) {
+  if (horas === 0) {
+    return 'no horário da coleta'
+  }
+
+  return horas === 1 ? '1 hora antes' : `${horas} horas antes`
 }

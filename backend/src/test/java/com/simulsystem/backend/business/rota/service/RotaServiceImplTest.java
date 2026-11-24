@@ -11,6 +11,7 @@ import com.simulsystem.backend.business.rota.repository.AreaAtendidaRepository;
 import com.simulsystem.backend.business.rota.repository.RotaRepository;
 import com.simulsystem.backend.business.rota.validation.AreaAtendidaValidation;
 import com.simulsystem.backend.business.rota.validation.RotaValidation;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,8 +52,7 @@ class RotaServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        rotaService =
-                new RotaServiceImpl(
+        rotaService = new RotaServiceImpl(
                         rotaRepository,
                         areaAtendidaRepository,
                         cronogramaService,
@@ -70,77 +70,32 @@ class RotaServiceImplTest {
 
         Long rotaId = 1L;
 
-        AreaAtendida areaAtendida =
-                new AreaAtendida();
+        AreaAtendida areaAtendida = new AreaAtendida();
 
-        Rota rota =
-                new Rota();
+        Rota rota = new Rota();
 
         rota.setId(rotaId);
 
         areaAtendida.setRota(rota);
 
-        List<Cronograma> cronogramas =
-                List.of(
-                        new Cronograma(),
-                        new Cronograma()
-                );
+        List<Cronograma> cronogramas = List.of(new Cronograma(), new Cronograma());
 
-        ConsultaColetaResponseDTO responseDTO =
-                org.mockito.Mockito.mock(
-                        ConsultaColetaResponseDTO.class
-                );
+        ConsultaColetaResponseDTO responseDTO = org.mockito.Mockito.mock(ConsultaColetaResponseDTO.class);
 
-        when(
-                areaAtendidaValidation
-                        .buscarAreaAtendidaComRotaAtiva(
-                                cidade,
-                                bairro
-                        )
-        ).thenReturn(areaAtendida);
+        when(areaAtendidaValidation.buscarAreaAtendidaComRotaAtiva(cidade, bairro)).thenReturn(areaAtendida);
 
-        when(
-                cronogramaService.buscarAtivosPorRota(
-                        rotaId
-                )
-        ).thenReturn(cronogramas);
+        when(cronogramaService.buscarAtivosPorRota(rotaId)).thenReturn(cronogramas);
 
-        when(
-                rotaMapper.toConsultaColetaResponseDTO(
-                        areaAtendida,
-                        cronogramas
-                )
-        ).thenReturn(responseDTO);
+        when(rotaMapper.toConsultaColetaResponseDTO(areaAtendida, cronogramas)).thenReturn(responseDTO);
 
-        ConsultaColetaResponseDTO resultado =
-                rotaService.consultarPorCidadeEBairro(
-                        cidade,
-                        bairro
-                );
+        ConsultaColetaResponseDTO resultado = rotaService.consultarPorCidadeEBairro(cidade, bairro);
 
-        assertSame(
-                responseDTO,
-                resultado
-        );
+        assertSame(responseDTO, resultado);
 
-        verify(
-                areaAtendidaValidation
-        ).buscarAreaAtendidaComRotaAtiva(
-                cidade,
-                bairro
-        );
+        verify(areaAtendidaValidation).buscarAreaAtendidaComRotaAtiva(cidade, bairro);
 
-        verify(
-                cronogramaService
-        ).buscarAtivosPorRota(
-                rotaId
-        );
+        verify(cronogramaService).buscarAtivosPorRota(rotaId);
 
-        verify(
-                rotaMapper
-        ).toConsultaColetaResponseDTO(
-                areaAtendida,
-                cronogramas
-        );
+        verify(rotaMapper).toConsultaColetaResponseDTO(areaAtendida, cronogramas);
     }
 }

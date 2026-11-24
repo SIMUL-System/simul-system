@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/** Resposta 403 em ProblemDetail quando o perfil não tem permissão. */
 @Component
 public class JwtAccessDeniedHandler implements AccessDeniedHandler {
 
@@ -29,7 +30,6 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
             HttpServletResponse response,
             AccessDeniedException accessDeniedException
     ) throws IOException, ServletException {
-
         response.setStatus(HttpStatus.FORBIDDEN.value());
         response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
@@ -39,15 +39,9 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
         body.put("type", "about:blank");
         body.put("title", "Acesso negado");
         body.put("status", HttpStatus.FORBIDDEN.value());
-        body.put(
-                "detail",
-                "Você não possui permissão para acessar este recurso."
-        );
+        body.put("detail", "Você não possui permissão para acessar este recurso.");
         body.put("instance", request.getRequestURI());
 
-        jsonMapper.writeValue(
-                response.getOutputStream(),
-                body
-        );
+        jsonMapper.writeValue(response.getOutputStream(), body);
     }
 }

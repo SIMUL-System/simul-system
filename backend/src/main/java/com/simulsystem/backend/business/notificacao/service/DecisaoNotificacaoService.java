@@ -5,14 +5,12 @@ import com.simulsystem.backend.business.notificacao.model.PreferenciaNotificacao
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+/** Decide se o lembrete de uma preferência vence no minuto de referência. */
 public interface DecisaoNotificacaoService {
 
     /**
      * Retorna a data/hora da coleta cujo lembrete deve ser enviado no
      * minuto de referência, ou vazio se nenhum lembrete vence agora.
      */
-    Optional<LocalDateTime> buscarColetaParaLembrete(
-            PreferenciaNotificacao preferencia,
-            LocalDateTime referencia
-    );
+    Optional<LocalDateTime> buscarColetaParaLembrete(PreferenciaNotificacao preferencia, LocalDateTime referencia);
 }

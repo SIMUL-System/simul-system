@@ -3,6 +3,7 @@ package com.simulsystem.backend.business.cronograma.validation;
 import com.simulsystem.backend.business.cronograma.model.Cronograma;
 import com.simulsystem.backend.business.cronograma.repository.CronogramaRepository;
 import com.simulsystem.backend.core.exception.CronogramaNaoEncontradoException;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

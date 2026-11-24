@@ -43,15 +43,14 @@ export function ehNoturno(horarioInicio) {
   return hora >= 18 || hora < 6
 }
 
+/** Nome do dia (curto ou longo) pela chave da API. */
 export function nomeDia(valor, formato = 'longo') {
   return DIAS_SEMANA.find((dia) => dia.valor === valor)?.[formato] ?? valor
 }
 
 /** ['SEGUNDA', 'QUARTA'] → "segunda-feira e quarta-feira" */
 export function listarDias(dias) {
-  const nomes = DIAS_SEMANA
-    .filter((dia) => dias.includes(dia.valor))
-    .map((dia) => dia.longo)
+  const nomes = DIAS_SEMANA.filter((dia) => dias.includes(dia.valor)).map((dia) => dia.longo)
 
   if (nomes.length <= 1) {
     return nomes.join('')
@@ -60,11 +59,10 @@ export function listarDias(dias) {
   return `${nomes.slice(0, -1).join(', ')} e ${nomes.at(-1)}`
 }
 
+/** Registro atualizado por último. */
 function maisRecente(lista) {
   return [...lista].sort((a, b) =>
-    String(b.dataAtualizacao ?? '').localeCompare(
-      String(a.dataAtualizacao ?? ''),
-    ),
+    String(b.dataAtualizacao ?? '').localeCompare(String(a.dataAtualizacao ?? '')),
   )[0]
 }
 
@@ -84,9 +82,10 @@ export function montarGrade(rotas, cronogramas, mostrarInativos) {
       const celulas = DIAS_SEMANA.map((dia) => {
         const doDia = daRota.filter((item) => item.diaSemana === dia.valor)
         const ativo = doDia.find((item) => item.ativo) ?? null
-        const inativo = mostrarInativos && !ativo
-          ? maisRecente(doDia.filter((item) => !item.ativo)) ?? null
-          : null
+        const inativo =
+          mostrarInativos && !ativo
+            ? (maisRecente(doDia.filter((item) => !item.ativo)) ?? null)
+            : null
 
         return { dia, cronograma: ativo ?? inativo }
       })

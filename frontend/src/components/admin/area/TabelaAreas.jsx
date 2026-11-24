@@ -18,11 +18,7 @@ function TabelaAreas({
   const visiveis = areas.slice(inicio, inicio + porPagina)
 
   if (areas.length === 0) {
-    return (
-      <p className="admin-quadro__vazio">
-        Nenhuma área encontrada com esses filtros.
-      </p>
-    )
+    return <p className="admin-quadro__vazio">Nenhuma área encontrada com esses filtros.</p>
   }
 
   return (
@@ -37,12 +33,11 @@ function TabelaAreas({
             <tr>
               <th scope="col">Bairro</th>
               {mostrarCidade && <th scope="col">Cidade</th>}
-              <th scope="col" className="admin-tabela__secundaria">Rota</th>
+              <th scope="col" className="admin-tabela__secundaria">
+                Rota
+              </th>
               <th scope="col">Mapa</th>
-              <th
-                scope="col"
-                className="admin-tabela__acoes"
-              >
+              <th scope="col" className="admin-tabela__acoes">
                 <span className="visualmente-oculto">Ações</span>
               </th>
             </tr>
@@ -53,20 +48,18 @@ function TabelaAreas({
               const aberta = areaAberta === area.id
 
               return (
-                <tr
-                  key={area.id}
-                  className={aberta ? 'admin-tabela__linha--aberta' : ''}
-                >
-                  <th
-                    scope="row"
-                    className="admin-tabela__principal"
-                  >
+                <tr key={area.id} className={aberta ? 'admin-tabela__linha--aberta' : ''}>
+                  <th scope="row" className="admin-tabela__principal">
                     {area.bairro}
                   </th>
                   {mostrarCidade && <td>{area.cidade}</td>}
-                  <td className="admin-tabela__secundaria" title={area.nomeRota}>{nomeRotaCurto(area.nomeRota, area.cidade)}</td>
+                  <td className="admin-tabela__secundaria" title={area.nomeRota}>
+                    {nomeRotaCurto(area.nomeRota, area.cidade)}
+                  </td>
                   <td>
-                    <span className={`selo ${area.possuiGeometria ? 'selo--ativo' : 'selo--pendente'}`}>
+                    <span
+                      className={`selo ${area.possuiGeometria ? 'selo--ativo' : 'selo--pendente'}`}
+                    >
                       {area.possuiGeometria ? 'Desenhada' : 'Sem desenho'}
                     </span>
                   </td>
@@ -88,13 +81,9 @@ function TabelaAreas({
         </table>
       </div>
 
-      <nav
-        className="paginacao"
-        aria-label="Páginas da lista de áreas"
-      >
+      <nav className="paginacao" aria-label="Páginas da lista de áreas">
         <span className="paginacao__texto">
-          Mostrando {inicio + 1}–{Math.min(inicio + porPagina, areas.length)} de{' '}
-          {areas.length}
+          Mostrando {inicio + 1}–{Math.min(inicio + porPagina, areas.length)} de {areas.length}
         </span>
 
         <div className="paginacao__botoes">

@@ -7,12 +7,7 @@ import Icone from '../Icone'
  * Ao abrir ou trocar de assunto, leva o foco para o título, para quem
  * usa teclado ou leitor de tela saber onde está. Esc fecha.
  */
-function PainelLateral({
-  titulo,
-  chave,
-  onFechar,
-  children,
-}) {
+function PainelLateral({ titulo, chave, onFechar, children }) {
   const idTitulo = useId()
   const tituloRef = useRef(null)
   const painelRef = useRef(null)
@@ -40,21 +35,11 @@ function PainelLateral({
       onKeyDown={handleKeyDown}
     >
       <div className="painel-lateral__topo">
-        <h2
-          id={idTitulo}
-          ref={tituloRef}
-          className="painel-lateral__titulo"
-          tabIndex={-1}
-        >
+        <h2 id={idTitulo} ref={tituloRef} className="painel-lateral__titulo" tabIndex={-1}>
           {titulo}
         </h2>
 
-        <button
-          type="button"
-          className="botao-icone"
-          onClick={onFechar}
-          aria-label="Fechar painel"
-        >
+        <button type="button" className="botao-icone" onClick={onFechar} aria-label="Fechar painel">
           <Icone nome="fechar" />
         </button>
       </div>

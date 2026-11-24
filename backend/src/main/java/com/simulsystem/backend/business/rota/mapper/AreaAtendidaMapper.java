@@ -1,7 +1,5 @@
 package com.simulsystem.backend.business.rota.mapper;
 
-import org.springframework.stereotype.Component;
-
 import com.simulsystem.backend.business.rota.dto.AreaAtendidaRequestDTO;
 import com.simulsystem.backend.business.rota.dto.AreaAtendidaResponseDTO;
 import com.simulsystem.backend.business.rota.dto.AreaDisponivelResponseDTO;
@@ -9,36 +7,28 @@ import com.simulsystem.backend.business.rota.dto.AreaGeometriaResponseDTO;
 import com.simulsystem.backend.business.rota.model.AreaAtendida;
 import com.simulsystem.backend.business.rota.model.Rota;
 
+import org.springframework.stereotype.Component;
+
+/** Converte entre AreaAtendida e seus DTOs. */
 @Component
 public class AreaAtendidaMapper {
 
-    public AreaAtendida toEntity(
-            AreaAtendidaRequestDTO requestDTO,
-            Rota rota
-    ) {
-        AreaAtendida areaAtendida =
-                new AreaAtendida();
+    /** Cria a área a partir do pedido. */
+    public AreaAtendida toEntity(AreaAtendidaRequestDTO requestDTO, Rota rota) {
+        AreaAtendida areaAtendida = new AreaAtendida();
 
-        areaAtendida.setCidade(
-                requestDTO.cidade()
-        );
+        areaAtendida.setCidade(requestDTO.cidade());
 
-        areaAtendida.setBairro(
-                requestDTO.bairro()
-        );
+        areaAtendida.setBairro(requestDTO.bairro());
 
-        areaAtendida.setRota(
-                rota
-        );
+        areaAtendida.setRota(rota);
 
         return areaAtendida;
     }
 
-    public AreaAtendidaResponseDTO toResponseDTO(
-            AreaAtendida areaAtendida
-    ) {
-        boolean possuiGeometria =
-                areaAtendida.getGeometriaGeoJson() != null
+    /** Monta a resposta do admin, indicando se já existe contorno. */
+    public AreaAtendidaResponseDTO toResponseDTO(AreaAtendida areaAtendida) {
+        boolean possuiGeometria = areaAtendida.getGeometriaGeoJson() != null
                         && !areaAtendida
                                 .getGeometriaGeoJson()
                                 .isBlank();
@@ -53,18 +43,13 @@ public class AreaAtendidaMapper {
         );
     }
 
-    public AreaDisponivelResponseDTO toAreaDisponivelResponseDTO(
-            AreaAtendida areaAtendida
-    ) {
-        return new AreaDisponivelResponseDTO(
-                areaAtendida.getCidade(),
-                areaAtendida.getBairro()
-        );
+    /** Só cidade e bairro, para a lista pública. */
+    public AreaDisponivelResponseDTO toAreaDisponivelResponseDTO(AreaAtendida areaAtendida) {
+        return new AreaDisponivelResponseDTO(areaAtendida.getCidade(), areaAtendida.getBairro());
     }
 
-    public AreaGeometriaResponseDTO toGeometriaResponseDTO(
-            AreaAtendida areaAtendida
-    ) {
+    /** Monta a resposta do contorno salvo. */
+    public AreaGeometriaResponseDTO toGeometriaResponseDTO(AreaAtendida areaAtendida) {
         return new AreaGeometriaResponseDTO(
                 areaAtendida.getId(),
                 areaAtendida.getCidade(),
@@ -73,21 +58,12 @@ public class AreaAtendidaMapper {
         );
     }
 
-    public void updateEntity(
-            AreaAtendida areaAtendida,
-            AreaAtendidaRequestDTO requestDTO,
-            Rota rota
-    ) {
-        areaAtendida.setCidade(
-                requestDTO.cidade()
-        );
+    /** Copia cidade, bairro e rota para a área existente. */
+    public void atualizarEntity(AreaAtendida areaAtendida, AreaAtendidaRequestDTO requestDTO, Rota rota) {
+        areaAtendida.setCidade(requestDTO.cidade());
 
-        areaAtendida.setBairro(
-                requestDTO.bairro()
-        );
+        areaAtendida.setBairro(requestDTO.bairro());
 
-        areaAtendida.setRota(
-                rota
-        );
+        areaAtendida.setRota(rota);
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
 
+/** Gera o JWT do login, com o e-mail no "sub" e o perfil em "roles". */
 @Service
 public class JwtService {
 
@@ -18,20 +19,16 @@ public class JwtService {
     private final JwtEncoder jwtEncoder;
     private final JwtProperties jwtProperties;
 
-    public JwtService(
-            JwtEncoder jwtEncoder,
-            JwtProperties jwtProperties
-    ) {
+    public JwtService(JwtEncoder jwtEncoder, JwtProperties jwtProperties) {
         this.jwtEncoder = jwtEncoder;
         this.jwtProperties = jwtProperties;
     }
 
+    /** Token com e-mail, perfis e validade de jwt.expiration-seconds. */
     public String gerarToken(Authentication authentication) {
         Instant agora = Instant.now();
 
-        Instant expiracao = agora.plusSeconds(
-                jwtProperties.expirationSeconds()
-        );
+        Instant expiracao = agora.plusSeconds(jwtProperties.expirationSeconds());
 
         List<String> roles = authentication.getAuthorities()
                 .stream()

@@ -11,6 +11,7 @@ import com.simulsystem.backend.business.usuario.dto.VerificacaoEmailResponseDTO;
 import com.simulsystem.backend.business.usuario.service.RecuperacaoSenhaService;
 import com.simulsystem.backend.business.usuario.service.UsuarioService;
 import com.simulsystem.backend.business.usuario.service.VerificacaoEmailService;
+
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
+/** Cadastro, confirmação de e-mail, recuperação de senha e dados do usuário logado (/api/usuarios). */
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioController {
@@ -37,43 +39,30 @@ public class UsuarioController {
             VerificacaoEmailService verificacaoEmailService,
             RecuperacaoSenhaService recuperacaoSenhaService
     ) {
-        this.usuarioService =
-                usuarioService;
-
-        this.verificacaoEmailService =
-                verificacaoEmailService;
-
-        this.recuperacaoSenhaService =
-                recuperacaoSenhaService;
+        this.usuarioService = usuarioService;
+        this.verificacaoEmailService = verificacaoEmailService;
+        this.recuperacaoSenhaService = recuperacaoSenhaService;
     }
 
+    /** POST (público): cria a conta e envia o e-mail de confirmação. */
     @PostMapping
-    public ResponseEntity<UsuarioResponseDTO> cadastrar(
-            @Valid @RequestBody UsuarioRequestDTO requestDTO
-    ) {
-        UsuarioResponseDTO usuario =
-                usuarioService.cadastrar(
-                        requestDTO
-                );
+    public ResponseEntity<UsuarioResponseDTO> cadastrar(@Valid @RequestBody UsuarioRequestDTO requestDTO) {
+        UsuarioResponseDTO usuario = usuarioService.cadastrar(requestDTO);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(usuario);
     }
 
+    /** POST /verificar-email (público): confirma o e-mail pelo token do link. */
     @PostMapping("/verificar-email")
     public ResponseEntity<VerificacaoEmailResponseDTO> verificarEmail(
             @Valid @RequestBody VerificacaoEmailRequestDTO requestDTO
     ) {
-        VerificacaoEmailResponseDTO resposta =
-                verificacaoEmailService.verificarEmail(
-                        requestDTO.token()
-                );
+        VerificacaoEmailResponseDTO resposta = verificacaoEmailService.verificarEmail(requestDTO.token());
 
         if (resposta.verificado()) {
-            return ResponseEntity.ok(
-                    resposta
-            );
+            return ResponseEntity.ok(resposta);
         }
 
         return ResponseEntity
@@ -81,13 +70,12 @@ public class UsuarioController {
                 .body(resposta);
     }
 
+    /** POST /reenviar-verificacao (público): resposta sempre neutra. */
     @PostMapping("/reenviar-verificacao")
     public ResponseEntity<Map<String, String>> reenviarVerificacao(
             @Valid @RequestBody ReenvioVerificacaoEmailRequestDTO requestDTO
     ) {
-        verificacaoEmailService.reenviarVerificacao(
-                requestDTO.email()
-        );
+        verificacaoEmailService.reenviarVerificacao(requestDTO.email());
 
         return ResponseEntity.ok(
                 Map.of(
@@ -97,13 +85,12 @@ public class UsuarioController {
         );
     }
 
+    /** POST /recuperar-senha (público): resposta sempre neutra. */
     @PostMapping("/recuperar-senha")
     public ResponseEntity<Map<String, String>> solicitarRecuperacaoSenha(
             @Valid @RequestBody SolicitacaoRecuperacaoSenhaRequestDTO requestDTO
     ) {
-        recuperacaoSenhaService.solicitarRecuperacao(
-                requestDTO.email()
-        );
+        recuperacaoSenhaService.solicitarRecuperacao(requestDTO.email());
 
         return ResponseEntity.ok(
                 Map.of(
@@ -113,19 +100,15 @@ public class UsuarioController {
         );
     }
 
+    /** POST /redefinir-senha (público): troca a senha pelo token do link. */
     @PostMapping("/redefinir-senha")
     public ResponseEntity<RecuperacaoSenhaResponseDTO> redefinirSenha(
             @Valid @RequestBody RedefinicaoSenhaRequestDTO requestDTO
     ) {
-        RecuperacaoSenhaResponseDTO resposta =
-                recuperacaoSenhaService.redefinirSenha(
-                        requestDTO
-                );
+        RecuperacaoSenhaResponseDTO resposta = recuperacaoSenhaService.redefinirSenha(requestDTO);
 
         if (resposta.sucesso()) {
-            return ResponseEntity.ok(
-                    resposta
-            );
+            return ResponseEntity.ok(resposta);
         }
 
         return ResponseEntity
@@ -133,18 +116,12 @@ public class UsuarioController {
                 .body(resposta);
     }
 
+    /** GET /me: dados do usuário logado. */
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<UsuarioResponseDTO> buscarUsuarioAutenticado(
-            Authentication authentication
-    ) {
-        UsuarioResponseDTO usuario =
-                usuarioService.buscarUsuarioAutenticado(
-                        authentication.getName()
-                );
+    public ResponseEntity<UsuarioResponseDTO> buscarUsuarioAutenticado(Authentication authentication) {
+        UsuarioResponseDTO usuario = usuarioService.buscarUsuarioAutenticado(authentication.getName());
 
-        return ResponseEntity.ok(
-                usuario
-        );
+        return ResponseEntity.ok(usuario);
     }
 }

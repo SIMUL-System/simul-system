@@ -2,6 +2,7 @@ package com.simulsystem.backend.business.notificacao.dto;
 
 import java.time.LocalDateTime;
 
+/** Preferência de lembrete devolvida ao usuário. */
 public record PreferenciaNotificacaoResponseDTO(
 
         Long id,

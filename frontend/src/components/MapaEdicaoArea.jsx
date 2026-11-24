@@ -1,69 +1,45 @@
-import {
-  useEffect,
-  useRef,
-} from 'react'
+import { useEffect, useRef } from 'react'
 
 import L from 'leaflet'
 
-import {
-  MapContainer,
-  TileLayer,
-  useMap,
-} from 'react-leaflet'
+import { MapContainer, TileLayer, useMap } from 'react-leaflet'
 
 import '@geoman-io/leaflet-geoman-free'
 import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css'
 
-function ControlarCentro({
-  latitude,
-  longitude,
-}) {
+/** Centraliza o mapa quando as coordenadas do bairro chegam. */
+function ControlarCentro({ latitude, longitude }) {
   const map = useMap()
 
   useEffect(() => {
-    if (
-      latitude == null ||
-      longitude == null
-    ) {
+    if (latitude == null || longitude == null) {
       return
     }
 
-    map.setView(
-      [latitude, longitude],
-      15,
-      {
-        animate: true,
-      },
-    )
-  }, [
-    latitude,
-    longitude,
-    map,
-  ])
+    map.setView([latitude, longitude], 15, {
+      animate: true,
+    })
+  }, [latitude, longitude, map])
 
   return null
 }
 
+/** Permite mover o mapa com o botão direito enquanto a ferramenta de desenho está ativa. */
 function ArrastarMapaComBotaoDireito() {
   const map = useMap()
 
   useEffect(() => {
-    const container =
-      map.getContainer()
+    const container = map.getContainer()
 
     let arrastando = false
 
     let ultimaPosicao = null
 
-    function impedirMenuContexto(
-      event,
-    ) {
+    function impedirMenuContexto(event) {
       event.preventDefault()
     }
 
-    function iniciarArraste(
-      event,
-    ) {
+    function iniciarArraste(event) {
       if (event.button !== 2) {
         return
       }
@@ -78,39 +54,23 @@ function ArrastarMapaComBotaoDireito() {
         y: event.clientY,
       }
 
-      container.style.cursor =
-        'grabbing'
+      container.style.cursor = 'grabbing'
     }
 
-    function moverMapa(
-      event,
-    ) {
-      if (
-        !arrastando ||
-        !ultimaPosicao
-      ) {
+    function moverMapa(event) {
+      if (!arrastando || !ultimaPosicao) {
         return
       }
 
       event.preventDefault()
 
-      const deslocamentoX =
-        event.clientX -
-        ultimaPosicao.x
+      const deslocamentoX = event.clientX - ultimaPosicao.x
 
-      const deslocamentoY =
-        event.clientY -
-        ultimaPosicao.y
+      const deslocamentoY = event.clientY - ultimaPosicao.y
 
-      map.panBy(
-        [
-          -deslocamentoX,
-          -deslocamentoY,
-        ],
-        {
-          animate: false,
-        },
-      )
+      map.panBy([-deslocamentoX, -deslocamentoY], {
+        animate: false,
+      })
 
       ultimaPosicao = {
         x: event.clientX,
@@ -118,17 +78,12 @@ function ArrastarMapaComBotaoDireito() {
       }
     }
 
-    function finalizarArraste(
-      event,
-    ) {
+    function finalizarArraste(event) {
       if (!arrastando) {
         return
       }
 
-      if (
-        event &&
-        event.button !== 2
-      ) {
+      if (event && event.button !== 2) {
         return
       }
 
@@ -138,56 +93,26 @@ function ArrastarMapaComBotaoDireito() {
       container.style.cursor = ''
     }
 
-    container.addEventListener(
-      'contextmenu',
-      impedirMenuContexto,
-    )
+    container.addEventListener('contextmenu', impedirMenuContexto)
 
-    container.addEventListener(
-      'mousedown',
-      iniciarArraste,
-    )
+    container.addEventListener('mousedown', iniciarArraste)
 
-    window.addEventListener(
-      'mousemove',
-      moverMapa,
-    )
+    window.addEventListener('mousemove', moverMapa)
 
-    window.addEventListener(
-      'mouseup',
-      finalizarArraste,
-    )
+    window.addEventListener('mouseup', finalizarArraste)
 
-    window.addEventListener(
-      'blur',
-      finalizarArraste,
-    )
+    window.addEventListener('blur', finalizarArraste)
 
     return () => {
-      container.removeEventListener(
-        'contextmenu',
-        impedirMenuContexto,
-      )
+      container.removeEventListener('contextmenu', impedirMenuContexto)
 
-      container.removeEventListener(
-        'mousedown',
-        iniciarArraste,
-      )
+      container.removeEventListener('mousedown', iniciarArraste)
 
-      window.removeEventListener(
-        'mousemove',
-        moverMapa,
-      )
+      window.removeEventListener('mousemove', moverMapa)
 
-      window.removeEventListener(
-        'mouseup',
-        finalizarArraste,
-      )
+      window.removeEventListener('mouseup', finalizarArraste)
 
-      window.removeEventListener(
-        'blur',
-        finalizarArraste,
-      )
+      window.removeEventListener('blur', finalizarArraste)
 
       container.style.cursor = ''
     }
@@ -196,103 +121,63 @@ function ArrastarMapaComBotaoDireito() {
   return null
 }
 
-function EditorGeometria({
-  geometriaInicial,
-  aoAlterarGeometria,
-}) {
+/** Ferramentas de desenho (Geoman): um único polígono por área, informado a cada alteração. */
+function EditorGeometria({ geometriaInicial, aoAlterarGeometria }) {
   const map = useMap()
 
   const camadaRef = useRef(null)
 
-  const callbackRef =
-    useRef(aoAlterarGeometria)
+  const callbackRef = useRef(aoAlterarGeometria)
 
   useEffect(() => {
-    callbackRef.current =
-      aoAlterarGeometria
+    callbackRef.current = aoAlterarGeometria
   }, [aoAlterarGeometria])
 
   useEffect(() => {
-    function informarGeometria(
-      layer,
-    ) {
+    function informarGeometria(layer) {
       if (!layer) {
         callbackRef.current(null)
 
         return
       }
 
-      const geoJson =
-        layer.toGeoJSON()
+      const geoJson = layer.toGeoJSON()
 
-      callbackRef.current(
-        geoJson.geometry,
-      )
+      callbackRef.current(geoJson.geometry)
     }
 
     function removerCamadaAtual() {
-      if (
-        camadaRef.current &&
-        map.hasLayer(
-          camadaRef.current,
-        )
-      ) {
-        map.removeLayer(
-          camadaRef.current,
-        )
+      if (camadaRef.current && map.hasLayer(camadaRef.current)) {
+        map.removeLayer(camadaRef.current)
       }
 
       camadaRef.current = null
     }
 
-    function configurarEventosCamada(
-      layer,
-    ) {
-      layer.on(
-        'pm:edit',
-        () => {
-          informarGeometria(
-            layer,
-          )
-        },
-      )
+    function configurarEventosCamada(layer) {
+      layer.on('pm:edit', () => {
+        informarGeometria(layer)
+      })
 
-      layer.on(
-        'pm:dragend',
-        () => {
-          informarGeometria(
-            layer,
-          )
-        },
-      )
+      layer.on('pm:dragend', () => {
+        informarGeometria(layer)
+      })
 
-      layer.on(
-        'pm:update',
-        () => {
-          informarGeometria(
-            layer,
-          )
-        },
-      )
+      layer.on('pm:update', () => {
+        informarGeometria(layer)
+      })
     }
 
-    function configurarCamada(
-      layer,
-    ) {
+    function configurarCamada(layer) {
       removerCamadaAtual()
 
-      camadaRef.current =
-        layer
+      camadaRef.current = layer
 
       layer.addTo(map)
 
-      configurarEventosCamada(
-        layer,
-      )
+      configurarEventosCamada(layer)
 
-      informarGeometria(
-        layer,
-      )
+      informarGeometria(layer)
     }
 
     map.pm.addControls({
@@ -321,113 +206,58 @@ function EditorGeometria({
       allowSelfIntersection: false,
     })
 
-    function handleCreate(
-      event,
-    ) {
-      const layer =
-        event.layer
+    function handleCreate(event) {
+      const layer = event.layer
 
-      if (
-        camadaRef.current &&
-        camadaRef.current !== layer &&
-        map.hasLayer(
-          camadaRef.current,
-        )
-      ) {
-        map.removeLayer(
-          camadaRef.current,
-        )
+      if (camadaRef.current && camadaRef.current !== layer && map.hasLayer(camadaRef.current)) {
+        map.removeLayer(camadaRef.current)
       }
 
-      camadaRef.current =
-        layer
+      camadaRef.current = layer
 
-      configurarEventosCamada(
-        layer,
-      )
+      configurarEventosCamada(layer)
 
-      informarGeometria(
-        layer,
-      )
+      informarGeometria(layer)
     }
 
-    function handleRemove(
-      event,
-    ) {
-      if (
-        event.layer ===
-        camadaRef.current
-      ) {
-        camadaRef.current =
-          null
+    function handleRemove(event) {
+      if (event.layer === camadaRef.current) {
+        camadaRef.current = null
 
-        callbackRef.current(
-          null,
-        )
+        callbackRef.current(null)
       }
     }
 
-    map.on(
-      'pm:create',
-      handleCreate,
-    )
+    map.on('pm:create', handleCreate)
 
-    map.on(
-      'pm:remove',
-      handleRemove,
-    )
+    map.on('pm:remove', handleRemove)
 
     if (
       geometriaInicial &&
-      (
-        geometriaInicial.type ===
-          'Polygon' ||
-        geometriaInicial.type ===
-          'MultiPolygon'
-      )
+      (geometriaInicial.type === 'Polygon' || geometriaInicial.type === 'MultiPolygon')
     ) {
-      const geoJsonLayer =
-        L.geoJSON(
-          geometriaInicial,
-        )
+      const geoJsonLayer = L.geoJSON(geometriaInicial)
 
-      const layers =
-        geoJsonLayer.getLayers()
+      const layers = geoJsonLayer.getLayers()
 
-      if (
-        layers.length === 1
-      ) {
-        configurarCamada(
-          layers[0],
-        )
-      } else if (
-        layers.length > 1
-      ) {
+      if (layers.length === 1) {
+        configurarCamada(layers[0])
+      } else if (layers.length > 1) {
         geoJsonLayer.addTo(map)
 
-        camadaRef.current =
-          geoJsonLayer
+        camadaRef.current = geoJsonLayer
 
-        informarGeometria(
-          geoJsonLayer,
-        )
+        informarGeometria(geoJsonLayer)
       }
 
       try {
-        const bounds =
-          geoJsonLayer.getBounds()
+        const bounds = geoJsonLayer.getBounds()
 
         if (bounds.isValid()) {
-          map.fitBounds(
-            bounds,
-            {
-              padding: [
-                30,
-                30,
-              ],
-              maxZoom: 17,
-            },
-          )
+          map.fitBounds(bounds, {
+            padding: [30, 30],
+            maxZoom: 17,
+          })
         }
       } catch {
         // Mantém a visualização atual.
@@ -435,66 +265,38 @@ function EditorGeometria({
     }
 
     return () => {
-      map.off(
-        'pm:create',
-        handleCreate,
-      )
+      map.off('pm:create', handleCreate)
 
-      map.off(
-        'pm:remove',
-        handleRemove,
-      )
+      map.off('pm:remove', handleRemove)
 
       map.pm.removeControls()
 
       removerCamadaAtual()
     }
-  }, [
-    geometriaInicial,
-    map,
-  ])
+  }, [geometriaInicial, map])
 
   return null
 }
 
-function MapaEdicaoArea({
-  latitude,
-  longitude,
-  geometriaInicial,
-  aoAlterarGeometria,
-}) {
-  const centroInicial = [
-    latitude ?? -16.708,
-    longitude ?? -49.093,
-  ]
+/** Mapa do painel admin para desenhar o contorno de uma área atendida. */
+function MapaEdicaoArea({ latitude, longitude, geometriaInicial, aoAlterarGeometria }) {
+  const centroInicial = [latitude ?? -16.708, longitude ?? -49.093]
 
   return (
     <div className="mapa-edicao-area">
-      <MapContainer
-        center={centroInicial}
-        zoom={14}
-        className="mapa-coleta"
-        scrollWheelZoom
-      >
+      <MapContainer center={centroInicial} zoom={14} className="mapa-coleta" scrollWheelZoom>
         <TileLayer
           attribution="&copy; OpenStreetMap contributors"
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        <ControlarCentro
-          latitude={latitude}
-          longitude={longitude}
-        />
+        <ControlarCentro latitude={latitude} longitude={longitude} />
 
         <ArrastarMapaComBotaoDireito />
 
         <EditorGeometria
-          geometriaInicial={
-            geometriaInicial
-          }
-          aoAlterarGeometria={
-            aoAlterarGeometria
-          }
+          geometriaInicial={geometriaInicial}
+          aoAlterarGeometria={aoAlterarGeometria}
         />
       </MapContainer>
     </div>

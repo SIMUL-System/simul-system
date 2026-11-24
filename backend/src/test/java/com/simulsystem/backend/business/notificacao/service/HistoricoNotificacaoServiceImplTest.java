@@ -6,6 +6,7 @@ import com.simulsystem.backend.business.notificacao.model.StatusNotificacao;
 import com.simulsystem.backend.business.notificacao.repository.HistoricoNotificacaoRepository;
 import com.simulsystem.backend.business.rota.model.Rota;
 import com.simulsystem.backend.business.usuario.model.Usuario;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,35 +45,26 @@ class HistoricoNotificacaoServiceImplTest {
         rota = new Rota();
         rota.setId(1L);
 
-        dataHoraColeta =
-                LocalDateTime.of(2026, 8, 17, 19, 0);
+        dataHoraColeta = LocalDateTime.of(2026, 8, 17, 19, 0);
 
-        referencia =
-                LocalDateTime.of(2026, 8, 17, 16, 0);
+        referencia = LocalDateTime.of(2026, 8, 17, 16, 0);
     }
 
     @Test
     void deveReservarEnvioQuandoAindaNaoExistirHistorico() {
         when(repository
-                .existsByUsuarioIdAndRotaIdAndDataHoraColetaAndCanal(
-                        3L,
-                        1L,
-                        dataHoraColeta,
-                        CanalNotificacao.EMAIL
-                ))
+                .existsByUsuarioIdAndRotaIdAndDataHoraColetaAndCanal(3L, 1L, dataHoraColeta, CanalNotificacao.EMAIL))
                 .thenReturn(false);
 
         when(repository.saveAndFlush(any(HistoricoNotificacao.class)))
                 .thenAnswer(invocation -> {
-                    HistoricoNotificacao historico =
-                            invocation.getArgument(0);
+                    HistoricoNotificacao historico = invocation.getArgument(0);
 
                     historico.setId(1L);
                     return historico;
                 });
 
-        Optional<HistoricoNotificacao> resultado =
-                service.reservarEnvio(
+        Optional<HistoricoNotificacao> resultado = service.reservarEnvio(
                         usuario,
                         rota,
                         dataHoraColeta,
@@ -81,38 +73,22 @@ class HistoricoNotificacaoServiceImplTest {
 
         assertTrue(resultado.isPresent());
 
-        HistoricoNotificacao historico =
-                resultado.orElseThrow();
+        HistoricoNotificacao historico = resultado.orElseThrow();
 
-        assertEquals(
-                StatusNotificacao.PENDENTE,
-                historico.getStatus()
-        );
+        assertEquals(StatusNotificacao.PENDENTE, historico.getStatus());
 
-        assertEquals(
-                CanalNotificacao.EMAIL,
-                historico.getCanal()
-        );
+        assertEquals(CanalNotificacao.EMAIL, historico.getCanal());
 
-        assertEquals(
-                0,
-                historico.getNumeroTentativas()
-        );
+        assertEquals(0, historico.getNumeroTentativas());
     }
 
     @Test
     void naoDeveReservarQuandoHistoricoJaExistir() {
         when(repository
-                .existsByUsuarioIdAndRotaIdAndDataHoraColetaAndCanal(
-                        3L,
-                        1L,
-                        dataHoraColeta,
-                        CanalNotificacao.EMAIL
-                ))
+                .existsByUsuarioIdAndRotaIdAndDataHoraColetaAndCanal(3L, 1L, dataHoraColeta, CanalNotificacao.EMAIL))
                 .thenReturn(true);
 
-        Optional<HistoricoNotificacao> resultado =
-                service.reservarEnvio(
+        Optional<HistoricoNotificacao> resultado = service.reservarEnvio(
                         usuario,
                         rota,
                         dataHoraColeta,
@@ -128,23 +104,13 @@ class HistoricoNotificacaoServiceImplTest {
     @Test
     void naoDeveReservarQuandoBancoDetectarConcorrencia() {
         when(repository
-                .existsByUsuarioIdAndRotaIdAndDataHoraColetaAndCanal(
-                        3L,
-                        1L,
-                        dataHoraColeta,
-                        CanalNotificacao.EMAIL
-                ))
+                .existsByUsuarioIdAndRotaIdAndDataHoraColetaAndCanal(3L, 1L, dataHoraColeta, CanalNotificacao.EMAIL))
                 .thenReturn(false);
 
         when(repository.saveAndFlush(any(HistoricoNotificacao.class)))
-                .thenThrow(
-                        new DataIntegrityViolationException(
-                                "Registro duplicado"
-                        )
-                );
+                .thenThrow(new DataIntegrityViolationException("Registro duplicado"));
 
-        Optional<HistoricoNotificacao> resultado =
-                service.reservarEnvio(
+        Optional<HistoricoNotificacao> resultado = service.reservarEnvio(
                         usuario,
                         rota,
                         dataHoraColeta,
@@ -156,33 +122,20 @@ class HistoricoNotificacaoServiceImplTest {
 
     @Test
     void deveMarcarComoEnviadoEIncrementarTentativa() {
-        HistoricoNotificacao historico =
-                criarHistoricoPendente();
+        HistoricoNotificacao historico = criarHistoricoPendente();
 
         historico.setNumeroTentativas(0);
 
         when(repository.findById(1L))
                 .thenReturn(Optional.of(historico));
 
-        service.marcarComoEnviado(
-                1L,
-                referencia
-        );
+        service.marcarComoEnviado(1L, referencia);
 
-        assertEquals(
-                StatusNotificacao.ENVIADO,
-                historico.getStatus()
-        );
+        assertEquals(StatusNotificacao.ENVIADO, historico.getStatus());
 
-        assertEquals(
-                1,
-                historico.getNumeroTentativas()
-        );
+        assertEquals(1, historico.getNumeroTentativas());
 
-        assertEquals(
-                referencia,
-                historico.getDataEnvio()
-        );
+        assertEquals(referencia, historico.getDataEnvio());
 
         assertNull(historico.getProximaTentativa());
         assertNull(historico.getMensagemErro());
@@ -192,39 +145,22 @@ class HistoricoNotificacaoServiceImplTest {
 
     @Test
     void deveAgendarRetryCincoMinutosAposPrimeiraFalha() {
-        HistoricoNotificacao historico =
-                criarHistoricoPendente();
+        HistoricoNotificacao historico = criarHistoricoPendente();
 
         historico.setNumeroTentativas(0);
 
         when(repository.findById(1L))
                 .thenReturn(Optional.of(historico));
 
-        service.marcarComoFalha(
-                1L,
-                "Erro SMTP",
-                referencia
-        );
+        service.marcarComoFalha(1L, "Erro SMTP", referencia);
 
-        assertEquals(
-                StatusNotificacao.FALHA,
-                historico.getStatus()
-        );
+        assertEquals(StatusNotificacao.FALHA, historico.getStatus());
 
-        assertEquals(
-                1,
-                historico.getNumeroTentativas()
-        );
+        assertEquals(1, historico.getNumeroTentativas());
 
-        assertEquals(
-                referencia.plusMinutes(5),
-                historico.getProximaTentativa()
-        );
+        assertEquals(referencia.plusMinutes(5), historico.getProximaTentativa());
 
-        assertEquals(
-                "Erro SMTP",
-                historico.getMensagemErro()
-        );
+        assertEquals("Erro SMTP", historico.getMensagemErro());
 
         assertNull(historico.getDataEnvio());
 
@@ -233,41 +169,27 @@ class HistoricoNotificacaoServiceImplTest {
 
     @Test
     void deveEncerrarRetriesQuandoTerceiraTentativaFalhar() {
-        HistoricoNotificacao historico =
-                criarHistoricoPendente();
+        HistoricoNotificacao historico = criarHistoricoPendente();
 
         historico.setNumeroTentativas(2);
 
         when(repository.findById(1L))
                 .thenReturn(Optional.of(historico));
 
-        service.marcarComoFalha(
-                1L,
-                "SMTP indisponível",
-                referencia
-        );
+        service.marcarComoFalha(1L, "SMTP indisponível", referencia);
 
-        assertEquals(
-                StatusNotificacao.FALHA,
-                historico.getStatus()
-        );
+        assertEquals(StatusNotificacao.FALHA, historico.getStatus());
 
-        assertEquals(
-                3,
-                historico.getNumeroTentativas()
-        );
+        assertEquals(3, historico.getNumeroTentativas());
 
-        assertNull(
-                historico.getProximaTentativa()
-        );
+        assertNull(historico.getProximaTentativa());
 
         verify(repository).save(historico);
     }
 
     @Test
     void deveBuscarFalhasElegiveisParaRetry() {
-        HistoricoNotificacao historico =
-                criarHistoricoPendente();
+        HistoricoNotificacao historico = criarHistoricoPendente();
 
         historico.setStatus(StatusNotificacao.FALHA);
         historico.setNumeroTentativas(1);
@@ -279,35 +201,22 @@ class HistoricoNotificacaoServiceImplTest {
                 3
         )).thenReturn(List.of(historico));
 
-        List<HistoricoNotificacao> resultado =
-                service.buscarFalhasElegiveisParaRetry(
-                        referencia
-                );
+        List<HistoricoNotificacao> resultado = service.buscarFalhasElegiveisParaRetry(referencia);
 
         assertEquals(1, resultado.size());
 
-        assertSame(
-                historico,
-                resultado.getFirst()
-        );
+        assertSame(historico, resultado.getFirst());
     }
 
     @Test
     void deveRejeitarReferenciaNulaAoBuscarRetries() {
-        assertThrows(
-                IllegalArgumentException.class,
-                () ->
-                        service.buscarFalhasElegiveisParaRetry(
-                                null
-                        )
-        );
+        assertThrows(IllegalArgumentException.class, () -> service.buscarFalhasElegiveisParaRetry(null));
 
         verifyNoInteractions(repository);
     }
 
     private HistoricoNotificacao criarHistoricoPendente() {
-        HistoricoNotificacao historico =
-                new HistoricoNotificacao();
+        HistoricoNotificacao historico = new HistoricoNotificacao();
 
         historico.setId(1L);
         historico.setUsuario(usuario);

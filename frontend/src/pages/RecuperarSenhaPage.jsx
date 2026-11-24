@@ -1,70 +1,40 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import {
-  solicitarRecuperacaoSenha,
-} from '../services/usuarioService'
+import { solicitarRecuperacaoSenha } from '../services/usuarioService'
 
 import '../App.css'
 
 import Alerta from '../components/Alerta'
 import LayoutAcesso from '../components/auth/LayoutAcesso'
 import CampoTexto from '../components/form/CampoTexto'
+import { emailValido } from '../utils/texto'
 
-function emailValido(valor) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-    valor,
-  )
-}
-
+/** Pede o link de redefinição de senha (resposta sempre neutra). */
 function RecuperarSenhaPage() {
   const [email, setEmail] = useState('')
-
-  const [
-    erroEmail,
-    setErroEmail,
-  ] = useState('')
-
+  const [erroEmail, setErroEmail] = useState('')
   const [erro, setErro] = useState('')
+  const [mensagem, setMensagem] = useState('')
+  const [carregando, setCarregando] = useState(false)
 
-  const [
-    mensagem,
-    setMensagem,
-  ] = useState('')
-
-  const [
-    carregando,
-    setCarregando,
-  ] = useState(false)
-
-  async function handleSubmit(
-    event,
-  ) {
+  async function handleSubmit(event) {
     event.preventDefault()
 
     setErro('')
     setErroEmail('')
     setMensagem('')
 
-    const emailNormalizado =
-      email.trim()
+    const emailNormalizado = email.trim()
 
     if (!emailNormalizado) {
-      setErroEmail(
-        'Informe seu e-mail.',
-      )
+      setErroEmail('Informe seu e-mail.')
 
       return
     }
 
-    if (
-      !emailValido(
-        emailNormalizado,
-      )
-    ) {
-      setErroEmail(
-        'Informe um e-mail válido.',
-      )
+    if (!emailValido(emailNormalizado)) {
+      setErroEmail('Informe um e-mail válido.')
 
       return
     }
@@ -72,20 +42,14 @@ function RecuperarSenhaPage() {
     try {
       setCarregando(true)
 
-      const resposta =
-        await solicitarRecuperacaoSenha(
-          emailNormalizado,
-        )
+      const resposta = await solicitarRecuperacaoSenha(emailNormalizado)
 
       setMensagem(
         resposta?.mensagem ||
           'Se existir uma conta associada a este e-mail, enviaremos as instruções para redefinir a senha.',
       )
     } catch (error) {
-      setErro(
-        error.message ||
-          'Não foi possível solicitar a recuperação da senha.',
-      )
+      setErro(error.message || 'Não foi possível solicitar a recuperação da senha.')
     } finally {
       setCarregando(false)
     }
@@ -99,36 +63,23 @@ function RecuperarSenhaPage() {
       ocupado={carregando}
       rodape={
         <p>
-          Lembrou a senha?{' '}
-          <Link to="/login">
-            Entrar
-          </Link>
+          Lembrou a senha? <Link to="/login">Entrar</Link>
         </p>
       }
     >
       {erro && (
-        <Alerta
-          tipo="erro"
-          titulo="Não foi possível enviar"
-        >
+        <Alerta tipo="erro" titulo="Não foi possível enviar">
           {erro}
         </Alerta>
       )}
 
       {mensagem && (
-        <Alerta
-          tipo="sucesso"
-          titulo="Confira seu e-mail"
-        >
+        <Alerta tipo="sucesso" titulo="Confira seu e-mail">
           {mensagem}
         </Alerta>
       )}
 
-      <form
-        className="acesso__form"
-        onSubmit={handleSubmit}
-        noValidate
-      >
+      <form className="acesso__form" onSubmit={handleSubmit} noValidate>
         <CampoTexto
           id="emailRecuperacao"
           rotulo="E-mail"
@@ -157,14 +108,8 @@ function RecuperarSenhaPage() {
           disabled={carregando}
         />
 
-        <button
-          type="submit"
-          className="botao botao--primario"
-          disabled={carregando}
-        >
-          {carregando
-            ? 'Enviando…'
-            : 'Enviar link'}
+        <button type="submit" className="botao botao--primario" disabled={carregando}>
+          {carregando ? 'Enviando…' : 'Enviar link'}
         </button>
       </form>
     </LayoutAcesso>

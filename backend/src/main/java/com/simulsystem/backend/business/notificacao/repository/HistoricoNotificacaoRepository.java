@@ -3,26 +3,19 @@ package com.simulsystem.backend.business.notificacao.repository;
 import com.simulsystem.backend.business.notificacao.model.CanalNotificacao;
 import com.simulsystem.backend.business.notificacao.model.HistoricoNotificacao;
 import com.simulsystem.backend.business.notificacao.model.StatusNotificacao;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
+/** Acesso ao histórico de lembretes. */
 public interface HistoricoNotificacaoRepository
         extends JpaRepository<HistoricoNotificacao, Long> {
-
+    /** Esse lembrete já foi reservado ou enviado? */
     boolean existsByUsuarioIdAndRotaIdAndDataHoraColetaAndCanal(
-            Long usuarioId,
-            Long rotaId,
-            LocalDateTime dataHoraColeta,
-            CanalNotificacao canal
-    );
-
-    Optional<HistoricoNotificacao>
-    findByUsuarioIdAndRotaIdAndDataHoraColetaAndCanal(
             Long usuarioId,
             Long rotaId,
             LocalDateTime dataHoraColeta,
@@ -40,6 +33,7 @@ public interface HistoricoNotificacaoRepository
               AND h.numeroTentativas < :limiteTentativas
             ORDER BY h.proximaTentativa ASC, h.id ASC
             """)
+    /** Falhas com tentativa agendada até a referência e abaixo do limite. */
     List<HistoricoNotificacao> buscarFalhasElegiveisParaRetry(
             @Param("status") StatusNotificacao status,
             @Param("referencia") LocalDateTime referencia,

@@ -1,7 +1,5 @@
 package com.simulsystem.backend.business.rota.service;
 
-import java.util.List;
-
 import com.simulsystem.backend.business.rota.dto.AreaAtendidaRequestDTO;
 import com.simulsystem.backend.business.rota.dto.AreaAtendidaResponseDTO;
 import com.simulsystem.backend.business.rota.dto.AreaDisponivelResponseDTO;
@@ -11,44 +9,38 @@ import com.simulsystem.backend.business.rota.dto.ConsultaColetaResponseDTO;
 import com.simulsystem.backend.business.rota.dto.RotaRequestDTO;
 import com.simulsystem.backend.business.rota.dto.RotaResponseDTO;
 
+import java.util.List;
+
+/** Regras de rotas e áreas atendidas, do admin e da consulta pública. */
 public interface RotaService {
 
-    RotaResponseDTO cadastrarRota(
-            RotaRequestDTO requestDTO
-    );
+    /** Cria uma rota (ativa). */
+    RotaResponseDTO cadastrarRota(RotaRequestDTO requestDTO);
 
-    AreaAtendidaResponseDTO cadastrarAreaAtendida(
-            AreaAtendidaRequestDTO requestDTO
-    );
+    /** Liga um bairro a uma rota (cidade e bairro únicos). */
+    AreaAtendidaResponseDTO cadastrarAreaAtendida(AreaAtendidaRequestDTO requestDTO);
 
+    /** Todas as áreas, para o admin. */
     List<AreaAtendidaResponseDTO> listarAreasAtendidas();
 
-    AreaAtendidaResponseDTO atualizarAreaAtendida(
-            Long id,
-            AreaAtendidaRequestDTO requestDTO
-    );
+    /** Edita cidade, bairro e rota de uma área. */
+    AreaAtendidaResponseDTO atualizarAreaAtendida(Long id, AreaAtendidaRequestDTO requestDTO);
 
-    AreaGeometriaResponseDTO atualizarGeometriaArea(
-            Long id,
-            AreaGeometriaRequestDTO requestDTO
-    );
+    /** Valida e salva o contorno GeoJSON da área. */
+    AreaGeometriaResponseDTO atualizarGeometriaArea(Long id, AreaGeometriaRequestDTO requestDTO);
 
+    /** Cidades e bairros de rotas ativas, para a consulta pública. */
     List<AreaDisponivelResponseDTO> listarAreasDisponiveis();
 
-    ConsultaColetaResponseDTO consultarPorCidadeEBairro(
-            String cidade,
-            String bairro
-    );
+    /** Rota, contorno e horários ativos do bairro (404 se não houver rota ativa). */
+    ConsultaColetaResponseDTO consultarPorCidadeEBairro(String cidade, String bairro);
 
+    /** Todas as rotas, para o admin. */
     List<RotaResponseDTO> listarRotas();
 
-    RotaResponseDTO atualizarRota(
-            Long id,
-            RotaRequestDTO requestDTO
-    );
+    /** Edita nome e descrição. */
+    RotaResponseDTO atualizarRota(Long id, RotaRequestDTO requestDTO);
 
-    RotaResponseDTO alterarStatus(
-            Long id,
-            boolean ativo
-    );
+    /** Ativa ou desativa a rota. */
+    RotaResponseDTO alterarStatus(Long id, boolean ativo);
 }

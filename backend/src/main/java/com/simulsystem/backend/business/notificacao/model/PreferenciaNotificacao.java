@@ -2,6 +2,7 @@ package com.simulsystem.backend.business.notificacao.model;
 
 import com.simulsystem.backend.business.rota.model.Rota;
 import com.simulsystem.backend.business.usuario.model.Usuario;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+/** Como o morador quer ser lembrado: rota, canais e antecedência. */
 @Entity
 @Table(name = "preferencias_notificacao")
 @Getter
@@ -21,18 +23,11 @@ public class PreferenciaNotificacao {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-            name = "usuario_id",
-            nullable = false,
-            unique = true
-    )
+    @JoinColumn(name = "usuario_id", nullable = false, unique = true)
     private Usuario usuario;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-            name = "rota_id",
-            nullable = false
-    )
+    @JoinColumn(name = "rota_id", nullable = false)
     private Rota rota;
 
     @Column(name = "email_ativo", nullable = false)
@@ -50,6 +45,7 @@ public class PreferenciaNotificacao {
     @Column(name = "data_atualizacao", nullable = false)
     private LocalDateTime dataAtualizacao;
 
+    /** Preenche as datas (e os padrões) antes de inserir. */
     @PrePersist
     public void prePersist() {
         LocalDateTime agora = LocalDateTime.now();
@@ -70,6 +66,7 @@ public class PreferenciaNotificacao {
         }
     }
 
+    /** Atualiza a data de alteração. */
     @PreUpdate
     public void preUpdate() {
         dataAtualizacao = LocalDateTime.now();

@@ -1,7 +1,4 @@
-import {
-  useEffect,
-  useState,
-} from 'react'
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import Alerta from '../../components/Alerta'
@@ -18,17 +15,12 @@ import {
 import { listarCronogramas } from '../../services/adminCronogramaService'
 import { listarRotas } from '../../services/adminRotaService'
 
-import {
-  filtrarAreas,
-  ordenarTexto,
-} from '../../utils/areas'
+import { filtrarAreas } from '../../utils/areas'
+import { comoLista, ordenarTexto } from '../../utils/texto'
 
 const POR_PAGINA = 20
 
-function comoLista(dados) {
-  return Array.isArray(dados) ? dados : []
-}
-
+/** Admin: bairros atendidos, com busca, filtros e editor do contorno. */
 function AreasAdminPage() {
   const [areas, setAreas] = useState([])
   const [rotas, setRotas] = useState([])
@@ -80,8 +72,9 @@ function AreasAdminPage() {
   }
 
   const rotasOrdenadas = [...rotas].sort((a, b) => ordenarTexto(a.nome, b.nome))
-  const cidades = [...new Set(areas.map((area) => area.cidade?.trim()).filter(Boolean))]
-    .sort(ordenarTexto)
+  const cidades = [...new Set(areas.map((area) => area.cidade?.trim()).filter(Boolean))].sort(
+    ordenarTexto,
+  )
   const semDesenho = areas.filter((area) => !area.possuiGeometria).length
   const filtradas = filtrarAreas(areas, filtros)
 
@@ -132,9 +125,11 @@ function AreasAdminPage() {
 
       // Após cadastrar, o painel continua aberto na área nova,
       // pronto para desenhar o contorno.
-      setPainel(areaSalva
-        ? { modo: 'editar', area: areaSalva, chave: `editar-${areaSalva.id}-salva` }
-        : null)
+      setPainel(
+        areaSalva
+          ? { modo: 'editar', area: areaSalva, chave: `editar-${areaSalva.id}-salva` }
+          : null,
+      )
     } catch (error) {
       setMensagem({
         tipo: 'erro',
@@ -163,14 +158,8 @@ function AreasAdminPage() {
 
   if (carregando) {
     return (
-      <div
-        className="carregando"
-        role="status"
-      >
-        <span
-          className="carregando__spinner"
-          aria-hidden="true"
-        />
+      <div className="carregando" role="status">
+        <span className="carregando__spinner" aria-hidden="true" />
         Carregando áreas atendidas…
       </div>
     )
@@ -199,18 +188,13 @@ function AreasAdminPage() {
           <h1 className="admin-pagina__titulo">Áreas atendidas</h1>
           <p className="admin-pagina__texto">
             {areas.length} bairros cadastrados
-            {cidades.length === 1 ? ` em ${cidades[0]}` : ` em ${cidades.length} cidades`},
-            cada um ligado a uma rota. É por aqui que o morador encontra o seu
-            bairro na consulta.
+            {cidades.length === 1 ? ` em ${cidades[0]}` : ` em ${cidades.length} cidades`}, cada um
+            ligado a uma rota. É por aqui que o morador encontra o seu bairro na consulta.
           </p>
         </div>
 
         <div className="admin-pagina__acoes">
-          <button
-            type="button"
-            className="botao botao--primario"
-            onClick={abrirNova}
-          >
+          <button type="button" className="botao botao--primario" onClick={abrirNova}>
             Nova área
           </button>
         </div>
@@ -225,16 +209,10 @@ function AreasAdminPage() {
           painel?.modo === 'contorno' ? 'admin-area--painel-largo' : '',
         ].join(' ')}
       >
-        <section
-          className="admin-quadro"
-          aria-label="Lista de áreas atendidas"
-        >
+        <section className="admin-quadro" aria-label="Lista de áreas atendidas">
           <div className="admin-filtros">
             <div className="campo-ds admin-filtros__busca">
-              <label
-                className="campo-ds__rotulo"
-                htmlFor="areas-busca"
-              >
+              <label className="campo-ds__rotulo" htmlFor="areas-busca">
                 Buscar bairro
               </label>
               <input
@@ -248,10 +226,7 @@ function AreasAdminPage() {
             </div>
 
             <div className="campo-ds">
-              <label
-                className="campo-ds__rotulo"
-                htmlFor="areas-rota"
-              >
+              <label className="campo-ds__rotulo" htmlFor="areas-rota">
                 Rota
               </label>
               <select
@@ -262,10 +237,7 @@ function AreasAdminPage() {
               >
                 <option value="">Todas as rotas</option>
                 {rotasOrdenadas.map((rota) => (
-                  <option
-                    key={rota.id}
-                    value={rota.id}
-                  >
+                  <option key={rota.id} value={rota.id}>
                     {rota.nome}
                   </option>
                 ))}
@@ -291,13 +263,8 @@ function AreasAdminPage() {
             </div>
           </div>
 
-          <p
-            className="visualmente-oculto"
-            aria-live="polite"
-          >
-            {filtradas.length === 1
-              ? '1 área encontrada'
-              : `${filtradas.length} áreas encontradas`}
+          <p className="visualmente-oculto" aria-live="polite">
+            {filtradas.length === 1 ? '1 área encontrada' : `${filtradas.length} áreas encontradas`}
           </p>
 
           <TabelaAreas

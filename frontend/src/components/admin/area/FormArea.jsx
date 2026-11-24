@@ -1,11 +1,8 @@
 import { useState } from 'react'
 
 import Icone from '../../Icone'
-import {
-  encontrarDuplicada,
-  normalizarTexto,
-  resumirColetaDaRota,
-} from '../../../utils/areas'
+import { encontrarDuplicada, resumirColetaDaRota } from '../../../utils/areas'
+import { normalizarTexto } from '../../../utils/texto'
 
 /**
  * Cria ou edita uma área (cidade, bairro e rota). Na edição, mostra
@@ -41,8 +38,7 @@ function FormArea({
     if (!dados.bairro) novosErros.bairro = 'Informe o bairro.'
     if (!rotaId) novosErros.rota = 'Escolha a rota que atende este bairro.'
 
-    if (dados.cidade && dados.bairro
-      && encontrarDuplicada(areas, { id: area?.id, ...dados })) {
+    if (dados.cidade && dados.bairro && encontrarDuplicada(areas, { id: area?.id, ...dados })) {
       novosErros.bairro = `${dados.bairro} já está cadastrado em ${dados.cidade}.`
     }
 
@@ -57,32 +53,18 @@ function FormArea({
     if (!mensagem) return null
 
     return (
-      <p
-        id={`${id}-erro`}
-        className="campo-ds__erro"
-        role="alert"
-      >
-        <Icone
-          nome="erro"
-          tamanho={16}
-        />
+      <p id={`${id}-erro`} className="campo-ds__erro" role="alert">
+        <Icone nome="erro" tamanho={16} />
         {mensagem}
       </p>
     )
   }
 
   return (
-    <form
-      className="painel-form"
-      onSubmit={handleSubmit}
-      noValidate
-    >
+    <form className="painel-form" onSubmit={handleSubmit} noValidate>
       <div className="painel-form__dupla">
         <div className="campo-ds">
-          <label
-            className="campo-ds__rotulo"
-            htmlFor="area-cidade"
-          >
+          <label className="campo-ds__rotulo" htmlFor="area-cidade">
             Cidade
           </label>
           <input
@@ -98,20 +80,14 @@ function FormArea({
           />
           <datalist id="area-cidades">
             {cidades.map((item) => (
-              <option
-                key={item}
-                value={item}
-              />
+              <option key={item} value={item} />
             ))}
           </datalist>
           {campoErro('area-cidade', erros.cidade)}
         </div>
 
         <div className="campo-ds">
-          <label
-            className="campo-ds__rotulo"
-            htmlFor="area-bairro"
-          >
+          <label className="campo-ds__rotulo" htmlFor="area-bairro">
             Bairro
           </label>
           <input
@@ -129,10 +105,7 @@ function FormArea({
       </div>
 
       <div className="campo-ds">
-        <label
-          className="campo-ds__rotulo"
-          htmlFor="area-rota"
-        >
+        <label className="campo-ds__rotulo" htmlFor="area-rota">
           Rota
         </label>
         <select
@@ -146,27 +119,21 @@ function FormArea({
         >
           <option value="">Selecione a rota</option>
           {rotas.map((rota) => (
-            <option
-              key={rota.id}
-              value={rota.id}
-            >
+            <option key={rota.id} value={rota.id}>
               {rota.nome}
               {rota.ativo ? '' : ' (inativa)'}
             </option>
           ))}
         </select>
-        {erros.rota
-          ? campoErro('area-rota', erros.rota)
-          : (
-            <p
-              id="area-rota-dica"
-              className="campo-ds__dica"
-            >
-              {rotaId
-                ? resumirColetaDaRota(cronogramas, Number(rotaId))
-                : 'Os dias e horários do bairro vêm da rota escolhida.'}
-            </p>
-          )}
+        {erros.rota ? (
+          campoErro('area-rota', erros.rota)
+        ) : (
+          <p id="area-rota-dica" className="campo-ds__dica">
+            {rotaId
+              ? resumirColetaDaRota(cronogramas, Number(rotaId))
+              : 'Os dias e horários do bairro vêm da rota escolhida.'}
+          </p>
+        )}
       </div>
 
       <div className="painel-form__acoes">

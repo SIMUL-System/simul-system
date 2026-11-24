@@ -3,9 +3,9 @@ package com.simulsystem.backend.business.notificacao.service;
 import com.simulsystem.backend.business.notificacao.model.CanalNotificacao;
 import com.simulsystem.backend.business.notificacao.model.HistoricoNotificacao;
 import com.simulsystem.backend.business.notificacao.model.StatusNotificacao;
-import com.simulsystem.backend.business.notificacao.strategy.TipoNotificacao;
 import com.simulsystem.backend.business.rota.model.Rota;
 import com.simulsystem.backend.business.usuario.model.Usuario;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,55 +37,38 @@ class ProcessamentoRetryNotificacaoServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service =
-                new ProcessamentoRetryNotificacaoServiceImpl(
+        service = new ProcessamentoRetryNotificacaoServiceImpl(
                         historicoNotificacaoService,
                         envioNotificacaoService,
-                        preferenciaNotificacaoService
-                );
+                        preferenciaNotificacaoService,
+                        new MensagemLembrete());
 
-        referencia =
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        17,
-                        16,
-                        5
-                );
+        referencia = LocalDateTime.of(2026, 8, 17, 16, 5);
     }
 
     @Test
     void deveReenviarEmailQuandoRetryContinuarElegivel() {
-        HistoricoNotificacao historico =
-                criarHistoricoEmail(1L);
+        HistoricoNotificacao historico = criarHistoricoEmail(1L);
 
         when(historicoNotificacaoService
-                .buscarFalhasElegiveisParaRetry(
-                        referencia
-                ))
+                .buscarFalhasElegiveisParaRetry(referencia))
                 .thenReturn(List.of(historico));
 
         when(preferenciaNotificacaoService
-                .podeReceberEmail(
-                        3L,
-                        1L
-                ))
+                .podeReceber(3L, 1L, CanalNotificacao.EMAIL))
                 .thenReturn(true);
 
         service.processar(referencia);
 
         verify(envioNotificacaoService).enviar(
-                eq(TipoNotificacao.EMAIL),
+                eq(CanalNotificacao.EMAIL),
                 eq("usuario.teste@simul.local"),
                 anyString(),
                 anyString()
         );
 
         verify(historicoNotificacaoService)
-                .marcarComoEnviado(
-                        1L,
-                        referencia
-                );
+                .marcarComoEnviado(1L, referencia);
 
         verify(historicoNotificacaoService, never())
                 .marcarComoCancelado(anyLong());
@@ -93,20 +76,14 @@ class ProcessamentoRetryNotificacaoServiceImplTest {
 
     @Test
     void deveCancelarRetryQuandoConfiguracaoAtualNaoPermitirEmail() {
-        HistoricoNotificacao historico =
-                criarHistoricoEmail(1L);
+        HistoricoNotificacao historico = criarHistoricoEmail(1L);
 
         when(historicoNotificacaoService
-                .buscarFalhasElegiveisParaRetry(
-                        referencia
-                ))
+                .buscarFalhasElegiveisParaRetry(referencia))
                 .thenReturn(List.of(historico));
 
         when(preferenciaNotificacaoService
-                .podeReceberEmail(
-                        3L,
-                        1L
-                ))
+                .podeReceber(3L, 1L, CanalNotificacao.EMAIL))
                 .thenReturn(false);
 
         service.processar(referencia);
@@ -114,200 +91,142 @@ class ProcessamentoRetryNotificacaoServiceImplTest {
         verify(historicoNotificacaoService)
                 .marcarComoCancelado(1L);
 
-        verifyNoInteractions(
-                envioNotificacaoService
-        );
+        verifyNoInteractions(envioNotificacaoService);
 
         verify(historicoNotificacaoService, never())
-                .marcarComoEnviado(
-                        anyLong(),
-                        any(LocalDateTime.class)
-                );
+                .marcarComoEnviado(anyLong(), any(LocalDateTime.class));
 
         verify(historicoNotificacaoService, never())
-                .marcarComoFalha(
-                        anyLong(),
-                        anyString(),
-                        any(LocalDateTime.class)
-                );
+                .marcarComoFalha(anyLong(), anyString(), any(LocalDateTime.class));
     }
 
     @Test
     void deveRegistrarNovaFalhaQuandoRetryFalhar() {
-        HistoricoNotificacao historico =
-                criarHistoricoEmail(1L);
+        HistoricoNotificacao historico = criarHistoricoEmail(1L);
 
         when(historicoNotificacaoService
-                .buscarFalhasElegiveisParaRetry(
-                        referencia
-                ))
+                .buscarFalhasElegiveisParaRetry(referencia))
                 .thenReturn(List.of(historico));
 
         when(preferenciaNotificacaoService
-                .podeReceberEmail(
-                        3L,
-                        1L
-                ))
+                .podeReceber(3L, 1L, CanalNotificacao.EMAIL))
                 .thenReturn(true);
 
-        doThrow(
-                new RuntimeException(
-                        "SMTP indisponível"
-                )
-        ).when(envioNotificacaoService)
-                .enviar(
-                        eq(TipoNotificacao.EMAIL),
-                        eq("usuario.teste@simul.local"),
-                        anyString(),
-                        anyString()
-                );
+        doThrow(new RuntimeException("SMTP indisponível")).when(envioNotificacaoService)
+                .enviar(eq(CanalNotificacao.EMAIL), eq("usuario.teste@simul.local"), anyString(), anyString());
 
         service.processar(referencia);
 
         verify(historicoNotificacaoService)
-                .marcarComoFalha(
-                        1L,
-                        "SMTP indisponível",
-                        referencia
-                );
+                .marcarComoFalha(1L, "SMTP indisponível", referencia);
 
         verify(historicoNotificacaoService, never())
-                .marcarComoEnviado(
-                        anyLong(),
-                        any(LocalDateTime.class)
-                );
+                .marcarComoEnviado(anyLong(), any(LocalDateTime.class));
     }
 
     @Test
     void naoDeveEnviarQuandoNaoExistiremRetriesElegiveis() {
         when(historicoNotificacaoService
-                .buscarFalhasElegiveisParaRetry(
-                        referencia
-                ))
+                .buscarFalhasElegiveisParaRetry(referencia))
                 .thenReturn(List.of());
 
         service.processar(referencia);
 
-        verifyNoInteractions(
-                envioNotificacaoService,
-                preferenciaNotificacaoService
-        );
+        verifyNoInteractions(envioNotificacaoService, preferenciaNotificacaoService);
     }
 
     @Test
     void deveContinuarProcessandoQuandoUmRetryGerarErroInesperado() {
-        HistoricoNotificacao historicoInvalido =
-                new HistoricoNotificacao();
+        HistoricoNotificacao historicoInvalido = new HistoricoNotificacao();
 
         historicoInvalido.setId(1L);
 
-        HistoricoNotificacao historicoValido =
-                criarHistoricoEmail(2L);
+        HistoricoNotificacao historicoValido = criarHistoricoEmail(2L);
 
         when(historicoNotificacaoService
-                .buscarFalhasElegiveisParaRetry(
-                        referencia
-                ))
-                .thenReturn(
-                        List.of(
-                                historicoInvalido,
-                                historicoValido
-                        )
-                );
+                .buscarFalhasElegiveisParaRetry(referencia))
+                .thenReturn(List.of(historicoInvalido, historicoValido));
 
         when(preferenciaNotificacaoService
-                .podeReceberEmail(
-                        3L,
-                        1L
-                ))
+                .podeReceber(3L, 1L, CanalNotificacao.EMAIL))
                 .thenReturn(true);
 
         service.processar(referencia);
 
         verify(envioNotificacaoService).enviar(
-                eq(TipoNotificacao.EMAIL),
+                eq(CanalNotificacao.EMAIL),
                 eq("usuario.teste@simul.local"),
                 anyString(),
                 anyString()
         );
 
         verify(historicoNotificacaoService)
-                .marcarComoEnviado(
-                        2L,
-                        referencia
-                );
+                .marcarComoEnviado(2L, referencia);
     }
 
     @Test
     void deveRejeitarReferenciaNula() {
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> service.processar(null)
-        );
+        assertThrows(IllegalArgumentException.class, () -> service.processar(null));
 
-        verifyNoInteractions(
-                historicoNotificacaoService,
-                envioNotificacaoService,
-                preferenciaNotificacaoService
-        );
+        verifyNoInteractions(historicoNotificacaoService, envioNotificacaoService, preferenciaNotificacaoService);
     }
 
-    private HistoricoNotificacao criarHistoricoEmail(
-            Long id
-    ) {
+    @Test
+    void deveReenviarWebPushPeloMesmoCanalDaFalha() {
+        HistoricoNotificacao historico = criarHistoricoEmail(5L);
+        historico.setCanal(CanalNotificacao.WEB_PUSH);
+
+        when(historicoNotificacaoService.buscarFalhasElegiveisParaRetry(referencia)).thenReturn(List.of(historico));
+        when(preferenciaNotificacaoService.podeReceber(3L, 1L, CanalNotificacao.WEB_PUSH)).thenReturn(true);
+
+        service.processar(referencia);
+
+        verify(envioNotificacaoService).enviar(
+                eq(CanalNotificacao.WEB_PUSH), eq("usuario.teste@simul.local"), anyString(), anyString());
+        verify(historicoNotificacaoService).marcarComoEnviado(5L, referencia);
+    }
+
+    @Test
+    void deveCancelarReenvioDeWebPushQuandoCanalForDesligado() {
+        HistoricoNotificacao historico = criarHistoricoEmail(6L);
+        historico.setCanal(CanalNotificacao.WEB_PUSH);
+
+        when(historicoNotificacaoService.buscarFalhasElegiveisParaRetry(referencia)).thenReturn(List.of(historico));
+        when(preferenciaNotificacaoService.podeReceber(3L, 1L, CanalNotificacao.WEB_PUSH)).thenReturn(false);
+
+        service.processar(referencia);
+
+        verify(historicoNotificacaoService).marcarComoCancelado(6L);
+        verifyNoInteractions(envioNotificacaoService);
+    }
+
+    private HistoricoNotificacao criarHistoricoEmail(Long id) {
         Usuario usuario = new Usuario();
         usuario.setId(3L);
-        usuario.setNome(
-                "Usuário Teste SIMUL"
-        );
-        usuario.setEmail(
-                "usuario.teste@simul.local"
-        );
+        usuario.setNome("Usuário Teste SIMUL");
+        usuario.setEmail("usuario.teste@simul.local");
         usuario.setAtivo(true);
 
         Rota rota = new Rota();
         rota.setId(1L);
-        rota.setNome(
-                "Rota Jardim Nova Goiânia"
-        );
+        rota.setNome("Rota Jardim Nova Goiânia");
         rota.setAtivo(true);
 
-        HistoricoNotificacao historico =
-                new HistoricoNotificacao();
+        HistoricoNotificacao historico = new HistoricoNotificacao();
 
         historico.setId(id);
         historico.setUsuario(usuario);
         historico.setRota(rota);
 
-        historico.setDataHoraColeta(
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        17,
-                        19,
-                        0
-                )
-        );
+        historico.setDataHoraColeta(LocalDateTime.of(2026, 8, 17, 19, 0));
 
-        historico.setCanal(
-                CanalNotificacao.EMAIL
-        );
+        historico.setCanal(CanalNotificacao.EMAIL);
 
-        historico.setStatus(
-                StatusNotificacao.FALHA
-        );
+        historico.setStatus(StatusNotificacao.FALHA);
 
         historico.setNumeroTentativas(1);
 
-        historico.setProximaTentativa(
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        17,
-                        16,
-                        5
-                )
-        );
+        historico.setProximaTentativa(LocalDateTime.of(2026, 8, 17, 16, 5));
 
         return historico;
     }

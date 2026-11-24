@@ -1,15 +1,9 @@
 import { useState } from 'react'
-import {
-  Link,
-  useNavigate,
-} from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 import { login } from '../services/authService'
 
-import {
-  obterUsuarioAtual,
-  reenviarVerificacaoEmail,
-} from '../services/usuarioService'
+import { obterUsuarioAtual, reenviarVerificacaoEmail } from '../services/usuarioService'
 
 import '../App.css'
 
@@ -18,57 +12,28 @@ import Icone from '../components/Icone'
 import LayoutAcesso from '../components/auth/LayoutAcesso'
 import CampoSenha from '../components/form/CampoSenha'
 import CampoTexto from '../components/form/CampoTexto'
+import { emailValido } from '../utils/texto'
 
-function emailValido(valor) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-    valor,
-  )
-}
-
+/** Entrar; oferece reenviar a confirmação quando o e-mail ainda não foi confirmado. */
 function LoginPage() {
   const navigate = useNavigate()
 
+  // Chegou aqui porque o token venceu (ver App.jsx).
+  const sessaoExpirada = Boolean(useLocation().state?.sessaoExpirada)
+
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
-
-  const [
-    erroEmail,
-    setErroEmail,
-  ] = useState('')
-
-  const [
-    erroSenha,
-    setErroSenha,
-  ] = useState('')
-
+  const [erroEmail, setErroEmail] = useState('')
+  const [erroSenha, setErroSenha] = useState('')
   const [erro, setErro] = useState('')
 
   // Erro do reenvio fica separado do erro do login, perto do botão
   // que o causou (antes ele sobrescrevia o aviso "E-mail não confirmado").
-  const [
-    erroReenvio,
-    setErroReenvio,
-  ] = useState('')
-
-  const [
-    carregando,
-    setCarregando,
-  ] = useState(false)
-
-  const [
-    mostrarReenvio,
-    setMostrarReenvio,
-  ] = useState(false)
-
-  const [
-    reenviando,
-    setReenviando,
-  ] = useState(false)
-
-  const [
-    mensagemReenvio,
-    setMensagemReenvio,
-  ] = useState('')
+  const [erroReenvio, setErroReenvio] = useState('')
+  const [carregando, setCarregando] = useState(false)
+  const [mostrarReenvio, setMostrarReenvio] = useState(false)
+  const [reenviando, setReenviando] = useState(false)
+  const [mensagemReenvio, setMensagemReenvio] = useState('')
 
   function limparEstadoReenvio() {
     setMostrarReenvio(false)
@@ -83,31 +48,20 @@ function LoginPage() {
     setErroSenha('')
     setErro('')
 
-    const emailNormalizado =
-      email.trim()
+    const emailNormalizado = email.trim()
 
     if (!emailNormalizado) {
-      setErroEmail(
-        'Informe seu e-mail.',
-      )
+      setErroEmail('Informe seu e-mail.')
 
       formularioValido = false
-    } else if (
-      !emailValido(
-        emailNormalizado,
-      )
-    ) {
-      setErroEmail(
-        'Informe um e-mail válido.',
-      )
+    } else if (!emailValido(emailNormalizado)) {
+      setErroEmail('Informe um e-mail válido.')
 
       formularioValido = false
     }
 
     if (!senha) {
-      setErroSenha(
-        'Informe sua senha.',
-      )
+      setErroSenha('Informe sua senha.')
 
       formularioValido = false
     }
@@ -115,9 +69,7 @@ function LoginPage() {
     return formularioValido
   }
 
-  async function handleSubmit(
-    event,
-  ) {
+  async function handleSubmit(event) {
     event.preventDefault()
 
     limparEstadoReenvio()
@@ -129,17 +81,13 @@ function LoginPage() {
     try {
       setCarregando(true)
 
-      await login(
-        email.trim(),
-        senha,
-      )
+      await login(email.trim(), senha)
 
       // Administrador vai direto para o painel.
       let destino = '/minha-conta'
 
       try {
-        const usuario =
-          await obterUsuarioAtual()
+        const usuario = await obterUsuarioAtual()
 
         if (usuario?.perfil === 'ADMIN') {
           destino = '/admin'
@@ -148,57 +96,37 @@ function LoginPage() {
         // Sem os dados do usuário, segue para Minha conta.
       }
 
-      navigate(
-        destino,
-        {
-          replace: true,
-        },
-      )
+      navigate(destino, {
+        replace: true,
+      })
     } catch (error) {
       const emailNaoVerificado =
         error?.status === 403 &&
-        (
-          error?.data?.title ===
-            'E-mail não verificado' ||
-          error?.message ===
-            'Confirme seu e-mail antes de entrar.'
-        )
+        (error?.data?.title === 'E-mail não verificado' ||
+          error?.message === 'Confirme seu e-mail antes de entrar.')
 
       if (emailNaoVerificado) {
         setMostrarReenvio(true)
 
-        setErro(
-          'Seu e-mail ainda não foi confirmado. Confirme o endereço antes de entrar.',
-        )
+        setErro('Seu e-mail ainda não foi confirmado. Confirme o endereço antes de entrar.')
 
         return
       }
 
-      setErro(
-        error.message ||
-          'Não foi possível realizar o login.',
-      )
+      setErro(error.message || 'Não foi possível realizar o login.')
     } finally {
       setCarregando(false)
     }
   }
 
   async function handleReenviarVerificacao() {
-    const emailNormalizado =
-      email.trim()
+    const emailNormalizado = email.trim()
 
     setMensagemReenvio('')
     setErroReenvio('')
 
-    if (
-      !emailNormalizado ||
-      !emailValido(
-        emailNormalizado,
-      )
-    ) {
-      setErroEmail(
-        'Informe um e-mail válido para reenviar a confirmação.',
-      )
+    if (!emailNormalizado || !emailValido(emailNormalizado)) {
+      setErroEmail('Informe um e-mail válido para reenviar a confirmação.')
 
       return
     }
@@ -206,10 +134,7 @@ function LoginPage() {
     try {
       setReenviando(true)
 
-      const resposta =
-        await reenviarVerificacaoEmail(
-          emailNormalizado,
-        )
+      const resposta = await reenviarVerificacaoEmail(emailNormalizado)
 
       setMensagemReenvio(
         resposta?.mensagem ||
@@ -225,9 +150,7 @@ function LoginPage() {
     }
   }
 
-  const ocupado =
-    carregando ||
-    reenviando
+  const ocupado = carregando || reenviando
 
   return (
     <LayoutAcesso
@@ -237,40 +160,32 @@ function LoginPage() {
       ocupado={ocupado}
       rodape={
         <p>
-          Ainda não tem conta?{' '}
-          <Link to="/cadastro">
-            Criar conta
-          </Link>
+          Ainda não tem conta? <Link to="/cadastro">Criar conta</Link>
         </p>
       }
     >
+      {sessaoExpirada && !erro && (
+        <Alerta tipo="info" titulo="Sessão encerrada">
+          Por segurança, sua sessão expira depois de 1 hora. Entre de novo para continuar.
+        </Alerta>
+      )}
+
       {erro && (
         <Alerta
           tipo="erro"
-          titulo={
-            mostrarReenvio
-              ? 'E-mail não confirmado'
-              : 'Não foi possível entrar'
-          }
+          titulo={mostrarReenvio ? 'E-mail não confirmado' : 'Não foi possível entrar'}
         >
           {erro}
         </Alerta>
       )}
 
       {mensagemReenvio && (
-        <Alerta
-          tipo="sucesso"
-          titulo="Pedido enviado"
-        >
+        <Alerta tipo="sucesso" titulo="Pedido enviado">
           {mensagemReenvio}
         </Alerta>
       )}
 
-      <form
-        className="acesso__form"
-        onSubmit={handleSubmit}
-        noValidate
-      >
+      <form className="acesso__form" onSubmit={handleSubmit} noValidate>
         <CampoTexto
           id="email"
           rotulo="E-mail"
@@ -283,10 +198,7 @@ function LoginPage() {
               setErroEmail('')
             }
 
-            if (
-              mostrarReenvio ||
-              mensagemReenvio
-            ) {
+            if (mostrarReenvio || mensagemReenvio) {
               limparEstadoReenvio()
             }
           }}
@@ -313,21 +225,12 @@ function LoginPage() {
           disabled={ocupado}
         />
 
-        <Link
-          to="/recuperar-senha"
-          className="acesso__link-direita"
-        >
+        <Link to="/recuperar-senha" className="acesso__link-direita">
           Esqueci minha senha
         </Link>
 
-        <button
-          type="submit"
-          className="botao botao--primario"
-          disabled={ocupado}
-        >
-          {carregando
-            ? 'Entrando…'
-            : 'Entrar'}
+        <button type="submit" className="botao botao--primario" disabled={ocupado}>
+          {carregando ? 'Entrando…' : 'Entrar'}
         </button>
       </form>
 
@@ -335,14 +238,8 @@ function LoginPage() {
         <>
           <hr className="acesso__separador" />
 
-          <section
-            className="acesso__bloco"
-            aria-labelledby="titulo-reenvio-email"
-          >
-            <h2
-              id="titulo-reenvio-email"
-              className="titulo-cartao"
-            >
+          <section className="acesso__bloco" aria-labelledby="titulo-reenvio-email">
+            <h2 id="titulo-reenvio-email" className="titulo-cartao">
               Não recebeu o e-mail?
             </h2>
 
@@ -352,10 +249,7 @@ function LoginPage() {
             </p>
 
             {erroReenvio && (
-              <Alerta
-                tipo="erro"
-                titulo="E-mail não enviado"
-              >
+              <Alerta tipo="erro" titulo="E-mail não enviado">
                 {erroReenvio}
               </Alerta>
             )}
@@ -366,9 +260,7 @@ function LoginPage() {
               onClick={handleReenviarVerificacao}
               disabled={ocupado}
             >
-              {reenviando
-                ? 'Enviando…'
-                : 'Reenviar e-mail de confirmação'}
+              {reenviando ? 'Enviando…' : 'Reenviar e-mail de confirmação'}
             </button>
           </section>
         </>

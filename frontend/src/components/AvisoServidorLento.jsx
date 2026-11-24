@@ -13,20 +13,13 @@ function AvisoServidorLento() {
   useEffect(() => inscreverServidorLento(setAtivo), [])
 
   return (
-    <div
-      className="aviso-servidor"
-      role="status"
-      aria-live="polite"
-    >
+    <div className="aviso-servidor" role="status" aria-live="polite">
       {ativo && (
         <div className="aviso-servidor__caixa">
-          <span
-            className="carregando__spinner"
-            aria-hidden="true"
-          />
+          <span className="carregando__spinner" aria-hidden="true" />
           <span>
-            <strong>Conectando ao servidor…</strong> Ele pode estar iniciando;
-            a primeira resposta pode levar até 1 minuto.
+            <strong>Conectando ao servidor…</strong> Ele pode estar iniciando; a primeira resposta
+            pode levar até 1 minuto.
           </span>
         </div>
       )}

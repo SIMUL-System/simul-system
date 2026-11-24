@@ -8,26 +8,20 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
+/** Entrega ao front a chave pública VAPID, necessária para inscrever o navegador. */
 @RestController
 @RequestMapping("/api/notificacoes/push")
 public class WebPushPublicKeyController {
 
     private final String publicKey;
 
-    public WebPushPublicKeyController(
-            @Value("${simul.webpush.vapid.public-key}")
-            String publicKey
-    ) {
+    public WebPushPublicKeyController(@Value("${simul.webpush.vapid.public-key}") String publicKey) {
         this.publicKey = publicKey;
     }
 
+    /** GET /public-key (público): chave VAPID pública. */
     @GetMapping("/public-key")
     public ResponseEntity<Map<String, String>> obterChavePublica() {
-        return ResponseEntity.ok(
-                Map.of(
-                        "publicKey",
-                        publicKey
-                )
-        );
+        return ResponseEntity.ok(Map.of("publicKey", publicKey));
     }
 }

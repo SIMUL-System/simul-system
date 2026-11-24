@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
+/** Corpo da preferência: rota, canais ligados e antecedência (0 a 72 horas). */
 public record PreferenciaNotificacaoRequestDTO(
 
         @NotNull(message = "A rota é obrigatória.")
@@ -16,14 +17,8 @@ public record PreferenciaNotificacaoRequestDTO(
         Boolean webPushAtivo,
 
         @NotNull(message = "A antecedência é obrigatória.")
-        @Min(
-                value = 0,
-                message = "A antecedência não pode ser negativa."
-        )
-        @Max(
-                value = 72,
-                message = "A antecedência não pode ultrapassar 72 horas."
-        )
+        @Min(value = 0, message = "A antecedência não pode ser negativa.")
+        @Max(value = 72, message = "A antecedência não pode ultrapassar 72 horas.")
         Integer antecedenciaHoras
 
 ) {

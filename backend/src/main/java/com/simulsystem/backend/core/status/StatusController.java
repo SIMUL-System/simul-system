@@ -17,6 +17,7 @@ import java.util.Map;
 @RequestMapping("/api/status")
 public class StatusController {
 
+    /** GET /api/status (público): {"status":"ok"}. */
     @GetMapping
     public ResponseEntity<Map<String, String>> status() {
         return ResponseEntity.ok(Map.of("status", "ok"));

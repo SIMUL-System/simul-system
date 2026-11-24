@@ -2,36 +2,17 @@
  * Funções puras da tela de áreas atendidas do painel admin.
  */
 
-import {
-  DIAS_SEMANA,
-  horaCurta,
-} from './cronogramas'
-
-export function ordenarTexto(a, b) {
-  return a.localeCompare(b, 'pt-BR', { sensitivity: 'base' })
-}
-
-/** Tira espaços das pontas e junta espaços repetidos. */
-export function normalizarTexto(valor) {
-  return valor.trim().replace(/\s+/g, ' ')
-}
-
-function semAcento(valor) {
-  return (valor ?? '')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLocaleLowerCase('pt-BR')
-}
+import { DIAS_SEMANA, horaCurta } from './cronogramas'
+import { ordenarTexto, semAcento } from './texto'
 
 /** Busca por bairro ou cidade, sem diferenciar acentos e maiúsculas. */
 export function filtrarAreas(areas, { busca, rotaId, mapa }) {
   const termo = semAcento(busca.trim())
 
   return areas
-    .filter((area) =>
-      !termo
-      || semAcento(area.bairro).includes(termo)
-      || semAcento(area.cidade).includes(termo),
+    .filter(
+      (area) =>
+        !termo || semAcento(area.bairro).includes(termo) || semAcento(area.cidade).includes(termo),
     )
     .filter((area) => !rotaId || area.rotaId === Number(rotaId))
     .filter((area) => {
@@ -44,10 +25,11 @@ export function filtrarAreas(areas, { busca, rotaId, mapa }) {
 
 /** Mesma cidade e bairro de outra área (o banco também impede). */
 export function encontrarDuplicada(areas, { id, cidade, bairro }) {
-  return areas.find((area) =>
-    area.id !== id
-    && semAcento(area.cidade?.trim()) === semAcento(cidade)
-    && semAcento(area.bairro?.trim()) === semAcento(bairro),
+  return areas.find(
+    (area) =>
+      area.id !== id &&
+      semAcento(area.cidade?.trim()) === semAcento(cidade) &&
+      semAcento(area.bairro?.trim()) === semAcento(bairro),
   )
 }
 
@@ -59,6 +41,7 @@ export function validarGeometria(geometria) {
   return geometria
 }
 
+/** Lê o GeoJSON salvo; devolve null se não for um polígono válido. */
 export function converterGeoJson(texto) {
   if (!texto) return null
 
@@ -77,17 +60,17 @@ export function resumirColetaDaRota(cronogramas, rotaId) {
     return 'Rota sem horário de coleta cadastrado.'
   }
 
-  const dias = DIAS_SEMANA
-    .filter((dia) => ativos.some((item) => item.diaSemana === dia.valor))
-    .map((dia) => dia.curto.toLowerCase())
+  const dias = DIAS_SEMANA.filter((dia) => ativos.some((item) => item.diaSemana === dia.valor)).map(
+    (dia) => dia.curto.toLowerCase(),
+  )
 
-  const faixas = [...new Set(ativos.map((item) =>
-    `${horaCurta(item.horarioInicio)}–${horaCurta(item.horarioFim)}`,
-  ))]
+  const faixas = [
+    ...new Set(
+      ativos.map((item) => `${horaCurta(item.horarioInicio)}–${horaCurta(item.horarioFim)}`),
+    ),
+  ]
 
-  const textoDias = dias.length > 1
-    ? `${dias.slice(0, -1).join(', ')} e ${dias.at(-1)}`
-    : dias[0]
+  const textoDias = dias.length > 1 ? `${dias.slice(0, -1).join(', ')} e ${dias.at(-1)}` : dias[0]
 
   return `Coleta: ${textoDias} · ${faixas.join(' / ')}`
 }
@@ -99,7 +82,5 @@ export function resumirColetaDaRota(cronogramas, rotaId) {
 export function nomeRotaCurto(nome, cidade) {
   const prefixo = `${cidade ?? ''} - `
 
-  return nome && cidade && nome.startsWith(prefixo)
-    ? nome.slice(prefixo.length)
-    : nome
+  return nome && cidade && nome.startsWith(prefixo) ? nome.slice(prefixo.length) : nome
 }

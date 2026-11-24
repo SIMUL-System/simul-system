@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+/** Corpo do cadastro. A senha vai até 72 caracteres, o limite do BCrypt. */
 public record UsuarioRequestDTO(
 
         @NotBlank(message = "O nome é obrigatório.")
@@ -16,7 +17,7 @@ public record UsuarioRequestDTO(
         String email,
 
         @NotBlank(message = "A senha é obrigatória.")
-        @Size(min = 8, max = 100, message = "A senha deve possuir entre 8 e 100 caracteres.")
+        @Size(min = 8, max = 72, message = "A senha deve possuir entre 8 e 72 caracteres.")
         String senha
 ) {
 }

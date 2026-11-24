@@ -14,218 +14,64 @@ class CalculoNotificacaoServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        calculoNotificacaoService =
-                new CalculoNotificacaoServiceImpl();
-    }
-
-    @Test
-    void deveCalcularHorarioDeEnvioComAntecedenciaDeTresHoras() {
-
-        LocalDateTime proximaColeta =
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        17,
-                        19,
-                        0
-                );
-
-        LocalDateTime resultado =
-                calculoNotificacaoService
-                        .calcularHorarioEnvio(
-                                proximaColeta,
-                                3
-                        );
-
-        LocalDateTime esperado =
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        17,
-                        16,
-                        0
-                );
-
-        assertEquals(
-                esperado,
-                resultado
-        );
-    }
-
-    @Test
-    void deveCalcularHorarioDeEnvioNoDiaAnterior() {
-
-        LocalDateTime proximaColeta =
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        17,
-                        1,
-                        0
-                );
-
-        LocalDateTime resultado =
-                calculoNotificacaoService
-                        .calcularHorarioEnvio(
-                                proximaColeta,
-                                3
-                        );
-
-        LocalDateTime esperado =
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        16,
-                        22,
-                        0
-                );
-
-        assertEquals(
-                esperado,
-                resultado
-        );
-    }
-
-    @Test
-    void deveManterMesmoHorarioQuandoAntecedenciaForZero() {
-
-        LocalDateTime proximaColeta =
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        17,
-                        19,
-                        0
-                );
-
-        LocalDateTime resultado =
-                calculoNotificacaoService
-                        .calcularHorarioEnvio(
-                                proximaColeta,
-                                0
-                        );
-
-        assertEquals(
-                proximaColeta,
-                resultado
-        );
-    }
-
-    @Test
-    void deveLancarExcecaoQuandoProximaColetaForNula() {
-
-        assertThrows(
-                IllegalArgumentException.class,
-                () ->
-                        calculoNotificacaoService
-                                .calcularHorarioEnvio(
-                                        null,
-                                        3
-                                )
-        );
+        calculoNotificacaoService = new CalculoNotificacaoServiceImpl();
     }
 
     @Test
     void deveLancarExcecaoQuandoAntecedenciaForNula() {
-
-        LocalDateTime proximaColeta =
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        17,
-                        19,
-                        0
-                );
+        LocalDateTime proximaColeta = LocalDateTime.of(2026, 8, 17, 19, 0);
 
         assertThrows(
                 IllegalArgumentException.class,
                 () ->
                         calculoNotificacaoService
-                                .calcularHorarioEnvio(
-                                        proximaColeta,
-                                        null
-                                )
+                                .calcularHorarioColetaAlvo(proximaColeta, null)
         );
     }
 
     @Test
     void deveLancarExcecaoQuandoAntecedenciaForNegativa() {
-
-        LocalDateTime proximaColeta =
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        17,
-                        19,
-                        0
-                );
+        LocalDateTime proximaColeta = LocalDateTime.of(2026, 8, 17, 19, 0);
 
         assertThrows(
                 IllegalArgumentException.class,
                 () ->
                         calculoNotificacaoService
-                                .calcularHorarioEnvio(
-                                        proximaColeta,
-                                        -1
-                                )
+                                .calcularHorarioColetaAlvo(proximaColeta, -1)
         );
     }
 
     @Test
     void deveCalcularHorarioDaColetaAlvoSomandoAntecedencia() {
+        LocalDateTime resultado = calculoNotificacaoService
+                        .calcularHorarioColetaAlvo(LocalDateTime.of(2026, 11, 23, 7, 0), 48);
 
-        LocalDateTime resultado =
-                calculoNotificacaoService
-                        .calcularHorarioColetaAlvo(
-                                LocalDateTime.of(2026, 11, 23, 7, 0),
-                                48
-                        );
-
-        assertEquals(
-                LocalDateTime.of(2026, 11, 25, 7, 0),
-                resultado
-        );
+        assertEquals(LocalDateTime.of(2026, 11, 25, 7, 0), resultado);
     }
 
     @Test
     void deveTruncarSegundosAoCalcularHorarioDaColetaAlvo() {
+        LocalDateTime resultado = calculoNotificacaoService
+                        .calcularHorarioColetaAlvo(LocalDateTime.of(2026, 11, 23, 4, 0, 59), 3);
 
-        LocalDateTime resultado =
-                calculoNotificacaoService
-                        .calcularHorarioColetaAlvo(
-                                LocalDateTime.of(2026, 11, 23, 4, 0, 59),
-                                3
-                        );
-
-        assertEquals(
-                LocalDateTime.of(2026, 11, 23, 7, 0),
-                resultado
-        );
+        assertEquals(LocalDateTime.of(2026, 11, 23, 7, 0), resultado);
     }
 
     @Test
     void deveLancarErroQuandoAntecedenciaDaColetaAlvoForNegativa() {
-
         assertThrows(
                 IllegalArgumentException.class,
                 () -> calculoNotificacaoService
-                        .calcularHorarioColetaAlvo(
-                                LocalDateTime.of(2026, 11, 23, 7, 0),
-                                -1
-                        )
+                        .calcularHorarioColetaAlvo(LocalDateTime.of(2026, 11, 23, 7, 0), -1)
         );
     }
 
     @Test
     void deveLancarErroQuandoReferenciaDaColetaAlvoForNula() {
-
         assertThrows(
                 IllegalArgumentException.class,
                 () -> calculoNotificacaoService
-                        .calcularHorarioColetaAlvo(
-                                null,
-                                3
-                        )
+                        .calcularHorarioColetaAlvo(null, 3)
         );
     }
 }

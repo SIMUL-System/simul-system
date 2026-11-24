@@ -7,12 +7,7 @@ import CamposHorario from './CamposHorario'
  * Muda início e fim de todos os horários ativos das rotas marcadas,
  * de uma vez só (o back-end aplica tudo ou nada).
  */
-function FormHorarioLote({
-  rotasSelecionadas,
-  quantidade,
-  salvando,
-  onEnviar,
-}) {
+function FormHorarioLote({ rotasSelecionadas, quantidade, salvando, onEnviar }) {
   const [horario, setHorario] = useState({ inicio: '', fim: '' })
   const [erro, setErro] = useState('')
 
@@ -33,16 +28,10 @@ function FormHorarioLote({
   }
 
   return (
-    <form
-      className="painel-form"
-      onSubmit={handleSubmit}
-      noValidate
-    >
+    <form className="painel-form" onSubmit={handleSubmit} noValidate>
       <div className="painel-form__selecao">
         <strong>
-          {quantidade === 1
-            ? '1 horário selecionado'
-            : `${quantidade} horários selecionados`}
+          {quantidade === 1 ? '1 horário selecionado' : `${quantidade} horários selecionados`}
         </strong>
 
         <ul>
@@ -65,24 +54,15 @@ function FormHorarioLote({
         disabled={salvando}
       />
 
-      <p
-        className="painel-form__resumo"
-        aria-live="polite"
-      >
+      <p className="painel-form__resumo" aria-live="polite">
         {horario.inicio && horario.fim
           ? `Os ${quantidade} horários passam a ser das ${horario.inicio} às ${horario.fim}. Tudo é salvo de uma vez: se algo falhar, nada muda.`
           : 'Informe o novo horário para ver o resumo.'}
       </p>
 
       {erro && (
-        <p
-          className="campo-ds__erro"
-          role="alert"
-        >
-          <Icone
-            nome="erro"
-            tamanho={16}
-          />
+        <p className="campo-ds__erro" role="alert">
+          <Icone nome="erro" tamanho={16} />
           {erro}
         </p>
       )}

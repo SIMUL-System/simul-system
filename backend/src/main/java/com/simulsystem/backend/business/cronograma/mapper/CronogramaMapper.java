@@ -4,15 +4,15 @@ import com.simulsystem.backend.business.cronograma.dto.CronogramaRequestDTO;
 import com.simulsystem.backend.business.cronograma.dto.CronogramaResponseDTO;
 import com.simulsystem.backend.business.cronograma.model.Cronograma;
 import com.simulsystem.backend.business.rota.model.Rota;
+
 import org.springframework.stereotype.Component;
 
+/** Converte entre a entidade Cronograma e seus DTOs. */
 @Component
 public class CronogramaMapper {
 
-    public Cronograma toEntity(
-            CronogramaRequestDTO requestDTO,
-            Rota rota
-    ) {
+    /** Cria a entidade a partir do pedido. */
+    public Cronograma toEntity(CronogramaRequestDTO requestDTO, Rota rota) {
         Cronograma cronograma = new Cronograma();
 
         cronograma.setRota(rota);
@@ -23,9 +23,8 @@ public class CronogramaMapper {
         return cronograma;
     }
 
-    public CronogramaResponseDTO toResponseDTO(
-            Cronograma cronograma
-    ) {
+    /** Monta a resposta do painel admin. */
+    public CronogramaResponseDTO toResponseDTO(Cronograma cronograma) {
         return new CronogramaResponseDTO(
                 cronograma.getId(),
                 cronograma.getRota().getId(),
@@ -38,11 +37,8 @@ public class CronogramaMapper {
                 cronograma.getDataAtualizacao()
         );
     }
-    public void atualizarEntity(
-        Cronograma cronograma,
-        CronogramaRequestDTO requestDTO,
-        Rota rota
-) {
+    /** Copia os dados do pedido para a entidade existente. */
+    public void atualizarEntity(Cronograma cronograma, CronogramaRequestDTO requestDTO, Rota rota) {
     cronograma.setRota(rota);
     cronograma.setDiaSemana(requestDTO.diaSemana());
     cronograma.setHorarioInicio(requestDTO.horarioInicio());

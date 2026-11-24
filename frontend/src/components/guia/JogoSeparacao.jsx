@@ -1,21 +1,13 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-} from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { Link } from 'react-router-dom'
 
 import Icone from '../Icone'
 import Lixeira from './Lixeira'
 
-import {
-  ITENS_JOGO,
-  ITENS_POR_RODADA,
-  LIXEIRAS,
-  NIVEIS,
-} from '../../utils/guiaConteudo'
+import { ITENS_JOGO, ITENS_POR_RODADA, LIXEIRAS, NIVEIS } from '../../utils/guiaConteudo'
 
+/** Embaralha os itens (Fisher-Yates) e pega os da rodada. */
 function sortearRodada() {
   const copia = [...ITENS_JOGO]
 
@@ -28,6 +20,7 @@ function sortearRodada() {
   return copia.slice(0, ITENS_POR_RODADA)
 }
 
+/** Nome da lixeira pelo id. */
 function nomeLixeira(id) {
   return LIXEIRAS.find((l) => l.id === id)?.nome || id
 }
@@ -99,31 +92,18 @@ function JogoSeparacao() {
   if (fase === 'inicio') {
     return (
       <div className="jogo jogo--inicio">
-        <div
-          className="jogo__turma"
-          aria-hidden="true"
-        >
+        <div className="jogo__turma" aria-hidden="true">
           {LIXEIRAS.slice(0, 5).map((l, i) => (
-            <Lixeira
-              key={l.id}
-              cor={l.cor}
-              humor={i % 2 === 0 ? 'feliz' : 'neutro'}
-              tamanho={56}
-            />
+            <Lixeira key={l.id} cor={l.cor} humor={i % 2 === 0 ? 'feliz' : 'neutro'} tamanho={56} />
           ))}
         </div>
 
         <p className="jogo__convite">
-          As lixeiras estão com fome, mas cada uma só come
-          um tipo de coisa. Ajude a turma a separar{' '}
+          As lixeiras estão com fome, mas cada uma só come um tipo de coisa. Ajude a turma a separar{' '}
           {ITENS_POR_RODADA} itens!
         </p>
 
-        <button
-          type="button"
-          className="botao botao--primario botao--grande"
-          onClick={comecar}
-        >
+        <button type="button" className="botao botao--primario botao--grande" onClick={comecar}>
           Começar o jogo
         </button>
       </div>
@@ -131,21 +111,12 @@ function JogoSeparacao() {
   }
 
   if (fase === 'fim') {
-    const nivel = [...NIVEIS]
-      .reverse()
-      .find((n) => acertos >= n.minimo)
+    const nivel = [...NIVEIS].reverse().find((n) => acertos >= n.minimo)
 
-    const porcentagem = Math.round(
-      (acertos / rodada.length) * 100,
-    )
+    const porcentagem = Math.round((acertos / rodada.length) * 100)
 
     return (
-      <div
-        className="jogo jogo--fim"
-        ref={fimRef}
-        tabIndex="-1"
-        aria-labelledby="titulo-fim-jogo"
-      >
+      <div className="jogo jogo--fim" ref={fimRef} tabIndex="-1" aria-labelledby="titulo-fim-jogo">
         <div
           className="jogo__placar"
           style={{ '--porcentagem': `${porcentagem}%` }}
@@ -156,41 +127,27 @@ function JogoSeparacao() {
           </span>
         </div>
 
-        <h3
-          id="titulo-fim-jogo"
-          className="jogo__nivel"
-        >
+        <h3 id="titulo-fim-jogo" className="jogo__nivel">
           {nivel.titulo}
         </h3>
 
         <p>
-          Você acertou {acertos} de {rodada.length}.{' '}
-          {nivel.texto}
+          Você acertou {acertos} de {rodada.length}. {nivel.texto}
         </p>
 
         <p className="jogo__impacto">
-          <Icone
-            nome="sucesso"
-            tamanho={20}
-          />
+          <Icone nome="sucesso" tamanho={20} />
           {acertos === 1
             ? '1 item foi para o lugar certo em vez do aterro.'
             : `${acertos} itens foram para o lugar certo em vez do aterro.`}
         </p>
 
         <div className="jogo__acoes">
-          <button
-            type="button"
-            className="botao botao--primario"
-            onClick={comecar}
-          >
+          <button type="button" className="botao botao--primario" onClick={comecar}>
             Jogar de novo
           </button>
 
-          <Link
-            to="/"
-            className="botao botao--secundario"
-          >
+          <Link to="/" className="botao botao--secundario">
             Ver a coleta do meu bairro
           </Link>
         </div>
@@ -208,18 +165,12 @@ function JogoSeparacao() {
         </span>
 
         <span className="jogo__acertos">
-          <Icone
-            nome="sucesso"
-            tamanho={18}
-          />
+          <Icone nome="sucesso" tamanho={18} />
           {acertos} {acertos === 1 ? 'acerto' : 'acertos'}
         </span>
       </div>
 
-      <div
-        className="jogo__progresso"
-        aria-hidden="true"
-      >
+      <div className="jogo__progresso" aria-hidden="true">
         <span
           style={{
             width: `${((indice + (resposta ? 1 : 0)) / rodada.length) * 100}%`,
@@ -238,20 +189,12 @@ function JogoSeparacao() {
         ref={itemRef}
         tabIndex="-1"
       >
-        <p className="jogo__pergunta">
-          Para onde vai…
-        </p>
+        <p className="jogo__pergunta">Para onde vai…</p>
 
-        <p className="jogo__nome-item">
-          {item.nome}?
-        </p>
+        <p className="jogo__nome-item">{item.nome}?</p>
       </div>
 
-      <div
-        className="jogo__lixeiras"
-        role="group"
-        aria-label="Escolha a lixeira"
-      >
+      <div className="jogo__lixeiras" role="group" aria-label="Escolha a lixeira">
         {LIXEIRAS.map((lixeira) => {
           let humor = 'neutro'
 
@@ -283,24 +226,15 @@ function JogoSeparacao() {
               disabled={Boolean(resposta)}
               aria-label={`Lixeira ${lixeira.nome}`}
             >
-              <Lixeira
-                cor={lixeira.cor}
-                humor={humor}
-                tamanho={56}
-              />
+              <Lixeira cor={lixeira.cor} humor={humor} tamanho={56} />
 
-              <span className="jogo__lixeira-nome">
-                {lixeira.nome}
-              </span>
+              <span className="jogo__lixeira-nome">{lixeira.nome}</span>
             </button>
           )
         })}
       </div>
 
-      <div
-        className="jogo__retorno-area"
-        aria-live="polite"
-      >
+      <div className="jogo__retorno-area" aria-live="polite">
         {resposta && (
           <div
             className={
@@ -312,9 +246,7 @@ function JogoSeparacao() {
             tabIndex="-1"
           >
             <p className="jogo__veredito">
-              <Icone
-                nome={resposta.acertou ? 'sucesso' : 'erro'}
-              />
+              <Icone nome={resposta.acertou ? 'sucesso' : 'erro'} />
               {resposta.acertou
                 ? 'Acertou! +1 item salvo do aterro'
                 : `Quase! O certo é: ${nomeLixeira(destinoCorreto)}`}
@@ -322,18 +254,9 @@ function JogoSeparacao() {
 
             <p>{item.explicacao}</p>
 
-            <button
-              type="button"
-              className="botao botao--primario"
-              onClick={proximo}
-            >
-              {indice + 1 >= rodada.length
-                ? 'Ver meu resultado'
-                : 'Próximo item'}
-              <Icone
-                nome="seta"
-                tamanho={18}
-              />
+            <button type="button" className="botao botao--primario" onClick={proximo}>
+              {indice + 1 >= rodada.length ? 'Ver meu resultado' : 'Próximo item'}
+              <Icone nome="seta" tamanho={18} />
             </button>
           </div>
         )}

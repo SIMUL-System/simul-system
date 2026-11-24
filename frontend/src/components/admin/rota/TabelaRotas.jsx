@@ -3,19 +3,9 @@ import { Link } from 'react-router-dom'
 /**
  * Tabela de rotas com o interruptor de ativa na própria linha.
  */
-function TabelaRotas({
-  linhas,
-  rotaAberta,
-  alterandoId,
-  onEditar,
-  onAlternarStatus,
-}) {
+function TabelaRotas({ linhas, rotaAberta, alterandoId, onEditar, onAlternarStatus }) {
   if (linhas.length === 0) {
-    return (
-      <p className="admin-quadro__vazio">
-        Nenhuma rota encontrada com esses filtros.
-      </p>
-    )
+    return <p className="admin-quadro__vazio">Nenhuma rota encontrada com esses filtros.</p>
   }
 
   return (
@@ -26,18 +16,12 @@ function TabelaRotas({
         <thead>
           <tr>
             <th scope="col">Rota</th>
-            <th
-              scope="col"
-              className="admin-tabela__secundaria"
-            >
+            <th scope="col" className="admin-tabela__secundaria">
               Coleta
             </th>
             <th scope="col">Bairros</th>
             <th scope="col">Ativa</th>
-            <th
-              scope="col"
-              className="admin-tabela__acoes"
-            >
+            <th scope="col" className="admin-tabela__acoes">
               <span className="visualmente-oculto">Ações</span>
             </th>
           </tr>
@@ -55,10 +39,7 @@ function TabelaRotas({
                   rota.ativo ? '' : 'admin-tabela__linha--inativa',
                 ].join(' ')}
               >
-                <th
-                  scope="row"
-                  className="admin-tabela__principal"
-                >
+                <th scope="row" className="admin-tabela__principal">
                   <span>{rota.nome}</span>
                   {rota.descricao && (
                     <span className="admin-tabela__detalhe">{rota.descricao}</span>
@@ -87,15 +68,10 @@ function TabelaRotas({
                     onClick={() => onAlternarStatus(rota)}
                     disabled={alterandoId === rota.id}
                   >
-                    <span
-                      className="interruptor-linha__trilho"
-                      aria-hidden="true"
-                    >
+                    <span className="interruptor-linha__trilho" aria-hidden="true">
                       <span className="interruptor-linha__botao" />
                     </span>
-                    <span className="interruptor-linha__texto">
-                      {rota.ativo ? 'Sim' : 'Não'}
-                    </span>
+                    <span className="interruptor-linha__texto">{rota.ativo ? 'Sim' : 'Não'}</span>
                   </button>
                 </td>
 

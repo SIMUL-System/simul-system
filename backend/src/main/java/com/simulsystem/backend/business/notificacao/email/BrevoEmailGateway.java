@@ -1,6 +1,7 @@
 package com.simulsystem.backend.business.notificacao.email;
 
 import com.simulsystem.backend.core.exception.EnvioEmailException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -20,10 +21,7 @@ import java.util.Map;
  * Documentação: POST https://api.brevo.com/v3/smtp/email
  */
 @Component
-@ConditionalOnProperty(
-        name = "simul.mail.provedor",
-        havingValue = "brevo"
-)
+@ConditionalOnProperty(name = "simul.mail.provedor", havingValue = "brevo")
 public class BrevoEmailGateway implements EmailGateway {
 
     static final String URL_ENVIO = "https://api.brevo.com/v3/smtp/email";
@@ -42,16 +40,9 @@ public class BrevoEmailGateway implements EmailGateway {
     }
 
     /** Usado nos testes, com um servidor HTTP simulado. */
-    BrevoEmailGateway(
-            RestClient.Builder builder,
-            String apiKey,
-            String remetente,
-            String nomeRemetente
-    ) {
+    BrevoEmailGateway(RestClient.Builder builder, String apiKey, String remetente, String nomeRemetente) {
         if (apiKey == null || apiKey.isBlank()) {
-            throw new IllegalStateException(
-                    "BREVO_API_KEY é obrigatória quando SIMUL_MAIL_PROVEDOR=brevo."
-            );
+            throw new IllegalStateException("BREVO_API_KEY é obrigatória quando SIMUL_MAIL_PROVEDOR=brevo.");
         }
 
         this.restClient = builder
@@ -63,8 +54,7 @@ public class BrevoEmailGateway implements EmailGateway {
     }
 
     private static RestClient.Builder criarBuilderPadrao() {
-        SimpleClientHttpRequestFactory fabrica =
-                new SimpleClientHttpRequestFactory();
+        SimpleClientHttpRequestFactory fabrica = new SimpleClientHttpRequestFactory();
 
         fabrica.setConnectTimeout(Duration.ofSeconds(10));
         fabrica.setReadTimeout(Duration.ofSeconds(15));
@@ -72,12 +62,9 @@ public class BrevoEmailGateway implements EmailGateway {
         return RestClient.builder().requestFactory(fabrica);
     }
 
+    /** Envia em texto simples pela API do Brevo; erro HTTP ou timeout vira EnvioEmailException. */
     @Override
-    public void enviar(
-            String destinatario,
-            String assunto,
-            String texto
-    ) {
+    public void enviar(String destinatario, String assunto, String texto) {
         Map<String, Object> corpo = Map.of(
                 "sender", Map.of("name", nomeRemetente, "email", remetente),
                 "to", List.of(Map.of("email", destinatario)),
@@ -93,10 +80,7 @@ public class BrevoEmailGateway implements EmailGateway {
                     .retrieve()
                     .toBodilessEntity();
         } catch (RestClientException exception) {
-            throw new EnvioEmailException(
-                    "Não foi possível enviar o e-mail pelo Brevo.",
-                    exception
-            );
+            throw new EnvioEmailException("Não foi possível enviar o e-mail pelo Brevo.", exception);
         }
     }
 }

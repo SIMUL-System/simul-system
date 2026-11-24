@@ -1,6 +1,7 @@
 package com.simulsystem.backend.business.notificacao.service;
 
 import com.simulsystem.backend.business.notificacao.mapper.PreferenciaNotificacaoMapper;
+import com.simulsystem.backend.business.notificacao.model.CanalNotificacao;
 import com.simulsystem.backend.business.notificacao.model.PreferenciaNotificacao;
 import com.simulsystem.backend.business.notificacao.repository.PreferenciaNotificacaoRepository;
 import com.simulsystem.backend.business.notificacao.validation.PreferenciaNotificacaoValidation;
@@ -8,6 +9,7 @@ import com.simulsystem.backend.business.rota.model.Rota;
 import com.simulsystem.backend.business.rota.validation.RotaValidation;
 import com.simulsystem.backend.business.usuario.model.Usuario;
 import com.simulsystem.backend.business.usuario.service.UsuarioService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,35 +44,17 @@ class PreferenciaNotificacaoServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service =
-                new PreferenciaNotificacaoServiceImpl(
-                        repository,
-                        mapper,
-                        validation,
-                        usuarioService,
-                        rotaValidation
-                );
+        service = new PreferenciaNotificacaoServiceImpl(repository, mapper, validation, usuarioService, rotaValidation);
     }
 
     @Test
     void devePermitirEmailQuandoUsuarioRotaEPreferenciaEstiveremAtivos() {
-        PreferenciaNotificacao preferencia =
-                criarPreferencia(
-                        3L,
-                        true,
-                        1L,
-                        true,
-                        true
-                );
+        PreferenciaNotificacao preferencia = criarPreferencia(3L, true, 1L, true, true);
 
         when(repository.findByUsuarioId(3L))
                 .thenReturn(Optional.of(preferencia));
 
-        boolean resultado =
-                service.podeReceberEmail(
-                        3L,
-                        1L
-                );
+        boolean resultado = service.podeReceber(3L, 1L, CanalNotificacao.EMAIL);
 
         assertTrue(resultado);
 
@@ -80,92 +64,48 @@ class PreferenciaNotificacaoServiceImplTest {
 
     @Test
     void naoDevePermitirEmailQuandoUsuarioEstiverInativo() {
-        PreferenciaNotificacao preferencia =
-                criarPreferencia(
-                        3L,
-                        false,
-                        1L,
-                        true,
-                        true
-                );
+        PreferenciaNotificacao preferencia = criarPreferencia(3L, false, 1L, true, true);
 
         when(repository.findByUsuarioId(3L))
                 .thenReturn(Optional.of(preferencia));
 
-        boolean resultado =
-                service.podeReceberEmail(
-                        3L,
-                        1L
-                );
+        boolean resultado = service.podeReceber(3L, 1L, CanalNotificacao.EMAIL);
 
         assertFalse(resultado);
     }
 
     @Test
     void naoDevePermitirEmailQuandoRotaEstiverInativa() {
-        PreferenciaNotificacao preferencia =
-                criarPreferencia(
-                        3L,
-                        true,
-                        1L,
-                        false,
-                        true
-                );
+        PreferenciaNotificacao preferencia = criarPreferencia(3L, true, 1L, false, true);
 
         when(repository.findByUsuarioId(3L))
                 .thenReturn(Optional.of(preferencia));
 
-        boolean resultado =
-                service.podeReceberEmail(
-                        3L,
-                        1L
-                );
+        boolean resultado = service.podeReceber(3L, 1L, CanalNotificacao.EMAIL);
 
         assertFalse(resultado);
     }
 
     @Test
     void naoDevePermitirEmailQuandoPreferenciaDeEmailEstiverDesativada() {
-        PreferenciaNotificacao preferencia =
-                criarPreferencia(
-                        3L,
-                        true,
-                        1L,
-                        true,
-                        false
-                );
+        PreferenciaNotificacao preferencia = criarPreferencia(3L, true, 1L, true, false);
 
         when(repository.findByUsuarioId(3L))
                 .thenReturn(Optional.of(preferencia));
 
-        boolean resultado =
-                service.podeReceberEmail(
-                        3L,
-                        1L
-                );
+        boolean resultado = service.podeReceber(3L, 1L, CanalNotificacao.EMAIL);
 
         assertFalse(resultado);
     }
 
     @Test
     void naoDevePermitirEmailQuandoPreferenciaEstiverEmOutraRota() {
-        PreferenciaNotificacao preferencia =
-                criarPreferencia(
-                        3L,
-                        true,
-                        2L,
-                        true,
-                        true
-                );
+        PreferenciaNotificacao preferencia = criarPreferencia(3L, true, 2L, true, true);
 
         when(repository.findByUsuarioId(3L))
                 .thenReturn(Optional.of(preferencia));
 
-        boolean resultado =
-                service.podeReceberEmail(
-                        3L,
-                        1L
-                );
+        boolean resultado = service.podeReceber(3L, 1L, CanalNotificacao.EMAIL);
 
         assertFalse(resultado);
     }
@@ -175,22 +115,14 @@ class PreferenciaNotificacaoServiceImplTest {
         when(repository.findByUsuarioId(3L))
                 .thenReturn(Optional.empty());
 
-        boolean resultado =
-                service.podeReceberEmail(
-                        3L,
-                        1L
-                );
+        boolean resultado = service.podeReceber(3L, 1L, CanalNotificacao.EMAIL);
 
         assertFalse(resultado);
     }
 
     @Test
     void naoDevePermitirEmailQuandoUsuarioIdForNulo() {
-        boolean resultado =
-                service.podeReceberEmail(
-                        null,
-                        1L
-                );
+        boolean resultado = service.podeReceber(null, 1L, CanalNotificacao.EMAIL);
 
         assertFalse(resultado);
 
@@ -199,15 +131,22 @@ class PreferenciaNotificacaoServiceImplTest {
 
     @Test
     void naoDevePermitirEmailQuandoRotaIdForNulo() {
-        boolean resultado =
-                service.podeReceberEmail(
-                        3L,
-                        null
-                );
+        boolean resultado = service.podeReceber(3L, null, CanalNotificacao.EMAIL);
 
         assertFalse(resultado);
 
         verifyNoInteractions(repository);
+    }
+
+    @Test
+    void deveConsultarOCanalWebPushSeparadoDoEmail() {
+        PreferenciaNotificacao preferencia = criarPreferencia(3L, true, 1L, true, false);
+        preferencia.setWebPushAtivo(true);
+
+        when(repository.findByUsuarioId(3L)).thenReturn(Optional.of(preferencia));
+
+        assertTrue(service.podeReceber(3L, 1L, CanalNotificacao.WEB_PUSH));
+        assertFalse(service.podeReceber(3L, 1L, CanalNotificacao.EMAIL));
     }
 
     private PreferenciaNotificacao criarPreferencia(
@@ -217,23 +156,20 @@ class PreferenciaNotificacaoServiceImplTest {
             boolean rotaAtiva,
             boolean emailAtivo
     ) {
-        Usuario usuario =
-                new Usuario();
+        Usuario usuario = new Usuario();
 
         usuario.setId(usuarioId);
         usuario.setNome("Usuário Teste");
         usuario.setEmail("usuario.teste@simul.local");
         usuario.setAtivo(usuarioAtivo);
 
-        Rota rota =
-                new Rota();
+        Rota rota = new Rota();
 
         rota.setId(rotaId);
         rota.setNome("Rota Teste");
         rota.setAtivo(rotaAtiva);
 
-        PreferenciaNotificacao preferencia =
-                new PreferenciaNotificacao();
+        PreferenciaNotificacao preferencia = new PreferenciaNotificacao();
 
         preferencia.setUsuario(usuario);
         preferencia.setRota(rota);

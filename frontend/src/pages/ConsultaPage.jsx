@@ -1,10 +1,4 @@
-import {
-  lazy,
-  Suspense,
-  useEffect,
-  useRef,
-  useState,
-} from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 
 import { Link } from 'react-router-dom'
 
@@ -18,327 +12,137 @@ import DiasSemana from '../components/coleta/DiasSemana'
 
 import { obterToken } from '../services/authService'
 
-import {
-  calcularProximaColeta,
-  formatarHora,
-  ordenarCronogramas,
-  rotuloDia,
-} from '../utils/coleta'
+import { calcularProximaColeta, formatarHora, ordenarCronogramas, rotuloDia } from '../utils/coleta'
 
-import {
-  buscarCoordenadasArea,
-} from '../services/geocodingService'
+import { buscarCoordenadasArea } from '../services/geocodingService'
 
-import {
-  consultarColeta,
-  listarAreasDisponiveis,
-} from '../services/rotaService'
+import { consultarColeta, listarAreasDisponiveis } from '../services/rotaService'
+import { ordenarTexto } from '../utils/texto'
 
-const MapaColeta = lazy(
-  () =>
-    import(
-      '../components/MapaColeta'
-    ),
-)
+const MapaColeta = lazy(() => import('../components/MapaColeta'))
 
-function ordenarTexto(
-  a,
-  b,
-) {
-  return a.localeCompare(
-    b,
-    'pt-BR',
-    {
-      sensitivity:
-        'base',
-    },
-  )
-}
-
+/** Página inicial: escolhe cidade e bairro e mostra dias, horários, próxima coleta e mapa. */
 function ConsultaPage() {
-  const [
-    areas,
-    setAreas,
-  ] = useState([])
-
-  const [
-    cidade,
-    setCidade,
-  ] = useState('')
-
-  const [
-    bairro,
-    setBairro,
-  ] = useState('')
-
-  const [
-    resultado,
-    setResultado,
-  ] = useState(null)
-
-  const [
-    erro,
-    setErro,
-  ] = useState('')
-
-  const [
-    avisoMapa,
-    setAvisoMapa,
-  ] = useState('')
-
-  const [
-    carregando,
-    setCarregando,
-  ] = useState(false)
-
-  const [
-    carregandoAreas,
-    setCarregandoAreas,
-  ] = useState(true)
-
-  const [
-    latitudeMapa,
-    setLatitudeMapa,
-  ] = useState(null)
-
-  const [
-    longitudeMapa,
-    setLongitudeMapa,
-  ] = useState(null)
-
-  const [
-    nomeAreaMapa,
-    setNomeAreaMapa,
-  ] = useState('')
-
-  const [
-    geometriaArea,
-    setGeometriaArea,
-  ] = useState(null)
-
-  const [
-    limitesArea,
-    setLimitesArea,
-  ] = useState(null)
-
-  const [
-    carregandoLocalizacaoMapa,
-    setCarregandoLocalizacaoMapa,
-  ] = useState(false)
-
-  const [
-    latitudeUsuario,
-    setLatitudeUsuario,
-  ] = useState(null)
-
-  const [
-    longitudeUsuario,
-    setLongitudeUsuario,
-  ] = useState(null)
-
-  const [
-    precisaoUsuario,
-    setPrecisaoUsuario,
-  ] = useState(null)
-
-  const [
-    statusLocalizacaoUsuario,
-    setStatusLocalizacaoUsuario,
-  ] = useState(
-    () =>
-      navigator.geolocation
-        ? 'buscando'
-        : 'indisponivel',
+  const [areas, setAreas] = useState([])
+  const [cidade, setCidade] = useState('')
+  const [bairro, setBairro] = useState('')
+  const [resultado, setResultado] = useState(null)
+  const [erro, setErro] = useState('')
+  const [avisoMapa, setAvisoMapa] = useState('')
+  const [carregando, setCarregando] = useState(false)
+  const [carregandoAreas, setCarregandoAreas] = useState(true)
+  const [latitudeMapa, setLatitudeMapa] = useState(null)
+  const [longitudeMapa, setLongitudeMapa] = useState(null)
+  const [nomeAreaMapa, setNomeAreaMapa] = useState('')
+  const [geometriaArea, setGeometriaArea] = useState(null)
+  const [limitesArea, setLimitesArea] = useState(null)
+  const [carregandoLocalizacaoMapa, setCarregandoLocalizacaoMapa] = useState(false)
+  const [latitudeUsuario, setLatitudeUsuario] = useState(null)
+  const [longitudeUsuario, setLongitudeUsuario] = useState(null)
+  const [precisaoUsuario, setPrecisaoUsuario] = useState(null)
+  const [statusLocalizacaoUsuario, setStatusLocalizacaoUsuario] = useState(() =>
+    navigator.geolocation ? 'buscando' : 'indisponivel',
   )
 
-  const [
-    erroLocalizacaoUsuario,
-    setErroLocalizacaoUsuario,
-  ] = useState(
-    () =>
-      navigator.geolocation
-        ? ''
-        : 'Seu navegador não oferece suporte à localização. Você ainda pode selecionar a cidade e o bairro manualmente.',
+  const [erroLocalizacaoUsuario, setErroLocalizacaoUsuario] = useState(() =>
+    navigator.geolocation
+      ? ''
+      : 'Seu navegador não oferece suporte à localização. Você ainda pode selecionar a cidade e o bairro manualmente.',
   )
 
-  const [
-    agora,
-    setAgora,
-  ] = useState(
-    () => new Date(),
-  )
+  const [agora, setAgora] = useState(() => new Date())
 
-  const ultimaSelecaoRef =
-    useRef(0)
+  const ultimaSelecaoRef = useRef(0)
 
-  const melhorPrecisaoRef =
-    useRef(null)
+  const melhorPrecisaoRef = useRef(null)
 
-  const tituloResultadoRef =
-    useRef(null)
+  const tituloResultadoRef = useRef(null)
 
   useEffect(() => {
-    let componenteAtivo =
-      true
+    let componenteAtivo = true
 
     listarAreasDisponiveis()
       .then((dados) => {
-        if (
-          !componenteAtivo
-        ) {
+        if (!componenteAtivo) {
           return
         }
 
-        setAreas(
-          Array.isArray(
-            dados,
-          )
-            ? dados
-            : [],
-        )
+        setAreas(Array.isArray(dados) ? dados : [])
       })
       .catch((error) => {
-        if (
-          !componenteAtivo
-        ) {
+        if (!componenteAtivo) {
           return
         }
 
-        setErro(
-          error.message ||
-            'Não foi possível carregar as áreas atendidas.',
-        )
+        setErro(error.message || 'Não foi possível carregar as áreas atendidas.')
       })
       .finally(() => {
-        if (
-          componenteAtivo
-        ) {
-          setCarregandoAreas(
-            false,
-          )
+        if (componenteAtivo) {
+          setCarregandoAreas(false)
         }
       })
 
     return () => {
-      componenteAtivo =
-        false
+      componenteAtivo = false
     }
   }, [])
 
   useEffect(() => {
-    let componenteAtivo =
-      true
+    let componenteAtivo = true
 
-    if (
-      !navigator.geolocation
-    ) {
+    if (!navigator.geolocation) {
       return () => {
-        componenteAtivo =
-          false
+        componenteAtivo = false
       }
     }
 
-    function atualizarLocalizacao(
-      position,
-    ) {
-      if (
-        !componenteAtivo
-      ) {
+    function atualizarLocalizacao(position) {
+      if (!componenteAtivo) {
         return
       }
 
-      const {
-        latitude,
-        longitude,
-        accuracy,
-      } =
-        position.coords
+      const { latitude, longitude, accuracy } = position.coords
 
-      if (
-        !Number.isFinite(
-          latitude,
-        ) ||
-        !Number.isFinite(
-          longitude,
-        ) ||
-        !Number.isFinite(
-          accuracy,
-        )
-      ) {
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !Number.isFinite(accuracy)) {
         return
       }
 
-      const melhorPrecisao =
-        melhorPrecisaoRef.current
+      const melhorPrecisao = melhorPrecisaoRef.current
 
-      const primeiraLeitura =
-        melhorPrecisao ==
-        null
+      const primeiraLeitura = melhorPrecisao == null
 
-      const leituraMelhor =
-        primeiraLeitura ||
-        accuracy <
-          melhorPrecisao
+      const leituraMelhor = primeiraLeitura || accuracy < melhorPrecisao
 
-      if (
-        !leituraMelhor
-      ) {
+      if (!leituraMelhor) {
         return
       }
 
-      melhorPrecisaoRef.current =
-        accuracy
+      melhorPrecisaoRef.current = accuracy
 
-      setLatitudeUsuario(
-        latitude,
-      )
+      setLatitudeUsuario(latitude)
 
-      setLongitudeUsuario(
-        longitude,
-      )
+      setLongitudeUsuario(longitude)
 
-      setPrecisaoUsuario(
-        accuracy,
-      )
+      setPrecisaoUsuario(accuracy)
 
-      setErroLocalizacaoUsuario(
-        '',
-      )
+      setErroLocalizacaoUsuario('')
 
-      if (
-        accuracy <= 100
-      ) {
-        setStatusLocalizacaoUsuario(
-          'precisa',
-        )
-      } else if (
-        accuracy <= 500
-      ) {
-        setStatusLocalizacaoUsuario(
-          'aproximada',
-        )
+      if (accuracy <= 100) {
+        setStatusLocalizacaoUsuario('precisa')
+      } else if (accuracy <= 500) {
+        setStatusLocalizacaoUsuario('aproximada')
       } else {
-        setStatusLocalizacaoUsuario(
-          'imprecisa',
-        )
+        setStatusLocalizacaoUsuario('imprecisa')
       }
     }
 
-    function tratarErroLocalizacao(
-      error,
-    ) {
-      if (
-        !componenteAtivo
-      ) {
+    function tratarErroLocalizacao(error) {
+      if (!componenteAtivo) {
         return
       }
 
-      if (
-        error.code === 1
-      ) {
-        setStatusLocalizacaoUsuario(
-          'negada',
-        )
+      if (error.code === 1) {
+        setStatusLocalizacaoUsuario('negada')
 
         setErroLocalizacaoUsuario(
           'A localização não foi autorizada. Você ainda pode selecionar a cidade e o bairro manualmente.',
@@ -347,12 +151,8 @@ function ConsultaPage() {
         return
       }
 
-      if (
-        error.code === 2
-      ) {
-        setStatusLocalizacaoUsuario(
-          'indisponivel',
-        )
+      if (error.code === 2) {
+        setStatusLocalizacaoUsuario('indisponivel')
 
         setErroLocalizacaoUsuario(
           'Sua localização não está disponível no momento. Você ainda pode selecionar a cidade e o bairro manualmente.',
@@ -361,12 +161,8 @@ function ConsultaPage() {
         return
       }
 
-      if (
-        error.code === 3
-      ) {
-        setStatusLocalizacaoUsuario(
-          'timeout',
-        )
+      if (error.code === 3) {
+        setStatusLocalizacaoUsuario('timeout')
 
         setErroLocalizacaoUsuario(
           'Não foi possível obter uma localização precisa a tempo. Você ainda pode selecionar a cidade e o bairro manualmente.',
@@ -375,40 +171,29 @@ function ConsultaPage() {
         return
       }
 
-      setStatusLocalizacaoUsuario(
-        'indisponivel',
-      )
+      setStatusLocalizacaoUsuario('indisponivel')
 
       setErroLocalizacaoUsuario(
         'Não foi possível obter sua localização. Você ainda pode selecionar a cidade e o bairro manualmente.',
       )
     }
 
-    const watchId =
-      navigator.geolocation
-        .watchPosition(
-          atualizarLocalizacao,
-          tratarErroLocalizacao,
-          {
-            enableHighAccuracy:
-              true,
+    const watchId = navigator.geolocation.watchPosition(
+      atualizarLocalizacao,
+      tratarErroLocalizacao,
+      {
+        enableHighAccuracy: true,
 
-            timeout:
-              30000,
+        timeout: 30000,
 
-            maximumAge:
-              0,
-          },
-        )
+        maximumAge: 0,
+      },
+    )
 
     return () => {
-      componenteAtivo =
-        false
+      componenteAtivo = false
 
-      navigator.geolocation
-        .clearWatch(
-          watchId,
-        )
+      navigator.geolocation.clearWatch(watchId)
     }
   }, [])
 
@@ -417,111 +202,53 @@ function ConsultaPage() {
       return
     }
 
-    tituloResultadoRef
-      .current
-      ?.focus()
+    tituloResultadoRef.current?.focus()
   }, [resultado])
 
-  const cidades = [
-    ...new Set(
-      areas
-        .map(
-          (area) =>
-            area.cidade
-              ?.trim(),
-        )
-        .filter(Boolean),
-    ),
-  ].sort(
+  const cidades = [...new Set(areas.map((area) => area.cidade?.trim()).filter(Boolean))].sort(
     ordenarTexto,
   )
 
-  const bairros =
-    cidade
-      ? [
-          ...new Set(
-            areas
-              .filter(
-                (area) =>
-                  area.cidade
-                    ?.trim() ===
-                  cidade,
-              )
-              .map(
-                (area) =>
-                  area.bairro
-                    ?.trim(),
-              )
-              .filter(
-                Boolean,
-              ),
-          ),
-        ].sort(
-          ordenarTexto,
-        )
-      : []
+  const bairros = cidade
+    ? [
+        ...new Set(
+          areas
+            .filter((area) => area.cidade?.trim() === cidade)
+            .map((area) => area.bairro?.trim())
+            .filter(Boolean),
+        ),
+      ].sort(ordenarTexto)
+    : []
 
   function limparAreaMapa() {
-    setLatitudeMapa(
-      null,
-    )
+    setLatitudeMapa(null)
 
-    setLongitudeMapa(
-      null,
-    )
+    setLongitudeMapa(null)
 
-    setNomeAreaMapa(
-      '',
-    )
+    setNomeAreaMapa('')
 
-    setGeometriaArea(
-      null,
-    )
+    setGeometriaArea(null)
 
-    setLimitesArea(
-      null,
-    )
+    setLimitesArea(null)
   }
 
-  function converterGeoJson(
-    geometriaGeoJson,
-  ) {
-    if (
-      !geometriaGeoJson
-    ) {
+  function converterGeoJson(geometriaGeoJson) {
+    if (!geometriaGeoJson) {
       return null
     }
 
     try {
-      const geometria =
-        JSON.parse(
-          geometriaGeoJson,
-        )
+      const geometria = JSON.parse(geometriaGeoJson)
 
-      if (
-        !geometria ||
-        typeof geometria !==
-          'object'
-      ) {
+      if (!geometria || typeof geometria !== 'object') {
         return null
       }
 
-      if (
-        geometria.type !==
-          'Polygon' &&
-        geometria.type !==
-          'MultiPolygon'
-      ) {
+      if (geometria.type !== 'Polygon' && geometria.type !== 'MultiPolygon') {
         return null
       }
 
-      if (
-        !Array.isArray(
-          geometria.coordinates,
-        ) ||
-        geometria.coordinates
-          .length === 0
-      ) {
+      if (!Array.isArray(geometria.coordinates) || geometria.coordinates.length === 0) {
         return null
       }
 
@@ -531,28 +258,15 @@ function ConsultaPage() {
     }
   }
 
-  async function carregarLocalizacaoFallback(
-    cidadeSelecionada,
-    bairroSelecionado,
-    idSelecao,
-  ) {
+  async function carregarLocalizacaoFallback(cidadeSelecionada, bairroSelecionado, idSelecao) {
     try {
-      const localizacao =
-        await buscarCoordenadasArea(
-          cidadeSelecionada,
-          bairroSelecionado,
-        )
+      const localizacao = await buscarCoordenadasArea(cidadeSelecionada, bairroSelecionado)
 
-      if (
-        idSelecao !==
-        ultimaSelecaoRef.current
-      ) {
+      if (idSelecao !== ultimaSelecaoRef.current) {
         return
       }
 
-      if (
-        !localizacao
-      ) {
+      if (!localizacao) {
         limparAreaMapa()
 
         setAvisoMapa(
@@ -562,30 +276,17 @@ function ConsultaPage() {
         return
       }
 
-      setLatitudeMapa(
-        localizacao.latitude,
-      )
+      setLatitudeMapa(localizacao.latitude)
 
-      setLongitudeMapa(
-        localizacao.longitude,
-      )
+      setLongitudeMapa(localizacao.longitude)
 
-      setNomeAreaMapa(
-        `${bairroSelecionado}, ${cidadeSelecionada}`,
-      )
+      setNomeAreaMapa(`${bairroSelecionado}, ${cidadeSelecionada}`)
 
-      setGeometriaArea(
-        localizacao.geometria,
-      )
+      setGeometriaArea(localizacao.geometria)
 
-      setLimitesArea(
-        localizacao.boundingBox,
-      )
+      setLimitesArea(localizacao.boundingBox)
     } catch {
-      if (
-        idSelecao !==
-        ultimaSelecaoRef.current
-      ) {
+      if (idSelecao !== ultimaSelecaoRef.current) {
         return
       }
 
@@ -597,14 +298,8 @@ function ConsultaPage() {
     }
   }
 
-  async function executarConsultaArea(
-    cidadeSelecionada,
-    bairroSelecionado,
-  ) {
-    if (
-      !cidadeSelecionada ||
-      !bairroSelecionado
-    ) {
+  async function executarConsultaArea(cidadeSelecionada, bairroSelecionado) {
+    if (!cidadeSelecionada || !bairroSelecionado) {
       return
     }
 
@@ -614,141 +309,77 @@ function ConsultaPage() {
 
     setAvisoMapa('')
 
-    const idSelecao =
-      ultimaSelecaoRef.current +
-      1
+    const idSelecao = ultimaSelecaoRef.current + 1
 
-    ultimaSelecaoRef.current =
-      idSelecao
+    ultimaSelecaoRef.current = idSelecao
 
-    setCarregando(
-      true,
-    )
+    setCarregando(true)
 
-    setCarregandoLocalizacaoMapa(
-      true,
-    )
+    setCarregandoLocalizacaoMapa(true)
 
     try {
-      const dadosColeta =
-        await consultarColeta(
-          cidadeSelecionada,
-          bairroSelecionado,
-        )
+      const dadosColeta = await consultarColeta(cidadeSelecionada, bairroSelecionado)
 
-      if (
-        idSelecao !==
-        ultimaSelecaoRef.current
-      ) {
+      if (idSelecao !== ultimaSelecaoRef.current) {
         return
       }
 
-      setAgora(
-        new Date(),
-      )
+      setAgora(new Date())
 
-      setResultado(
-        dadosColeta,
-      )
+      setResultado(dadosColeta)
 
-      const geometriaSimul =
-        converterGeoJson(
-          dadosColeta
-            ?.geometriaGeoJson,
-        )
+      const geometriaSimul = converterGeoJson(dadosColeta?.geometriaGeoJson)
 
-      if (
-        geometriaSimul
-      ) {
-        setNomeAreaMapa(
-          `${bairroSelecionado}, ${cidadeSelecionada}`,
-        )
+      if (geometriaSimul) {
+        setNomeAreaMapa(`${bairroSelecionado}, ${cidadeSelecionada}`)
 
-        setGeometriaArea(
-          geometriaSimul,
-        )
+        setGeometriaArea(geometriaSimul)
 
-        setLimitesArea(
-          null,
-        )
+        setLimitesArea(null)
 
-        setLatitudeMapa(
-          null,
-        )
+        setLatitudeMapa(null)
 
-        setLongitudeMapa(
-          null,
-        )
+        setLongitudeMapa(null)
 
-        setAvisoMapa(
-          '',
-        )
+        setAvisoMapa('')
 
         return
       }
 
-      if (
-        dadosColeta
-          ?.geometriaGeoJson
-      ) {
+      if (dadosColeta?.geometriaGeoJson) {
         setAvisoMapa(
           'A geometria cadastrada no SIMUL está inválida. O mapa usará a localização do OpenStreetMap como alternativa.',
         )
       }
 
-      await carregarLocalizacaoFallback(
-        cidadeSelecionada,
-        bairroSelecionado,
-        idSelecao,
-      )
+      await carregarLocalizacaoFallback(cidadeSelecionada, bairroSelecionado, idSelecao)
     } catch (error) {
-      if (
-        idSelecao !==
-        ultimaSelecaoRef.current
-      ) {
+      if (idSelecao !== ultimaSelecaoRef.current) {
         return
       }
 
-      setErro(
-        error?.message ||
-          'Não foi possível consultar a coleta.',
-      )
+      setErro(error?.message || 'Não foi possível consultar a coleta.')
 
       limparAreaMapa()
     } finally {
-      if (
-        idSelecao ===
-        ultimaSelecaoRef.current
-      ) {
-        setCarregando(
-          false,
-        )
+      if (idSelecao === ultimaSelecaoRef.current) {
+        setCarregando(false)
 
-        setCarregandoLocalizacaoMapa(
-          false,
-        )
+        setCarregandoLocalizacaoMapa(false)
       }
     }
   }
 
-  function handleCidadeChange(
-    event,
-  ) {
-    const novaCidade =
-      event.target.value
+  function handleCidadeChange(event) {
+    const novaCidade = event.target.value
 
-    ultimaSelecaoRef.current +=
-      1
+    ultimaSelecaoRef.current += 1
 
-    setCidade(
-      novaCidade,
-    )
+    setCidade(novaCidade)
 
     setBairro('')
 
-    setResultado(
-      null,
-    )
+    setResultado(null)
 
     setErro('')
 
@@ -756,117 +387,67 @@ function ConsultaPage() {
 
     limparAreaMapa()
 
-    setCarregando(
-      false,
-    )
+    setCarregando(false)
 
-    setCarregandoLocalizacaoMapa(
-      false,
-    )
+    setCarregandoLocalizacaoMapa(false)
   }
 
-  async function handleBairroChange(
-    event,
-  ) {
-    const novoBairro =
-      event.target.value
+  async function handleBairroChange(event) {
+    const novoBairro = event.target.value
 
-    setBairro(
-      novoBairro,
-    )
+    setBairro(novoBairro)
 
     setErro('')
 
     setAvisoMapa('')
 
-    if (
-      !cidade ||
-      !novoBairro
-    ) {
-      setResultado(
-        null,
-      )
+    if (!cidade || !novoBairro) {
+      setResultado(null)
 
       limparAreaMapa()
 
       return
     }
 
-    await executarConsultaArea(
-      cidade,
-      novoBairro,
-    )
+    await executarConsultaArea(cidade, novoBairro)
   }
 
-  const paginaCarregando =
-    carregandoAreas ||
-    carregando
+  const paginaCarregando = carregandoAreas || carregando
 
-  const cronogramasOrdenados =
-    ordenarCronogramas(
-      resultado?.cronogramas,
-    )
+  const cronogramasOrdenados = ordenarCronogramas(resultado?.cronogramas)
 
-  const proximaColeta =
-    calcularProximaColeta(
-      cronogramasOrdenados,
-      agora,
-    )
+  const proximaColeta = calcularProximaColeta(cronogramasOrdenados, agora)
 
-  const usuarioLogado =
-    Boolean(obterToken())
+  const usuarioLogado = Boolean(obterToken())
 
   // "Senador Canedo - Diurna (seg, qua e sex)" → "Diurna (seg, qua e sex)",
   // já que a cidade aparece ao lado.
-  const prefixoCidade =
-    resultado?.cidade
-      ? `${resultado.cidade} - `
-      : null
+  const prefixoCidade = resultado?.cidade ? `${resultado.cidade} - ` : null
 
   const rotaExibida =
-    prefixoCidade &&
-    resultado?.nomeRota?.startsWith(prefixoCidade)
+    prefixoCidade && resultado?.nomeRota?.startsWith(prefixoCidade)
       ? resultado.nomeRota.slice(prefixoCidade.length)
       : resultado?.nomeRota
 
   const textoLocalizacao = {
-    buscando:
-      'Procurando sua localização para mostrar no mapa…',
-    precisa:
-      'Sua localização aparece no mapa.',
-    aproximada:
-      'Sua localização aproximada aparece no mapa.',
+    buscando: 'Procurando sua localização para mostrar no mapa…',
+    precisa: 'Sua localização aparece no mapa.',
+    aproximada: 'Sua localização aproximada aparece no mapa.',
   }[statusLocalizacaoUsuario]
 
   return (
-    <main
-      className="consulta-pagina"
-      aria-busy={paginaCarregando}
-    >
-      <section
-        className="consulta-hero"
-        aria-labelledby="titulo-consulta-publica"
-      >
+    <main className="consulta-pagina" aria-busy={paginaCarregando}>
+      <section className="consulta-hero" aria-labelledby="titulo-consulta-publica">
         <div className="consulta-hero__texto">
-          <p className="sobretitulo sobretitulo--verde">
-            Coleta seletiva
-          </p>
+          <p className="sobretitulo sobretitulo--verde">Coleta seletiva</p>
 
-          <h1
-            id="titulo-consulta-publica"
-            className="consulta-hero__titulo"
-          >
-            Quando passa a coleta
-            seletiva no seu bairro?
+          <h1 id="titulo-consulta-publica" className="consulta-hero__titulo">
+            Quando passa a coleta seletiva no seu bairro?
           </h1>
 
           <p className="consulta-hero__lead">
-            Escolha sua cidade e seu
-            bairro para ver os dias, os
-            horários e a área atendida.
-            Com uma conta, você recebe um
-            lembrete por e-mail antes de
-            cada coleta.
+            Escolha sua cidade e seu bairro para ver os dias, os horários e a área atendida. Com uma
+            conta, você recebe um lembrete por e-mail antes de cada coleta.
           </p>
         </div>
 
@@ -874,23 +455,15 @@ function ConsultaPage() {
           className="consulta-busca"
           aria-labelledby="titulo-consulta-regiao"
           aria-busy={carregandoAreas}
-          onSubmit={(event) =>
-            event.preventDefault()
-          }
+          onSubmit={(event) => event.preventDefault()}
         >
-          <h2
-            id="titulo-consulta-regiao"
-            className="titulo-cartao"
-          >
+          <h2 id="titulo-consulta-regiao" className="titulo-cartao">
             Encontre sua região
           </h2>
 
           <div className="consulta-busca__campos">
             <div className="campo-ds">
-              <label
-                className="campo-ds__rotulo"
-                htmlFor="cidade"
-              >
+              <label className="campo-ds__rotulo" htmlFor="cidade">
                 Cidade
               </label>
 
@@ -899,10 +472,7 @@ function ConsultaPage() {
                 className="campo-ds__controle"
                 value={cidade}
                 onChange={handleCidadeChange}
-                disabled={
-                  carregandoAreas ||
-                  cidades.length === 0
-                }
+                disabled={carregandoAreas || cidades.length === 0}
                 aria-describedby="ajuda-cidade"
                 aria-busy={carregandoAreas}
               >
@@ -915,19 +485,13 @@ function ConsultaPage() {
                 </option>
 
                 {cidades.map((nomeCidade) => (
-                  <option
-                    key={nomeCidade}
-                    value={nomeCidade}
-                  >
+                  <option key={nomeCidade} value={nomeCidade}>
                     {nomeCidade}
                   </option>
                 ))}
               </select>
 
-              <p
-                id="ajuda-cidade"
-                className="campo-ds__dica"
-              >
+              <p id="ajuda-cidade" className="campo-ds__dica">
                 {carregandoAreas
                   ? 'Carregando as cidades atendidas.'
                   : cidades.length > 0
@@ -937,10 +501,7 @@ function ConsultaPage() {
             </div>
 
             <div className="campo-ds">
-              <label
-                className="campo-ds__rotulo"
-                htmlFor="bairro"
-              >
+              <label className="campo-ds__rotulo" htmlFor="bairro">
                 Bairro
               </label>
 
@@ -949,11 +510,7 @@ function ConsultaPage() {
                 className="campo-ds__controle"
                 value={bairro}
                 onChange={handleBairroChange}
-                disabled={
-                  !cidade ||
-                  bairros.length === 0 ||
-                  carregando
-                }
+                disabled={!cidade || bairros.length === 0 || carregando}
                 aria-describedby="ajuda-bairro"
                 aria-busy={carregando}
               >
@@ -968,19 +525,13 @@ function ConsultaPage() {
                 </option>
 
                 {bairros.map((nomeBairro) => (
-                  <option
-                    key={nomeBairro}
-                    value={nomeBairro}
-                  >
+                  <option key={nomeBairro} value={nomeBairro}>
                     {nomeBairro}
                   </option>
                 ))}
               </select>
 
-              <p
-                id="ajuda-bairro"
-                className="campo-ds__dica"
-              >
+              <p id="ajuda-bairro" className="campo-ds__dica">
                 {!cidade
                   ? 'A lista de bairros aparece depois da cidade.'
                   : bairros.length === 0
@@ -990,19 +541,10 @@ function ConsultaPage() {
             </div>
           </div>
 
-          {(textoLocalizacao ||
-            erroLocalizacaoUsuario) && (
-            <p
-              className="consulta-busca__local"
-              role="status"
-              aria-live="polite"
-            >
-              <Icone
-                nome="local"
-                tamanho={16}
-              />
-              {textoLocalizacao ||
-                erroLocalizacaoUsuario}
+          {(textoLocalizacao || erroLocalizacaoUsuario) && (
+            <p className="consulta-busca__local" role="status" aria-live="polite">
+              <Icone nome="local" tamanho={16} />
+              {textoLocalizacao || erroLocalizacaoUsuario}
             </p>
           )}
         </form>
@@ -1011,45 +553,28 @@ function ConsultaPage() {
       <div className="consulta-grade">
         <div className="consulta-grade__principal">
           {erro && (
-            <div
-              className="alerta alerta--erro"
-              role="alert"
-            >
+            <div className="alerta alerta--erro" role="alert">
               <Icone nome="erro" />
 
               <div>
-                <strong>
-                  Não foi possível consultar
-                </strong>
+                <strong>Não foi possível consultar</strong>
                 {erro}
               </div>
             </div>
           )}
 
           {carregando && (
-            <div
-              className="consulta-carregando"
-              role="status"
-              aria-live="polite"
-            >
+            <div className="consulta-carregando" role="status" aria-live="polite">
               <span className="consulta-carregando__barra" />
               <span className="consulta-carregando__barra consulta-carregando__barra--curta" />
-              <span className="visualmente-oculto">
-                Carregando os horários da
-                coleta…
-              </span>
+              <span className="visualmente-oculto">Carregando os horários da coleta…</span>
             </div>
           )}
 
           {resultado && !carregando && (
-            <section
-              className="consulta-resultado"
-              aria-labelledby="titulo-resultado-consulta"
-            >
+            <section className="consulta-resultado" aria-labelledby="titulo-resultado-consulta">
               <header className="consulta-resultado__cabecalho">
-                <p className="sobretitulo">
-                  Resultado da consulta
-                </p>
+                <p className="sobretitulo">Resultado da consulta</p>
 
                 <h2
                   id="titulo-resultado-consulta"
@@ -1057,8 +582,7 @@ function ConsultaPage() {
                   tabIndex="-1"
                   className="consulta-resultado__titulo"
                 >
-                  Coleta seletiva em{' '}
-                  {resultado.bairro}
+                  Coleta seletiva em {resultado.bairro}
                 </h2>
 
                 <p className="consulta-resultado__local">
@@ -1074,88 +598,46 @@ function ConsultaPage() {
 
               {cronogramasOrdenados.length > 0 ? (
                 <>
-                  <CartaoProximaColeta
-                    proxima={proximaColeta}
-                    bairro={resultado.bairro}
-                  />
+                  <CartaoProximaColeta proxima={proximaColeta} bairro={resultado.bairro} />
 
-                  <section
-                    className="cartao"
-                    aria-labelledby="titulo-dias-coleta"
-                  >
-                    <h3
-                      id="titulo-dias-coleta"
-                      className="titulo-cartao"
-                    >
+                  <section className="cartao" aria-labelledby="titulo-dias-coleta">
+                    <h3 id="titulo-dias-coleta" className="titulo-cartao">
                       Dias e horários
                     </h3>
 
-                    <DiasSemana
-                      cronogramas={
-                        cronogramasOrdenados
-                      }
-                      hoje={agora}
-                    />
+                    <DiasSemana cronogramas={cronogramasOrdenados} hoje={agora} />
 
                     <ul className="horarios">
-                      {cronogramasOrdenados.map(
-                        (cronograma, indice) => {
-                          const inicio =
-                            formatarHora(
-                              cronograma.horarioInicio,
-                            )
+                      {cronogramasOrdenados.map((cronograma, indice) => {
+                        const inicio = formatarHora(cronograma.horarioInicio)
 
-                          const fim =
-                            formatarHora(
-                              cronograma.horarioFim,
-                            )
+                        const fim = formatarHora(cronograma.horarioFim)
 
-                          return (
-                            <li
-                              key={`${cronograma.diaSemana}-${inicio}-${indice}`}
-                              className="horarios__item"
-                            >
-                              <span className="horarios__dia">
-                                {rotuloDia(
-                                  cronograma.diaSemana,
-                                )}
-                              </span>
+                        return (
+                          <li
+                            key={`${cronograma.diaSemana}-${inicio}-${indice}`}
+                            className="horarios__item"
+                          >
+                            <span className="horarios__dia">{rotuloDia(cronograma.diaSemana)}</span>
 
-                              <span className="horarios__hora">
-                                <time dateTime={inicio}>
-                                  {inicio}
-                                </time>
-                                {' – '}
-                                <time dateTime={fim}>
-                                  {fim}
-                                </time>
-                              </span>
-                            </li>
-                          )
-                        },
-                      )}
+                            <span className="horarios__hora">
+                              <time dateTime={inicio}>{inicio}</time>
+                              {' – '}
+                              <time dateTime={fim}>{fim}</time>
+                            </span>
+                          </li>
+                        )
+                      })}
                     </ul>
                   </section>
 
-                  <section
-                    className="chamada-lembrete"
-                    aria-labelledby="titulo-chamada-lembrete"
-                  >
-                    <span
-                      className="chamada-lembrete__icone"
-                      aria-hidden="true"
-                    >
-                      <Icone
-                        nome="sino"
-                        tamanho={24}
-                      />
+                  <section className="chamada-lembrete" aria-labelledby="titulo-chamada-lembrete">
+                    <span className="chamada-lembrete__icone" aria-hidden="true">
+                      <Icone nome="sino" tamanho={24} />
                     </span>
 
                     <div className="chamada-lembrete__texto">
-                      <h3 id="titulo-chamada-lembrete">
-                        Não esqueça a próxima
-                        coleta
-                      </h3>
+                      <h3 id="titulo-chamada-lembrete">Não esqueça a próxima coleta</h3>
 
                       <p>
                         {usuarioLogado
@@ -1165,34 +647,20 @@ function ConsultaPage() {
                     </div>
 
                     <Link
-                      to={
-                        usuarioLogado
-                          ? '/preferencias'
-                          : '/cadastro'
-                      }
+                      to={usuarioLogado ? '/preferencias' : '/cadastro'}
                       className="botao botao--primario"
                     >
-                      {usuarioLogado
-                        ? 'Configurar lembrete'
-                        : 'Ativar lembrete'}
+                      {usuarioLogado ? 'Configurar lembrete' : 'Ativar lembrete'}
                     </Link>
                   </section>
                 </>
               ) : (
-                <div
-                  className="alerta alerta--info"
-                  role="status"
-                >
+                <div className="alerta alerta--info" role="status">
                   <Icone nome="info" />
 
                   <div>
-                    <strong>
-                      Ainda não há coleta
-                      cadastrada
-                    </strong>
-                    Este bairro ainda não tem
-                    coleta seletiva ativa no
-                    SIMUL.
+                    <strong>Ainda não há coleta cadastrada</strong>
+                    Este bairro ainda não tem coleta seletiva ativa no SIMUL.
                   </div>
                 </div>
               )}
@@ -1200,30 +668,20 @@ function ConsultaPage() {
           )}
 
           {avisoMapa && (
-            <div
-              className="alerta alerta--aviso"
-              role="status"
-            >
+            <div className="alerta alerta--aviso" role="status">
               <Icone nome="aviso" />
 
               <div>
-                <strong>
-                  Sobre o mapa
-                </strong>
+                <strong>Sobre o mapa</strong>
                 {avisoMapa}
               </div>
             </div>
           )}
 
-          {!resultado && !carregando && (
-            <ComoFunciona />
-          )}
+          {!resultado && !carregando && <ComoFunciona />}
         </div>
 
-        <aside
-          className="consulta-grade__mapa"
-          aria-label="Mapa da área de coleta"
-        >
+        <aside className="consulta-grade__mapa" aria-label="Mapa da área de coleta">
           <Suspense
             fallback={
               <div
@@ -1240,17 +698,13 @@ function ConsultaPage() {
               latitude={latitudeMapa}
               longitude={longitudeMapa}
               nomeArea={nomeAreaMapa}
-              carregandoLocalizacao={
-                carregandoLocalizacaoMapa
-              }
+              carregandoLocalizacao={carregandoLocalizacaoMapa}
               geometriaArea={geometriaArea}
               limitesArea={limitesArea}
               latitudeUsuario={latitudeUsuario}
               longitudeUsuario={longitudeUsuario}
               precisaoUsuario={precisaoUsuario}
-              statusLocalizacaoUsuario={
-                statusLocalizacaoUsuario
-              }
+              statusLocalizacaoUsuario={statusLocalizacaoUsuario}
             />
           </Suspense>
         </aside>

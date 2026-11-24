@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/** Bairro de uma cidade ligado a uma rota, com o contorno opcional em GeoJSON. */
 @Entity
 @Table(name = "areas_atendidas")
 @Getter
@@ -30,10 +31,7 @@ public class AreaAtendida {
     @Column(nullable = false, length = 120)
     private String bairro;
 
-    @Column(
-            name = "geometria_geojson",
-            columnDefinition = "TEXT"
-    )
+    @Column(name = "geometria_geojson", columnDefinition = "TEXT")
     private String geometriaGeoJson;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

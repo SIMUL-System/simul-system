@@ -1,10 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import {
-  cadastrarUsuario,
-  reenviarVerificacaoEmail,
-} from '../services/usuarioService'
+import { cadastrarUsuario, reenviarVerificacaoEmail } from '../services/usuarioService'
 
 import '../App.css'
 
@@ -13,65 +10,25 @@ import Icone from '../components/Icone'
 import LayoutAcesso from '../components/auth/LayoutAcesso'
 import CampoSenha from '../components/form/CampoSenha'
 import CampoTexto from '../components/form/CampoTexto'
+import { emailValido } from '../utils/texto'
 
-function emailValido(valor) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-    valor,
-  )
-}
-
+/** Criar conta; depois do cadastro a pessoa precisa confirmar o e-mail. */
 function CadastroPage() {
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
-  const [
-    confirmacaoSenha,
-    setConfirmacaoSenha,
-  ] = useState('')
-
-  const [erroNome, setErroNome] =
-    useState('')
-
-  const [erroEmail, setErroEmail] =
-    useState('')
-
-  const [erroSenha, setErroSenha] =
-    useState('')
-
-  const [
-    erroConfirmacaoSenha,
-    setErroConfirmacaoSenha,
-  ] = useState('')
-
+  const [confirmacaoSenha, setConfirmacaoSenha] = useState('')
+  const [erroNome, setErroNome] = useState('')
+  const [erroEmail, setErroEmail] = useState('')
+  const [erroSenha, setErroSenha] = useState('')
+  const [erroConfirmacaoSenha, setErroConfirmacaoSenha] = useState('')
   const [erro, setErro] = useState('')
-
-  const [sucesso, setSucesso] =
-    useState('')
-
-  const [
-    emailCadastro,
-    setEmailCadastro,
-  ] = useState('')
-
-  const [
-    cadastroConcluido,
-    setCadastroConcluido,
-  ] = useState(false)
-
-  const [
-    carregando,
-    setCarregando,
-  ] = useState(false)
-
-  const [
-    reenviando,
-    setReenviando,
-  ] = useState(false)
-
-  const [
-    mensagemReenvio,
-    setMensagemReenvio,
-  ] = useState('')
+  const [sucesso, setSucesso] = useState('')
+  const [emailCadastro, setEmailCadastro] = useState('')
+  const [cadastroConcluido, setCadastroConcluido] = useState(false)
+  const [carregando, setCarregando] = useState(false)
+  const [reenviando, setReenviando] = useState(false)
+  const [mensagemReenvio, setMensagemReenvio] = useState('')
 
   function validarFormulario() {
     let formularioValido = true
@@ -84,67 +41,42 @@ function CadastroPage() {
     setSucesso('')
     setMensagemReenvio('')
 
-    const nomeNormalizado =
-      nome.trim()
+    const nomeNormalizado = nome.trim()
 
-    const emailNormalizado =
-      email.trim()
+    const emailNormalizado = email.trim()
 
     if (!nomeNormalizado) {
-      setErroNome(
-        'Informe seu nome.',
-      )
+      setErroNome('Informe seu nome.')
 
       formularioValido = false
     }
 
     if (!emailNormalizado) {
-      setErroEmail(
-        'Informe seu e-mail.',
-      )
+      setErroEmail('Informe seu e-mail.')
 
       formularioValido = false
-    } else if (
-      !emailValido(
-        emailNormalizado,
-      )
-    ) {
-      setErroEmail(
-        'Informe um e-mail válido.',
-      )
+    } else if (!emailValido(emailNormalizado)) {
+      setErroEmail('Informe um e-mail válido.')
 
       formularioValido = false
     }
 
     if (!senha) {
-      setErroSenha(
-        'Informe uma senha.',
-      )
+      setErroSenha('Informe uma senha.')
 
       formularioValido = false
-    } else if (
-      senha.length < 8 ||
-      senha.length > 100
-    ) {
-      setErroSenha(
-        'A senha deve ter entre 8 e 100 caracteres.',
-      )
+    } else if (senha.length < 8 || senha.length > 72) {
+      setErroSenha('A senha deve ter entre 8 e 72 caracteres.')
 
       formularioValido = false
     }
 
     if (!confirmacaoSenha) {
-      setErroConfirmacaoSenha(
-        'Confirme sua senha.',
-      )
+      setErroConfirmacaoSenha('Confirme sua senha.')
 
       formularioValido = false
-    } else if (
-      senha !== confirmacaoSenha
-    ) {
-      setErroConfirmacaoSenha(
-        'As senhas não coincidem.',
-      )
+    } else if (senha !== confirmacaoSenha) {
+      setErroConfirmacaoSenha('As senhas não coincidem.')
 
       formularioValido = false
     }
@@ -152,17 +84,14 @@ function CadastroPage() {
     return formularioValido
   }
 
-  async function handleSubmit(
-    event,
-  ) {
+  async function handleSubmit(event) {
     event.preventDefault()
 
     if (!validarFormulario()) {
       return
     }
 
-    const emailNormalizado =
-      email.trim()
+    const emailNormalizado = email.trim()
 
     try {
       setCarregando(true)
@@ -173,9 +102,7 @@ function CadastroPage() {
         senha,
       })
 
-      setEmailCadastro(
-        emailNormalizado,
-      )
+      setEmailCadastro(emailNormalizado)
 
       setCadastroConcluido(true)
 
@@ -188,10 +115,7 @@ function CadastroPage() {
       setSenha('')
       setConfirmacaoSenha('')
     } catch (error) {
-      setErro(
-        error.message ||
-          'Não foi possível realizar o cadastro.',
-      )
+      setErro(error.message || 'Não foi possível realizar o cadastro.')
     } finally {
       setCarregando(false)
     }
@@ -208,20 +132,14 @@ function CadastroPage() {
     try {
       setReenviando(true)
 
-      const resposta =
-        await reenviarVerificacaoEmail(
-          emailCadastro,
-        )
+      const resposta = await reenviarVerificacaoEmail(emailCadastro)
 
       setMensagemReenvio(
         resposta?.mensagem ||
           'Se a conta ainda precisar de confirmação, um novo e-mail será enviado.',
       )
     } catch (error) {
-      setErro(
-        error.message ||
-          'Não foi possível solicitar um novo e-mail de confirmação.',
-      )
+      setErro(error.message || 'Não foi possível solicitar um novo e-mail de confirmação.')
     } finally {
       setReenviando(false)
     }
@@ -230,11 +148,7 @@ function CadastroPage() {
   return (
     <LayoutAcesso
       idTitulo="titulo-cadastro"
-      titulo={
-        cadastroConcluido
-          ? 'Confirme seu e-mail'
-          : 'Criar conta'
-      }
+      titulo={cadastroConcluido ? 'Confirme seu e-mail' : 'Criar conta'}
       descricao={
         cadastroConcluido
           ? 'Falta só um passo para ativar sua conta.'
@@ -244,17 +158,11 @@ function CadastroPage() {
       rodape={
         cadastroConcluido ? (
           <p>
-            Já confirmou?{' '}
-            <Link to="/login">
-              Entrar
-            </Link>
+            Já confirmou? <Link to="/login">Entrar</Link>
           </p>
         ) : (
           <p>
-            Já tem conta?{' '}
-            <Link to="/login">
-              Entrar
-            </Link>
+            Já tem conta? <Link to="/login">Entrar</Link>
           </p>
         )
       }
@@ -263,9 +171,7 @@ function CadastroPage() {
         <Alerta
           tipo="erro"
           titulo={
-            cadastroConcluido
-              ? 'Não foi possível reenviar'
-              : 'Não foi possível criar a conta'
+            cadastroConcluido ? 'Não foi possível reenviar' : 'Não foi possível criar a conta'
           }
         >
           {erro}
@@ -273,11 +179,7 @@ function CadastroPage() {
       )}
 
       {!cadastroConcluido && (
-        <form
-          className="acesso__form"
-          onSubmit={handleSubmit}
-          noValidate
-        >
+        <form className="acesso__form" onSubmit={handleSubmit} noValidate>
           <CampoTexto
             id="nome"
             rotulo="Nome"
@@ -333,7 +235,7 @@ function CadastroPage() {
               }
             }}
             autoComplete="new-password"
-            maxLength={100}
+            maxLength={72}
             dica="Use pelo menos 8 caracteres."
             erro={erroSenha}
             disabled={carregando}
@@ -351,40 +253,25 @@ function CadastroPage() {
               }
             }}
             autoComplete="new-password"
-            maxLength={100}
+            maxLength={72}
             erro={erroConfirmacaoSenha}
             disabled={carregando}
           />
 
-          <button
-            type="submit"
-            className="botao botao--primario"
-            disabled={carregando}
-          >
-            {carregando
-              ? 'Criando conta…'
-              : 'Criar conta'}
+          <button type="submit" className="botao botao--primario" disabled={carregando}>
+            {carregando ? 'Criando conta…' : 'Criar conta'}
           </button>
         </form>
       )}
 
       {cadastroConcluido && (
-        <section
-          className="acesso__bloco"
-          aria-labelledby="titulo-confirmar-cadastro"
-        >
-          <h2
-            id="titulo-confirmar-cadastro"
-            className="visualmente-oculto"
-          >
+        <section className="acesso__bloco" aria-labelledby="titulo-confirmar-cadastro">
+          <h2 id="titulo-confirmar-cadastro" className="visualmente-oculto">
             Confirmação pendente
           </h2>
 
           {sucesso && (
-            <Alerta
-              tipo="sucesso"
-              titulo="Conta criada"
-            >
+            <Alerta tipo="sucesso" titulo="Conta criada">
               Enviamos um link de confirmação para:
             </Alerta>
           )}
@@ -394,21 +281,12 @@ function CadastroPage() {
             {emailCadastro}
           </p>
 
-          <p>
-            Abra o e-mail e clique no link.
-            Depois disso, você já pode entrar.
-          </p>
+          <p>Abra o e-mail e clique no link. Depois disso, você já pode entrar.</p>
 
-          <p className="acesso__nota">
-            Não encontrou? Confira a pasta de
-            spam ou lixo eletrônico.
-          </p>
+          <p className="acesso__nota">Não encontrou? Confira a pasta de spam ou lixo eletrônico.</p>
 
           {mensagemReenvio && (
-            <Alerta
-              tipo="info"
-              titulo="Pedido enviado"
-            >
+            <Alerta tipo="info" titulo="Pedido enviado">
               {mensagemReenvio}
             </Alerta>
           )}
@@ -419,9 +297,7 @@ function CadastroPage() {
             onClick={handleReenviarVerificacao}
             disabled={reenviando}
           >
-            {reenviando
-              ? 'Reenviando…'
-              : 'Reenviar e-mail de confirmação'}
+            {reenviando ? 'Reenviando…' : 'Reenviar e-mail de confirmação'}
           </button>
         </section>
       )}

@@ -1,7 +1,4 @@
-import {
-  NavLink,
-  Outlet,
-} from 'react-router-dom'
+import { NavLink, Outlet } from 'react-router-dom'
 
 import Icone from '../components/Icone'
 
@@ -22,10 +19,7 @@ const SECOES = [
 function AdminPage() {
   return (
     <main className="admin-layout">
-      <nav
-        className="admin-menu"
-        aria-label="Seções do painel administrativo"
-      >
+      <nav className="admin-menu" aria-label="Seções do painel administrativo">
         <p className="admin-menu__titulo">Painel administrativo</p>
 
         <ul className="admin-menu__lista">

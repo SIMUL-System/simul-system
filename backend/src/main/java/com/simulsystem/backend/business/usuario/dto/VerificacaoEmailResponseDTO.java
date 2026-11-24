@@ -1,7 +1,5 @@
 package com.simulsystem.backend.business.usuario.dto;
 
-public record VerificacaoEmailResponseDTO(
-        boolean verificado,
-        String mensagem
-) {
+/** Resultado da confirmação de e-mail. */
+public record VerificacaoEmailResponseDTO(boolean verificado, String mensagem) {
 }

@@ -5,9 +5,7 @@ const configuredApiUrl = import.meta.env.VITE_API_URL?.trim()
 const API_URL = (configuredApiUrl || '').replace(/\/+$/, '')
 
 if (!API_URL && !import.meta.env.DEV) {
-  throw new Error(
-    'API não configurada. Defina VITE_API_URL no ambiente de build do front-end.',
-  )
+  throw new Error('API não configurada. Defina VITE_API_URL no ambiente de build do front-end.')
 }
 
 // Tempo máximo de espera. A Render gratuita "dorme" após 15 min sem uso e
@@ -17,9 +15,13 @@ const TEMPO_LIMITE_MS = 75000
 // A partir deste tempo a tela avisa que o servidor pode estar acordando.
 const AVISO_LENTO_MS = 6000
 
+/** Evento disparado quando uma chamada autenticada recebe 401. */
+const EVENTO_SESSAO_EXPIRADA = 'simul:sessao-expirada'
+
 let requisicoesLentas = 0
 const ouvintesLentidao = new Set()
 
+/** Informa os inscritos se há requisição demorando. */
 function avisarLentidao() {
   const ativo = requisicoesLentas > 0
   ouvintesLentidao.forEach((ouvinte) => ouvinte(ativo))
@@ -48,75 +50,46 @@ class ApiError extends Error {
   }
 }
 
-function obterMensagemErro(
-  data,
-  status,
-) {
-  if (
-    data &&
-    typeof data === 'object'
-  ) {
-    if (
-      typeof data.detail === 'string' &&
-      data.detail.trim()
-    ) {
+/** Mensagem legível de um erro da API (ProblemDetail "detail" primeiro). */
+function obterMensagemErro(data, status) {
+  if (data && typeof data === 'object') {
+    if (typeof data.detail === 'string' && data.detail.trim()) {
       return data.detail
     }
 
-    if (
-      typeof data.mensagem === 'string' &&
-      data.mensagem.trim()
-    ) {
+    if (typeof data.mensagem === 'string' && data.mensagem.trim()) {
       return data.mensagem
     }
 
-    if (
-      typeof data.message === 'string' &&
-      data.message.trim()
-    ) {
+    if (typeof data.message === 'string' && data.message.trim()) {
       return data.message
     }
 
-    if (
-      typeof data.title === 'string' &&
-      data.title.trim()
-    ) {
+    if (typeof data.title === 'string' && data.title.trim()) {
       return data.title
     }
   }
 
-  if (
-    typeof data === 'string' &&
-    data.trim()
-  ) {
+  if (typeof data === 'string' && data.trim()) {
     return data
   }
 
   return `Erro HTTP ${status}`
 }
 
-async function apiRequest(
-  path,
-  {
-    method = 'GET',
-    body,
-    token,
-    headers = {},
-  } = {},
-) {
+/** Única porta de saída para a API: JSON, token, tempo-limite, aviso de lentidão e sessão expirada. */
+async function apiRequest(path, { method = 'GET', body, token, headers = {} } = {}) {
   const requestHeaders = {
     Accept: 'application/json',
     ...headers,
   }
 
   if (body !== undefined) {
-    requestHeaders['Content-Type'] =
-      'application/json'
+    requestHeaders['Content-Type'] = 'application/json'
   }
 
   if (token) {
-    requestHeaders.Authorization =
-      `Bearer ${token}`
+    requestHeaders.Authorization = `Bearer ${token}`
   }
 
   const controlador = new AbortController()
@@ -132,18 +105,12 @@ async function apiRequest(
   let response
 
   try {
-    response = await fetch(
-      `${API_URL}${path}`,
-      {
-        method,
-        headers: requestHeaders,
-        body:
-          body !== undefined
-            ? JSON.stringify(body)
-            : undefined,
-        signal: controlador.signal,
-      },
-    )
+    response = await fetch(`${API_URL}${path}`, {
+      method,
+      headers: requestHeaders,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal: controlador.signal,
+    })
   } catch (error) {
     if (error?.name === 'AbortError') {
       throw new ApiError(
@@ -172,49 +139,33 @@ async function apiRequest(
     return null
   }
 
-  const contentType =
-    response.headers.get(
-      'content-type',
-    )
+  const contentType = response.headers.get('content-type')
 
   let data
 
   if (
-    contentType?.includes(
-      'application/json',
-    ) ||
-    contentType?.includes(
-      'application/problem+json',
-    )
+    contentType?.includes('application/json') ||
+    contentType?.includes('application/problem+json')
   ) {
     data = await response.json()
   } else {
-    const text =
-      await response.text()
+    const text = await response.text()
 
     data = text || null
   }
 
-  if (!response.ok) {
-    const message =
-      obterMensagemErro(
-        data,
-        response.status,
-      )
+  // Token vencido ou inválido: avisa o App, que encerra a sessão e leva ao login.
+  if (response.status === 401 && token) {
+    window.dispatchEvent(new Event(EVENTO_SESSAO_EXPIRADA))
+  }
 
-    throw new ApiError(
-      message,
-      response.status,
-      data,
-    )
+  if (!response.ok) {
+    const message = obterMensagemErro(data, response.status)
+
+    throw new ApiError(message, response.status, data)
   }
 
   return data
 }
 
-export {
-  inscreverServidorLento,
-  API_URL,
-  ApiError,
-  apiRequest,
-}
+export { EVENTO_SESSAO_EXPIRADA, inscreverServidorLento, ApiError, apiRequest }

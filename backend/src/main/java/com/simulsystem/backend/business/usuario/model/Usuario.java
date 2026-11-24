@@ -16,6 +16,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+/** Conta de morador ou administrador. O e-mail é único e gravado em minúsculas. */
 @Entity
 @Table(name = "usuarios")
 @Getter
@@ -52,6 +53,7 @@ public class Usuario {
     @Column(name = "data_atualizacao", nullable = false)
     private LocalDateTime dataAtualizacao;
 
+    /** Preenche as datas (e os padrões) antes de inserir. */
     @PrePersist
     private void prePersist() {
         LocalDateTime agora = LocalDateTime.now();
@@ -72,6 +74,7 @@ public class Usuario {
         }
     }
 
+    /** Atualiza a data de alteração. */
     @PreUpdate
     private void preUpdate() {
         this.dataAtualizacao = LocalDateTime.now();

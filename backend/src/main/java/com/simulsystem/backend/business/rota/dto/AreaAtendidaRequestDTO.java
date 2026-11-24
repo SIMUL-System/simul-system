@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+/** Corpo para criar ou editar uma área atendida (cidade, bairro e rota). */
 public record AreaAtendidaRequestDTO(
 
         @NotBlank(message = "A cidade é obrigatória.")

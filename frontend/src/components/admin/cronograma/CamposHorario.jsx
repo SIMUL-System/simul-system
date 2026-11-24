@@ -3,23 +3,14 @@ import { ATALHOS_HORARIO } from '../../../utils/cronogramas'
 /**
  * Início e fim da coleta, com atalhos para os dois períodos da cidade.
  */
-function CamposHorario({
-  idBase,
-  inicio,
-  fim,
-  onAlterar,
-  disabled,
-}) {
+function CamposHorario({ idBase, inicio, fim, onAlterar, disabled }) {
   return (
     <fieldset className="campos-horario">
       <legend className="campo-ds__rotulo">Horário da coleta</legend>
 
       <div className="campos-horario__linha">
         <div className="campo-ds">
-          <label
-            className="campo-ds__rotulo campo-ds__rotulo--leve"
-            htmlFor={`${idBase}-inicio`}
-          >
+          <label className="campo-ds__rotulo campo-ds__rotulo--leve" htmlFor={`${idBase}-inicio`}>
             Início
           </label>
 
@@ -35,10 +26,7 @@ function CamposHorario({
         </div>
 
         <div className="campo-ds">
-          <label
-            className="campo-ds__rotulo campo-ds__rotulo--leve"
-            htmlFor={`${idBase}-fim`}
-          >
+          <label className="campo-ds__rotulo campo-ds__rotulo--leve" htmlFor={`${idBase}-fim`}>
             Fim
           </label>
 
@@ -54,11 +42,7 @@ function CamposHorario({
         </div>
       </div>
 
-      <div
-        className="atalhos"
-        role="group"
-        aria-label="Preencher horário"
-      >
+      <div className="atalhos" role="group" aria-label="Preencher horário">
         {ATALHOS_HORARIO.map((atalho) => (
           <button
             key={atalho.rotulo}

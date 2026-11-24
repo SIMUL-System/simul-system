@@ -9,6 +9,7 @@ import com.simulsystem.backend.business.cronograma.validation.CronogramaValidati
 import com.simulsystem.backend.business.rota.validation.RotaValidation;
 import com.simulsystem.backend.core.exception.CronogramaNaoEncontradoException;
 import com.simulsystem.backend.core.exception.HorarioCronogramaInvalidoException;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -57,8 +58,7 @@ class CronogramaHorarioLoteServiceImplTest {
         when(cronogramaRepository.saveAll(cronogramas))
                 .thenReturn(cronogramas);
 
-        CronogramaHorarioLoteRequestDTO pedido =
-                new CronogramaHorarioLoteRequestDTO(
+        CronogramaHorarioLoteRequestDTO pedido = new CronogramaHorarioLoteRequestDTO(
                         List.of(1L, 2L),
                         LocalTime.of(19, 0),
                         LocalTime.of(23, 59)
@@ -87,11 +87,7 @@ class CronogramaHorarioLoteServiceImplTest {
                 .thenReturn(List.of(cronograma));
 
         cronogramaService.alterarHorariosEmLote(
-                new CronogramaHorarioLoteRequestDTO(
-                        List.of(5L),
-                        LocalTime.of(6, 30, 45),
-                        LocalTime.of(18, 0, 10)
-                )
+                new CronogramaHorarioLoteRequestDTO(List.of(5L), LocalTime.of(6, 30, 45), LocalTime.of(18, 0, 10))
         );
 
         assertEquals(LocalTime.of(6, 30), cronograma.getHorarioInicio());
@@ -107,11 +103,7 @@ class CronogramaHorarioLoteServiceImplTest {
         assertThrows(
                 HorarioCronogramaInvalidoException.class,
                 () -> cronogramaService.alterarHorariosEmLote(
-                        new CronogramaHorarioLoteRequestDTO(
-                                List.of(1L),
-                                LocalTime.of(8, 0),
-                                LocalTime.of(8, 0)
-                        )
+                        new CronogramaHorarioLoteRequestDTO(List.of(1L), LocalTime.of(8, 0), LocalTime.of(8, 0))
                 )
         );
 
@@ -127,11 +119,7 @@ class CronogramaHorarioLoteServiceImplTest {
         assertThrows(
                 CronogramaNaoEncontradoException.class,
                 () -> cronogramaService.alterarHorariosEmLote(
-                        new CronogramaHorarioLoteRequestDTO(
-                                List.of(1L, 99L),
-                                LocalTime.of(6, 0),
-                                LocalTime.of(18, 0)
-                        )
+                        new CronogramaHorarioLoteRequestDTO(List.of(1L, 99L), LocalTime.of(6, 0), LocalTime.of(18, 0))
                 )
         );
 

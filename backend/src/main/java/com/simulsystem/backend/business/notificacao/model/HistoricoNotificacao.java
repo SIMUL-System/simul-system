@@ -2,6 +2,7 @@ package com.simulsystem.backend.business.notificacao.model;
 
 import com.simulsystem.backend.business.rota.model.Rota;
 import com.simulsystem.backend.business.usuario.model.Usuario;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,6 +25,7 @@ import java.time.LocalDateTime;
                 )
         }
 )
+/** Registro de cada lembrete (um por usuário, rota, coleta e canal): evita duplicidade e guarda as tentativas. */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -70,6 +72,7 @@ public class HistoricoNotificacao {
     @Column(name = "data_atualizacao", nullable = false)
     private LocalDateTime dataAtualizacao;
 
+    /** Preenche as datas (e os padrões) antes de inserir. */
     @PrePersist
     public void prePersist() {
         LocalDateTime agora = LocalDateTime.now();
@@ -86,6 +89,7 @@ public class HistoricoNotificacao {
         }
     }
 
+    /** Atualiza a data de alteração. */
     @PreUpdate
     public void preUpdate() {
         dataAtualizacao = LocalDateTime.now();

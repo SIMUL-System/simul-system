@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -14,9 +13,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
+/** Agrupa os bairros que têm a mesma coleta; inativa, some da consulta e dos lembretes. */
 @Entity
 @Table(name = "rotas")
 @Getter
@@ -43,9 +41,7 @@ public class Rota {
     @Column(name = "data_atualizacao", nullable = false)
     private LocalDateTime dataAtualizacao;
 
-    @OneToMany(mappedBy = "rota")
-    private List<AreaAtendida> areasAtendidas = new ArrayList<>();
-
+    /** Preenche as datas (e os padrões) antes de inserir. */
     @PrePersist
     private void prePersist() {
         LocalDateTime agora = LocalDateTime.now();
@@ -58,6 +54,7 @@ public class Rota {
         }
     }
 
+    /** Atualiza a data de alteração. */
     @PreUpdate
     private void preUpdate() {
         this.dataAtualizacao = LocalDateTime.now();

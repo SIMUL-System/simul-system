@@ -34,41 +34,23 @@ class CicloNotificacaoServiceImplTest {
                 processamentoRetryNotificacaoService
         );
 
-        referencia =
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        17,
-                        16,
-                        5
-                );
+        referencia = LocalDateTime.of(2026, 8, 17, 16, 5);
     }
 
     @Test
     void deveExecutarProcessamentoNormalEDepoisRetries() {
         service.executar(referencia);
 
-        InOrder ordem = inOrder(
-                processamentoNotificacaoLoteService,
-                processamentoRetryNotificacaoService
-        );
+        InOrder ordem = inOrder(processamentoNotificacaoLoteService, processamentoRetryNotificacaoService);
 
-        ordem.verify(
-                processamentoNotificacaoLoteService
-        ).processar(referencia);
+        ordem.verify(processamentoNotificacaoLoteService).processar(referencia);
 
-        ordem.verify(
-                processamentoRetryNotificacaoService
-        ).processar(referencia);
+        ordem.verify(processamentoRetryNotificacaoService).processar(referencia);
     }
 
     @Test
     void deveExecutarRetriesMesmoQuandoProcessamentoNormalFalhar() {
-        doThrow(
-                new RuntimeException(
-                        "Falha geral nas notificações normais"
-                )
-        ).when(processamentoNotificacaoLoteService)
+        doThrow(new RuntimeException("Falha geral nas notificações normais")).when(processamentoNotificacaoLoteService)
                 .processar(referencia);
 
         service.executar(referencia);
@@ -82,11 +64,7 @@ class CicloNotificacaoServiceImplTest {
 
     @Test
     void deveEncerrarCicloSemPropagarErroQuandoRetryFalhar() {
-        doThrow(
-                new RuntimeException(
-                        "Falha geral nos retries"
-                )
-        ).when(processamentoRetryNotificacaoService)
+        doThrow(new RuntimeException("Falha geral nos retries")).when(processamentoRetryNotificacaoService)
                 .processar(referencia);
 
         service.executar(referencia);
@@ -100,14 +78,8 @@ class CicloNotificacaoServiceImplTest {
 
     @Test
     void deveRejeitarReferenciaNula() {
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> service.executar(null)
-        );
+        assertThrows(IllegalArgumentException.class, () -> service.executar(null));
 
-        verifyNoInteractions(
-                processamentoNotificacaoLoteService,
-                processamentoRetryNotificacaoService
-        );
+        verifyNoInteractions(processamentoNotificacaoLoteService, processamentoRetryNotificacaoService);
     }
 }

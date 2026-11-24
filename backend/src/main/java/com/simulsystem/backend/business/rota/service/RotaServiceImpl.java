@@ -1,10 +1,5 @@
 package com.simulsystem.backend.business.rota.service;
 
-import java.util.List;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.simulsystem.backend.business.cronograma.model.Cronograma;
 import com.simulsystem.backend.business.cronograma.service.CronogramaService;
 import com.simulsystem.backend.business.rota.dto.AreaAtendidaRequestDTO;
@@ -24,6 +19,12 @@ import com.simulsystem.backend.business.rota.repository.RotaRepository;
 import com.simulsystem.backend.business.rota.validation.AreaAtendidaValidation;
 import com.simulsystem.backend.business.rota.validation.RotaValidation;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+/** Implementação de RotaService. */
 @Service
 public class RotaServiceImpl implements RotaService {
 
@@ -56,52 +57,25 @@ public class RotaServiceImpl implements RotaService {
     }
 
     @Override
-    public RotaResponseDTO cadastrarRota(
-            RotaRequestDTO requestDTO
-    ) {
-        Rota rota =
-                rotaMapper.toEntity(
-                        requestDTO
-                );
+    public RotaResponseDTO cadastrarRota(RotaRequestDTO requestDTO) {
+        Rota rota = rotaMapper.toEntity(requestDTO);
 
-        Rota rotaSalva =
-                rotaRepository.save(
-                        rota
-                );
+        Rota rotaSalva = rotaRepository.save(rota);
 
-        return rotaMapper.toResponseDTO(
-                rotaSalva
-        );
+        return rotaMapper.toResponseDTO(rotaSalva);
     }
 
     @Override
-    public AreaAtendidaResponseDTO cadastrarAreaAtendida(
-            AreaAtendidaRequestDTO requestDTO
-    ) {
-        areaAtendidaValidation.validarAreaNaoCadastrada(
-                requestDTO.cidade(),
-                requestDTO.bairro()
-        );
+    public AreaAtendidaResponseDTO cadastrarAreaAtendida(AreaAtendidaRequestDTO requestDTO) {
+        areaAtendidaValidation.validarAreaNaoCadastrada(requestDTO.cidade(), requestDTO.bairro());
 
-        Rota rota =
-                rotaValidation.buscarRotaExistente(
-                        requestDTO.rotaId()
-                );
+        Rota rota = rotaValidation.buscarRotaExistente(requestDTO.rotaId());
 
-        AreaAtendida areaAtendida =
-                areaAtendidaMapper.toEntity(
-                        requestDTO,
-                        rota
-                );
+        AreaAtendida areaAtendida = areaAtendidaMapper.toEntity(requestDTO, rota);
 
-        AreaAtendida areaSalva =
-                areaAtendidaRepository.save(
-                        areaAtendida
-                );
+        AreaAtendida areaSalva = areaAtendidaRepository.save(areaAtendida);
 
-        return areaAtendidaMapper.toResponseDTO(
-                areaSalva
-        );
+        return areaAtendidaMapper.toResponseDTO(areaSalva);
     }
 
     @Override
@@ -109,77 +83,37 @@ public class RotaServiceImpl implements RotaService {
         return areaAtendidaRepository
                 .findAll()
                 .stream()
-                .map(
-                        areaAtendidaMapper::toResponseDTO
-                )
+                .map(areaAtendidaMapper::toResponseDTO)
                 .toList();
     }
 
     @Override
-    public AreaAtendidaResponseDTO atualizarAreaAtendida(
-            Long id,
-            AreaAtendidaRequestDTO requestDTO
-    ) {
-        AreaAtendida areaAtendida =
-                areaAtendidaValidation.buscarPorId(
-                        id
-                );
+    public AreaAtendidaResponseDTO atualizarAreaAtendida(Long id, AreaAtendidaRequestDTO requestDTO) {
+        AreaAtendida areaAtendida = areaAtendidaValidation.buscarPorId(id);
 
-        areaAtendidaValidation
-                .validarAreaNaoCadastradaParaOutroRegistro(
-                        id,
-                        requestDTO.cidade(),
-                        requestDTO.bairro()
-                );
+        areaAtendidaValidation.validarAreaNaoCadastradaParaOutroRegistro(id, requestDTO.cidade(), requestDTO.bairro());
 
-        Rota rota =
-                rotaValidation.buscarRotaExistente(
-                        requestDTO.rotaId()
-                );
+        Rota rota = rotaValidation.buscarRotaExistente(requestDTO.rotaId());
 
-        areaAtendidaMapper.updateEntity(
-                areaAtendida,
-                requestDTO,
-                rota
-        );
+        areaAtendidaMapper.atualizarEntity(areaAtendida, requestDTO, rota);
 
-        AreaAtendida areaAtualizada =
-                areaAtendidaRepository.save(
-                        areaAtendida
-                );
+        AreaAtendida areaAtualizada = areaAtendidaRepository.save(areaAtendida);
 
-        return areaAtendidaMapper.toResponseDTO(
-                areaAtualizada
-        );
+        return areaAtendidaMapper.toResponseDTO(areaAtualizada);
     }
 
     @Override
     @Transactional
-    public AreaGeometriaResponseDTO atualizarGeometriaArea(
-            Long id,
-            AreaGeometriaRequestDTO requestDTO
-    ) {
-        AreaAtendida areaAtendida =
-                areaAtendidaValidation.buscarPorId(
-                        id
-                );
+    public AreaGeometriaResponseDTO atualizarGeometriaArea(Long id, AreaGeometriaRequestDTO requestDTO) {
+        AreaAtendida areaAtendida = areaAtendidaValidation.buscarPorId(id);
 
-        areaAtendidaValidation.validarGeometriaGeoJson(
-                requestDTO.geometriaGeoJson()
-        );
+        areaAtendidaValidation.validarGeometriaGeoJson(requestDTO.geometriaGeoJson());
 
-        areaAtendida.setGeometriaGeoJson(
-                requestDTO.geometriaGeoJson()
-        );
+        areaAtendida.setGeometriaGeoJson(requestDTO.geometriaGeoJson());
 
-        AreaAtendida areaAtualizada =
-                areaAtendidaRepository.save(
-                        areaAtendida
-                );
+        AreaAtendida areaAtualizada = areaAtendidaRepository.save(areaAtendida);
 
-        return areaAtendidaMapper.toGeometriaResponseDTO(
-                areaAtualizada
-        );
+        return areaAtendidaMapper.toGeometriaResponseDTO(areaAtualizada);
     }
 
     @Override
@@ -187,35 +121,17 @@ public class RotaServiceImpl implements RotaService {
         return areaAtendidaRepository
                 .findAllByRota_AtivoTrueOrderByCidadeAscBairroAsc()
                 .stream()
-                .map(
-                        areaAtendidaMapper::toAreaDisponivelResponseDTO
-                )
+                .map(areaAtendidaMapper::toAreaDisponivelResponseDTO)
                 .toList();
     }
 
     @Override
-    public ConsultaColetaResponseDTO consultarPorCidadeEBairro(
-            String cidade,
-            String bairro
-    ) {
-        AreaAtendida areaAtendida =
-                areaAtendidaValidation
-                        .buscarAreaAtendidaComRotaAtiva(
-                                cidade,
-                                bairro
-                        );
+    public ConsultaColetaResponseDTO consultarPorCidadeEBairro(String cidade, String bairro) {
+        AreaAtendida areaAtendida = areaAtendidaValidation.buscarAreaAtendidaComRotaAtiva(cidade, bairro);
 
-        List<Cronograma> cronogramas =
-                cronogramaService.buscarAtivosPorRota(
-                        areaAtendida
-                                .getRota()
-                                .getId()
-                );
+        List<Cronograma> cronogramas = cronogramaService.buscarAtivosPorRota(areaAtendida.getRota().getId());
 
-        return rotaMapper.toConsultaColetaResponseDTO(
-                areaAtendida,
-                cronogramas
-        );
+        return rotaMapper.toConsultaColetaResponseDTO(areaAtendida, cronogramas);
     }
 
     @Override
@@ -223,58 +139,29 @@ public class RotaServiceImpl implements RotaService {
         return rotaRepository
                 .findAll()
                 .stream()
-                .map(
-                        rotaMapper::toResponseDTO
-                )
+                .map(rotaMapper::toResponseDTO)
                 .toList();
     }
 
     @Override
-    public RotaResponseDTO atualizarRota(
-            Long id,
-            RotaRequestDTO requestDTO
-    ) {
-        Rota rota =
-                rotaValidation.buscarRotaExistente(
-                        id
-                );
+    public RotaResponseDTO atualizarRota(Long id, RotaRequestDTO requestDTO) {
+        Rota rota = rotaValidation.buscarRotaExistente(id);
 
-        rotaMapper.atualizarEntity(
-                rota,
-                requestDTO
-        );
+        rotaMapper.atualizarEntity(rota, requestDTO);
 
-        Rota rotaAtualizada =
-                rotaRepository.save(
-                        rota
-                );
+        Rota rotaAtualizada = rotaRepository.save(rota);
 
-        return rotaMapper.toResponseDTO(
-                rotaAtualizada
-        );
+        return rotaMapper.toResponseDTO(rotaAtualizada);
     }
 
     @Override
-    public RotaResponseDTO alterarStatus(
-            Long id,
-            boolean ativo
-    ) {
-        Rota rota =
-                rotaValidation.buscarRotaExistente(
-                        id
-                );
+    public RotaResponseDTO alterarStatus(Long id, boolean ativo) {
+        Rota rota = rotaValidation.buscarRotaExistente(id);
 
-        rota.setAtivo(
-                ativo
-        );
+        rota.setAtivo(ativo);
 
-        Rota rotaAtualizada =
-                rotaRepository.save(
-                        rota
-                );
+        Rota rotaAtualizada = rotaRepository.save(rota);
 
-        return rotaMapper.toResponseDTO(
-                rotaAtualizada
-        );
+        return rotaMapper.toResponseDTO(rotaAtualizada);
     }
 }

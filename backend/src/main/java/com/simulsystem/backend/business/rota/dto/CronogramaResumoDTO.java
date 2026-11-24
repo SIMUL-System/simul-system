@@ -4,9 +4,6 @@ import com.simulsystem.backend.business.cronograma.model.DiaSemana;
 
 import java.time.LocalTime;
 
-public record CronogramaResumoDTO(
-        DiaSemana diaSemana,
-        LocalTime horarioInicio,
-        LocalTime horarioFim
-) {
+/** Horário de coleta resumido, usado na consulta pública. */
+public record CronogramaResumoDTO(DiaSemana diaSemana, LocalTime horarioInicio, LocalTime horarioFim) {
 }

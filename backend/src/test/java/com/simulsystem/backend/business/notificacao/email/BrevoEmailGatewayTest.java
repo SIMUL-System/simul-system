@@ -1,6 +1,7 @@
 package com.simulsystem.backend.business.notificacao.email;
 
 import com.simulsystem.backend.core.exception.EnvioEmailException;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
@@ -26,12 +27,7 @@ class BrevoEmailGatewayTest {
     void setUp() {
         RestClient.Builder builder = RestClient.builder();
         servidor = MockRestServiceServer.bindTo(builder).build();
-        gateway = new BrevoEmailGateway(
-                builder,
-                "chave-teste",
-                "simul.sistema@gmail.com",
-                "SIMUL"
-        );
+        gateway = new BrevoEmailGateway(builder, "chave-teste", "simul.sistema@gmail.com", "SIMUL");
     }
 
     @Test
@@ -56,10 +52,7 @@ class BrevoEmailGatewayTest {
         servidor.expect(requestTo(BrevoEmailGateway.URL_ENVIO))
                 .andRespond(withStatus(HttpStatus.UNAUTHORIZED));
 
-        assertThrows(
-                EnvioEmailException.class,
-                () -> gateway.enviar("morador@exemplo.com", "Assunto", "Texto")
-        );
+        assertThrows(EnvioEmailException.class, () -> gateway.enviar("morador@exemplo.com", "Assunto", "Texto"));
     }
 
     @Test

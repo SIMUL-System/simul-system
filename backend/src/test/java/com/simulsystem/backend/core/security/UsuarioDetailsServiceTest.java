@@ -3,6 +3,7 @@ package com.simulsystem.backend.core.security;
 import com.simulsystem.backend.business.usuario.model.PerfilUsuario;
 import com.simulsystem.backend.business.usuario.model.Usuario;
 import com.simulsystem.backend.business.usuario.repository.UsuarioRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,48 +28,27 @@ class UsuarioDetailsServiceTest {
 
     @BeforeEach
     void setUp() {
-        usuarioDetailsService =
-                new UsuarioDetailsService(
-                        usuarioRepository
-                );
+        usuarioDetailsService = new UsuarioDetailsService(usuarioRepository);
     }
 
     @Test
     void deveCarregarUsuarioAtivoComRoleUsuario() {
-        String email =
-                "usuario@simul.local";
+        String email = "usuario@simul.local";
 
-        Usuario usuario =
-                new Usuario();
+        Usuario usuario = new Usuario();
 
         usuario.setEmail(email);
-        usuario.setSenha(
-                "$2a$10$senhaCriptografada"
-        );
-        usuario.setPerfil(
-                PerfilUsuario.USUARIO
-        );
+        usuario.setSenha("$2a$10$senhaCriptografada");
+        usuario.setPerfil(PerfilUsuario.USUARIO);
         usuario.setAtivo(true);
 
-        when(
-                usuarioRepository
-                        .findByEmailIgnoreCase(email)
-        ).thenReturn(
-                Optional.of(usuario)
-        );
+        when(usuarioRepository.findByEmailIgnoreCase(email)).thenReturn(Optional.of(usuario));
 
-        UserDetails resultado =
-                usuarioDetailsService
-                        .loadUserByUsername(email);
+        UserDetails resultado = usuarioDetailsService.loadUserByUsername(email);
 
-        assertEquals(
-                email,
-                resultado.getUsername()
-        );
+        assertEquals(email, resultado.getUsername());
 
-        assertTrue(
-                resultado.isEnabled()
-        );
+        assertTrue(resultado.isEnabled());
 
         assertTrue(
                 resultado
@@ -77,44 +57,27 @@ class UsuarioDetailsServiceTest {
                         .anyMatch(authority ->
                                 authority
                                         .getAuthority()
-                                        .equals(
-                                                "ROLE_USUARIO"
-                                        )
+                                        .equals("ROLE_USUARIO")
                         )
         );
 
-        verify(
-                usuarioRepository
-        ).findByEmailIgnoreCase(email);
+        verify(usuarioRepository).findByEmailIgnoreCase(email);
     }
 
     @Test
     void deveCarregarAdministradorComRoleAdmin() {
-        String email =
-                "admin@simul.local";
+        String email = "admin@simul.local";
 
-        Usuario usuario =
-                new Usuario();
+        Usuario usuario = new Usuario();
 
         usuario.setEmail(email);
-        usuario.setSenha(
-                "$2a$10$senhaCriptografada"
-        );
-        usuario.setPerfil(
-                PerfilUsuario.ADMIN
-        );
+        usuario.setSenha("$2a$10$senhaCriptografada");
+        usuario.setPerfil(PerfilUsuario.ADMIN);
         usuario.setAtivo(true);
 
-        when(
-                usuarioRepository
-                        .findByEmailIgnoreCase(email)
-        ).thenReturn(
-                Optional.of(usuario)
-        );
+        when(usuarioRepository.findByEmailIgnoreCase(email)).thenReturn(Optional.of(usuario));
 
-        UserDetails resultado =
-                usuarioDetailsService
-                        .loadUserByUsername(email);
+        UserDetails resultado = usuarioDetailsService.loadUserByUsername(email);
 
         assertTrue(
                 resultado
@@ -123,65 +86,35 @@ class UsuarioDetailsServiceTest {
                         .anyMatch(authority ->
                                 authority
                                         .getAuthority()
-                                        .equals(
-                                                "ROLE_ADMIN"
-                                        )
+                                        .equals("ROLE_ADMIN")
                         )
         );
     }
 
     @Test
     void deveMarcarUsuarioInativoComoDesabilitado() {
-        String email =
-                "inativo@simul.local";
+        String email = "inativo@simul.local";
 
-        Usuario usuario =
-                new Usuario();
+        Usuario usuario = new Usuario();
 
         usuario.setEmail(email);
-        usuario.setSenha(
-                "$2a$10$senhaCriptografada"
-        );
-        usuario.setPerfil(
-                PerfilUsuario.USUARIO
-        );
+        usuario.setSenha("$2a$10$senhaCriptografada");
+        usuario.setPerfil(PerfilUsuario.USUARIO);
         usuario.setAtivo(false);
 
-        when(
-                usuarioRepository
-                        .findByEmailIgnoreCase(email)
-        ).thenReturn(
-                Optional.of(usuario)
-        );
+        when(usuarioRepository.findByEmailIgnoreCase(email)).thenReturn(Optional.of(usuario));
 
-        UserDetails resultado =
-                usuarioDetailsService
-                        .loadUserByUsername(email);
+        UserDetails resultado = usuarioDetailsService.loadUserByUsername(email);
 
-        assertFalse(
-                resultado.isEnabled()
-        );
+        assertFalse(resultado.isEnabled());
     }
 
     @Test
     void deveLancarExcecaoQuandoUsuarioNaoExistir() {
-        String email =
-                "inexistente@simul.local";
+        String email = "inexistente@simul.local";
 
-        when(
-                usuarioRepository
-                        .findByEmailIgnoreCase(email)
-        ).thenReturn(
-                Optional.empty()
-        );
+        when(usuarioRepository.findByEmailIgnoreCase(email)).thenReturn(Optional.empty());
 
-        assertThrows(
-                UsernameNotFoundException.class,
-                () ->
-                        usuarioDetailsService
-                                .loadUserByUsername(
-                                        email
-                                )
-        );
+        assertThrows(UsernameNotFoundException.class, () -> usuarioDetailsService.loadUserByUsername(email));
     }
 }

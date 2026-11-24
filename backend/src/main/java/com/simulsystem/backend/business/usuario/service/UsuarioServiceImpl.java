@@ -13,6 +13,7 @@ import com.simulsystem.backend.core.exception.EmailNaoVerificadoException;
 import com.simulsystem.backend.core.exception.EnvioEmailException;
 import com.simulsystem.backend.core.exception.UsuarioNaoEncontradoException;
 import com.simulsystem.backend.core.security.JwtService;
+import com.simulsystem.backend.core.util.Textos;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,13 +24,11 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Locale;
-
+/** Implementação de UsuarioService. */
 @Service
 public class UsuarioServiceImpl implements UsuarioService {
 
-    private static final Logger LOG =
-            LoggerFactory.getLogger(UsuarioServiceImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(UsuarioServiceImpl.class);
 
     private final UsuarioRepository usuarioRepository;
     private final UsuarioMapper usuarioMapper;
@@ -59,7 +58,7 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     public UsuarioResponseDTO cadastrar(UsuarioRequestDTO requestDTO) {
-        String emailNormalizado = normalizarEmail(requestDTO.email());
+        String emailNormalizado = Textos.normalizarEmail(requestDTO.email());
 
         usuarioValidation.validarEmailNaoCadastrado(emailNormalizado);
 
@@ -89,38 +88,28 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     public LoginResponseDTO autenticar(LoginRequestDTO requestDTO) {
-        String emailNormalizado = normalizarEmail(requestDTO.email());
+        String emailNormalizado = Textos.normalizarEmail(requestDTO.email());
 
         try {
             Authentication authentication = authenticationManager.authenticate(
-                    UsernamePasswordAuthenticationToken.unauthenticated(
-                            emailNormalizado,
-                            requestDTO.senha()
-                    )
+                    UsernamePasswordAuthenticationToken.unauthenticated(emailNormalizado, requestDTO.senha())
             );
 
             Usuario usuario = usuarioRepository
                     .findByEmailIgnoreCase(emailNormalizado)
                     .orElseThrow(() ->
-                            new CredenciaisInvalidasException(
-                                    "E-mail ou senha inválidos."
-                            )
+                            new CredenciaisInvalidasException("E-mail ou senha inválidos.")
                     );
 
             if (!Boolean.TRUE.equals(usuario.getEmailVerificado())) {
-                throw new EmailNaoVerificadoException(
-                        "Confirme seu e-mail antes de entrar."
-                );
+                throw new EmailNaoVerificadoException("Confirme seu e-mail antes de entrar.");
             }
 
             String token = jwtService.gerarToken(authentication);
 
             return new LoginResponseDTO(token, "Bearer");
-
         } catch (AuthenticationException exception) {
-            throw new CredenciaisInvalidasException(
-                    "E-mail ou senha inválidos."
-            );
+            throw new CredenciaisInvalidasException("E-mail ou senha inválidos.");
         }
     }
 
@@ -133,22 +122,12 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     public Usuario buscarEntidadePorEmail(String email) {
-        String emailNormalizado = normalizarEmail(email);
+        String emailNormalizado = Textos.normalizarEmail(email);
 
         return usuarioRepository
                 .findByEmailIgnoreCase(emailNormalizado)
                 .orElseThrow(() ->
-                        new UsuarioNaoEncontradoException(
-                                "Usuário autenticado não foi encontrado."
-                        )
+                        new UsuarioNaoEncontradoException("Usuário autenticado não foi encontrado.")
                 );
-    }
-
-    private String normalizarEmail(String email) {
-        if (email == null) {
-            return null;
-        }
-
-        return email.trim().toLowerCase(Locale.ROOT);
     }
 }

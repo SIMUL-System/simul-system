@@ -123,43 +123,32 @@ class SecurityHttpTest {
     void deveRetornar401AoAcessarEndpointProtegidoSemToken() throws Exception {
         mockMvc.perform(get("/api/usuarios/me"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(content().contentTypeCompatibleWith(
-                        MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.title").value("Não autorizado"))
                 .andExpect(jsonPath("$.status").value(401))
-                .andExpect(jsonPath("$.detail").value(
-                        "Autenticação necessária ou token inválido."))
+                .andExpect(jsonPath("$.detail").value("Autenticação necessária ou token inválido."))
                 .andExpect(jsonPath("$.instance").value("/api/usuarios/me"));
     }
 
     @Test
     void deveBloquearUsuarioComumEmEndpointAdmin() throws Exception {
         when(jwtDecoder.decode("token-usuario"))
-                .thenReturn(criarJwt(
-                        "token-usuario",
-                        "usuario@simul.local",
-                        "USUARIO"));
+                .thenReturn(criarJwt("token-usuario", "usuario@simul.local", "USUARIO"));
 
         mockMvc.perform(get("/api/admin/usuarios/verificar-acesso")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer token-usuario"))
                 .andExpect(status().isForbidden())
-                .andExpect(content().contentTypeCompatibleWith(
-                        MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.title").value("Acesso negado"))
                 .andExpect(jsonPath("$.status").value(403))
-                .andExpect(jsonPath("$.detail").value(
-                        "Você não possui permissão para acessar este recurso."))
-                .andExpect(jsonPath("$.instance").value(
-                        "/api/admin/usuarios/verificar-acesso"));
+                .andExpect(jsonPath("$.detail").value("Você não possui permissão para acessar este recurso."))
+                .andExpect(jsonPath("$.instance").value("/api/admin/usuarios/verificar-acesso"));
     }
 
     @Test
     void devePermitirAdminEmEndpointAdmin() throws Exception {
         when(jwtDecoder.decode("token-admin"))
-                .thenReturn(criarJwt(
-                        "token-admin",
-                        "admin@simul.local",
-                        "ADMIN"));
+                .thenReturn(criarJwt("token-admin", "admin@simul.local", "ADMIN"));
 
         mockMvc.perform(get("/api/admin/usuarios/verificar-acesso")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer token-admin"))

@@ -86,7 +86,8 @@ export const ITENS_JOGO = [
   {
     nome: 'Espelho quebrado',
     destino: 'rejeito',
-    explicacao: 'Não reciclável. Espelho não é reciclado como vidro comum. Embrulhe em jornal para ninguém se cortar.',
+    explicacao:
+      'Não reciclável. Espelho não é reciclado como vidro comum. Embrulhe em jornal para ninguém se cortar.',
   },
   {
     nome: 'Jornal velho',
@@ -101,7 +102,8 @@ export const ITENS_JOGO = [
   {
     nome: 'Pilha usada',
     destino: 'entrega',
-    explicacao: 'Ponto de entrega! Pilhas têm substâncias tóxicas e vão para coletores em lojas e supermercados.',
+    explicacao:
+      'Ponto de entrega! Pilhas têm substâncias tóxicas e vão para coletores em lojas e supermercados.',
   },
   {
     nome: 'Pote de iogurte',
@@ -181,8 +183,18 @@ export const MATERIAIS = [
     id: 'papel',
     nome: 'Papel e papelão',
     cor: 'recycle-paper',
-    vai: ['Caixas de papelão', 'Jornais e revistas', 'Folhas e cadernos', 'Caixas de leite (longa vida)'],
-    naoVai: ['Guardanapo e papel engordurado', 'Papel higiênico', 'Fotografias', 'Etiquetas adesivas'],
+    vai: [
+      'Caixas de papelão',
+      'Jornais e revistas',
+      'Folhas e cadernos',
+      'Caixas de leite (longa vida)',
+    ],
+    naoVai: [
+      'Guardanapo e papel engordurado',
+      'Papel higiênico',
+      'Fotografias',
+      'Etiquetas adesivas',
+    ],
     dica: 'Mantenha o papel seco. Papel molhado ou com gordura não é reciclado.',
   },
   {
@@ -238,7 +250,8 @@ export const MITOS = [
   {
     frase: 'O Brasil é um dos países que mais reciclam latinhas.',
     verdade: true,
-    resposta: 'Verdade! Mais de 97% das latas de alumínio vendidas no Brasil voltam para a reciclagem.',
+    resposta:
+      'Verdade! Mais de 97% das latas de alumínio vendidas no Brasil voltam para a reciclagem.',
   },
   {
     frase: 'Pilha pode ir no lixo comum se for pequena.',

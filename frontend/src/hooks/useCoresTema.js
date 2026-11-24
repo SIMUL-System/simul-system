@@ -1,20 +1,11 @@
-import {
-  useEffect,
-  useState,
-} from 'react'
+import { useEffect, useState } from 'react'
 
+/** Lê as cores atuais dos tokens CSS (mudam com o tema). */
 function lerCores(nomes) {
-  const estilo = getComputedStyle(
-    document.documentElement,
-  )
+  const estilo = getComputedStyle(document.documentElement)
 
   return Object.fromEntries(
-    nomes.map((nome) => [
-      nome,
-      estilo
-        .getPropertyValue(`--${nome}`)
-        .trim(),
-    ]),
+    nomes.map((nome) => [nome, estilo.getPropertyValue(`--${nome}`).trim()]),
   )
 }
 
@@ -26,9 +17,7 @@ function lerCores(nomes) {
 export function useCoresTema(nomes) {
   const chave = nomes.join('|')
 
-  const [cores, setCores] = useState(() =>
-    lerCores(nomes),
-  )
+  const [cores, setCores] = useState(() => lerCores(nomes))
 
   useEffect(() => {
     const lista = chave.split('|')

@@ -1,7 +1,4 @@
-import {
-  useEffect,
-  useState,
-} from 'react'
+import { useEffect, useState } from 'react'
 
 import Alerta from '../../components/Alerta'
 import DialogoConfirmacao from '../../components/admin/DialogoConfirmacao'
@@ -21,24 +18,15 @@ import {
 
 import { listarRotas } from '../../services/adminRotaService'
 
-import {
-  horaCurta,
-  horaParaApi,
-  listarDias,
-  montarGrade,
-  nomeDia,
-} from '../../utils/cronogramas'
+import { horaCurta, horaParaApi, listarDias, montarGrade, nomeDia } from '../../utils/cronogramas'
+import { comoLista } from '../../utils/texto'
 
-function comoLista(dados) {
-  return Array.isArray(dados) ? dados : []
-}
-
+/** Admin: grade semanal de horários, criação de vários dias e alteração em massa. */
 function CronogramasAdminPage() {
   const [rotas, setRotas] = useState([])
   const [cronogramas, setCronogramas] = useState([])
   const [carregando, setCarregando] = useState(true)
   const [erroCarga, setErroCarga] = useState('')
-
   const [mensagem, setMensagem] = useState(null)
   const [mostrarInativos, setMostrarInativos] = useState(false)
   const [selecionadas, setSelecionadas] = useState([])
@@ -73,10 +61,7 @@ function CronogramasAdminPage() {
   }, [])
 
   async function recarregar() {
-    const [dadosRotas, dadosCronogramas] = await Promise.all([
-      listarRotas(),
-      listarCronogramas(),
-    ])
+    const [dadosRotas, dadosCronogramas] = await Promise.all([listarRotas(), listarCronogramas()])
 
     setRotas(comoLista(dadosRotas))
     setCronogramas(comoLista(dadosCronogramas))
@@ -87,12 +72,8 @@ function CronogramasAdminPage() {
     .filter((rota) => rota.ativo)
     .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
 
-  const linhasSelecionadas = linhas.filter((linha) =>
-    selecionadas.includes(linha.rota.id),
-  )
-  const idsSelecionados = linhasSelecionadas.flatMap((linha) =>
-    linha.ativos.map((item) => item.id),
-  )
+  const linhasSelecionadas = linhas.filter((linha) => selecionadas.includes(linha.rota.id))
+  const idsSelecionados = linhasSelecionadas.flatMap((linha) => linha.ativos.map((item) => item.id))
 
   function nomeRota(rotaId) {
     return rotas.find((rota) => rota.id === rotaId)?.nome ?? `Rota ${rotaId}`
@@ -102,9 +83,7 @@ function CronogramasAdminPage() {
 
   function alternarRota(rotaId) {
     setSelecionadas((atuais) =>
-      atuais.includes(rotaId)
-        ? atuais.filter((id) => id !== rotaId)
-        : [...atuais, rotaId],
+      atuais.includes(rotaId) ? atuais.filter((id) => id !== rotaId) : [...atuais, rotaId],
     )
   }
 
@@ -194,7 +173,9 @@ function CronogramasAdminPage() {
         `Não foi possível criar: ${falhas
           .map((falha) => `${nomeDia(falha.dia)} (${falha.motivo || 'erro desconhecido'})`)
           .join('; ')}.`,
-      ].join(' ').trim(),
+      ]
+        .join(' ')
+        .trim(),
     })
   }
 
@@ -265,11 +246,7 @@ function CronogramasAdminPage() {
     setMensagem(null)
 
     try {
-      await alterarHorariosEmLote(
-        idsSelecionados,
-        horaParaApi(inicio),
-        horaParaApi(fim),
-      )
+      await alterarHorariosEmLote(idsSelecionados, horaParaApi(inicio), horaParaApi(fim))
       await recarregar()
       setPainel(null)
       setSelecionadas([])
@@ -328,14 +305,8 @@ function CronogramasAdminPage() {
 
   if (carregando) {
     return (
-      <div
-        className="carregando"
-        role="status"
-      >
-        <span
-          className="carregando__spinner"
-          aria-hidden="true"
-        />
+      <div className="carregando" role="status">
+        <span className="carregando__spinner" aria-hidden="true" />
         Carregando cronogramas…
       </div>
     )
@@ -357,8 +328,8 @@ function CronogramasAdminPage() {
         <div>
           <h1 className="admin-pagina__titulo">Cronogramas</h1>
           <p className="admin-pagina__texto">
-            Cada linha é uma rota e cada coluna, um dia. Toque num horário para
-            editar ou num espaço vazio para criar.
+            Cada linha é uma rota e cada coluna, um dia. Toque num horário para editar ou num espaço
+            vazio para criar.
           </p>
         </div>
 
@@ -372,32 +343,19 @@ function CronogramasAdminPage() {
             Mostrar inativos
           </label>
 
-          <button
-            type="button"
-            className="botao botao--primario"
-            onClick={() => abrirNovo()}
-          >
+          <button type="button" className="botao botao--primario" onClick={() => abrirNovo()}>
             Novo cronograma
           </button>
         </div>
       </header>
 
-      {mensagem && (
-        <Alerta tipo={mensagem.tipo}>{mensagem.texto}</Alerta>
-      )}
+      {mensagem && <Alerta tipo={mensagem.tipo}>{mensagem.texto}</Alerta>}
 
       <div className={`admin-area ${painel ? 'admin-area--com-painel' : ''}`}>
-        <section
-          className="admin-quadro"
-          aria-label="Grade semanal de cronogramas"
-        >
+        <section className="admin-quadro" aria-label="Grade semanal de cronogramas">
           <div className="admin-quadro__barra">
             <span className="admin-quadro__rotulo">Selecionar:</span>
-            <button
-              type="button"
-              className="atalho"
-              onClick={() => selecionar(() => true)}
-            >
+            <button type="button" className="atalho" onClick={() => selecionar(() => true)}>
               Todas
             </button>
             <button
@@ -417,10 +375,7 @@ function CronogramasAdminPage() {
           </div>
 
           {selecionadas.length > 0 && (
-            <div
-              className="barra-selecao"
-              role="status"
-            >
+            <div className="barra-selecao" role="status">
               <strong className="barra-selecao__texto">
                 {idsSelecionados.length} horários selecionados em{' '}
                 {selecionadas.length === 1 ? '1 rota' : `${selecionadas.length} rotas`}
@@ -469,15 +424,24 @@ function CronogramasAdminPage() {
             />
           )}
 
-          <ul
-            className="legenda-horarios"
-            aria-label="Legenda"
-          >
-            <li><span className="legenda-horarios__amostra legenda-horarios__amostra--diurno" />Diurno</li>
-            <li><span className="legenda-horarios__amostra legenda-horarios__amostra--noturno" />Noturno</li>
-            <li><span className="legenda-horarios__amostra legenda-horarios__amostra--vazio" />Sem coleta</li>
+          <ul className="legenda-horarios" aria-label="Legenda">
+            <li>
+              <span className="legenda-horarios__amostra legenda-horarios__amostra--diurno" />
+              Diurno
+            </li>
+            <li>
+              <span className="legenda-horarios__amostra legenda-horarios__amostra--noturno" />
+              Noturno
+            </li>
+            <li>
+              <span className="legenda-horarios__amostra legenda-horarios__amostra--vazio" />
+              Sem coleta
+            </li>
             {mostrarInativos && (
-              <li><span className="legenda-horarios__amostra legenda-horarios__amostra--inativo" />Inativo</li>
+              <li>
+                <span className="legenda-horarios__amostra legenda-horarios__amostra--inativo" />
+                Inativo
+              </li>
             )}
           </ul>
         </section>
@@ -540,9 +504,8 @@ function CronogramasAdminPage() {
             <strong>{nomeRota(confirmacao.cronograma.rotaId)}</strong>, na{' '}
             {nomeDia(confirmacao.cronograma.diaSemana)}, das{' '}
             {horaCurta(confirmacao.cronograma.horarioInicio)} às{' '}
-            {horaCurta(confirmacao.cronograma.horarioFim)}. Os moradores deixam
-            de ver este horário na consulta e de receber lembrete para ele.
-            Você pode reativar depois.
+            {horaCurta(confirmacao.cronograma.horarioFim)}. Os moradores deixam de ver este horário
+            na consulta e de receber lembrete para ele. Você pode reativar depois.
           </p>
         )}
       </DialogoConfirmacao>
@@ -559,9 +522,8 @@ function CronogramasAdminPage() {
       >
         <p>
           Todos os horários ativos de{' '}
-          {linhasSelecionadas.map((linha) => linha.rota.nome).join(', ')}{' '}
-          deixam de aparecer na consulta e de gerar lembretes. Você pode
-          reativar cada um depois.
+          {linhasSelecionadas.map((linha) => linha.rota.nome).join(', ')} deixam de aparecer na
+          consulta e de gerar lembretes. Você pode reativar cada um depois.
         </p>
       </DialogoConfirmacao>
     </div>

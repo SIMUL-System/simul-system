@@ -10,16 +10,9 @@ const ICONES = {
 /**
  * Alert do Design System. Erro usa role="alert"; os demais, role="status".
  */
-function Alerta({
-  tipo = 'info',
-  titulo,
-  children,
-}) {
+function Alerta({ tipo = 'info', titulo, children }) {
   return (
-    <div
-      className={`alerta alerta--${tipo}`}
-      role={tipo === 'erro' ? 'alert' : 'status'}
-    >
+    <div className={`alerta alerta--${tipo}`} role={tipo === 'erro' ? 'alert' : 'status'}>
       <Icone nome={ICONES[tipo]} />
 
       <div>

@@ -1,6 +1,7 @@
 package com.simulsystem.backend.business.notificacao.email;
 
 import com.simulsystem.backend.core.exception.EnvioEmailException;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.MailException;
@@ -14,30 +15,20 @@ import org.springframework.stereotype.Component;
  * lá use SIMUL_MAIL_PROVEDOR=brevo.
  */
 @Component
-@ConditionalOnProperty(
-        name = "simul.mail.provedor",
-        havingValue = "smtp",
-        matchIfMissing = true
-)
+@ConditionalOnProperty(name = "simul.mail.provedor", havingValue = "smtp", matchIfMissing = true)
 public class SmtpEmailGateway implements EmailGateway {
 
     private final JavaMailSender mailSender;
     private final String remetente;
 
-    public SmtpEmailGateway(
-            JavaMailSender mailSender,
-            @Value("${simul.mail.remetente}") String remetente
-    ) {
+    public SmtpEmailGateway(JavaMailSender mailSender, @Value("${simul.mail.remetente}") String remetente) {
         this.mailSender = mailSender;
         this.remetente = remetente;
     }
 
+    /** Envia por SMTP; falha vira EnvioEmailException. */
     @Override
-    public void enviar(
-            String destinatario,
-            String assunto,
-            String texto
-    ) {
+    public void enviar(String destinatario, String assunto, String texto) {
         SimpleMailMessage email = new SimpleMailMessage();
 
         email.setFrom(remetente);
@@ -48,10 +39,7 @@ public class SmtpEmailGateway implements EmailGateway {
         try {
             mailSender.send(email);
         } catch (MailException exception) {
-            throw new EnvioEmailException(
-                    "Não foi possível enviar o e-mail por SMTP.",
-                    exception
-            );
+            throw new EnvioEmailException("Não foi possível enviar o e-mail por SMTP.", exception);
         }
     }
 }

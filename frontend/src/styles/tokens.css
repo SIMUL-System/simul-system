@@ -34,8 +34,8 @@
   --recycle-organic: #7a4b2a;
   --recycle-rejeito: #5b6672;
   --recycle-especial: #b4470c;
-  --shadow-card: 0 1px 2px rgba(19,33,49,0.06), 0 2px 8px rgba(19,33,49,0.06);
-  --shadow-overlay: 0 8px 24px rgba(19,33,49,0.16);
+  --shadow-card: 0 1px 2px rgba(19, 33, 49, 0.06), 0 2px 8px rgba(19, 33, 49, 0.06);
+  --shadow-overlay: 0 8px 24px rgba(19, 33, 49, 0.16);
 }
 
 [data-theme='dark'] {
@@ -64,12 +64,12 @@
   --recycle-organic: #c08a5e;
   --recycle-rejeito: #9aa6b2;
   --recycle-especial: #f0915a;
-  --shadow-card: 0 1px 2px rgba(0,0,0,0.4);
-  --shadow-overlay: 0 8px 24px rgba(0,0,0,0.5);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-overlay: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
 :root {
-  --font-sans: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --font-sans: 'Public Sans', 'Segoe UI', system-ui, sans-serif;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;

@@ -1,7 +1,4 @@
-import {
-  useEffect,
-  useState,
-} from 'react'
+import { useEffect, useState } from 'react'
 
 import Alerta from '../../components/Alerta'
 import DialogoConfirmacao from '../../components/admin/DialogoConfirmacao'
@@ -18,29 +15,16 @@ import {
   listarRotas,
 } from '../../services/adminRotaService'
 
-import {
-  ordenarTexto,
-  resumirColetaDaRota,
-} from '../../utils/areas'
+import { resumirColetaDaRota } from '../../utils/areas'
+import { comoLista, ordenarTexto, semAcento } from '../../utils/texto'
 
-function comoLista(dados) {
-  return Array.isArray(dados) ? dados : []
-}
-
-function semAcento(valor) {
-  return (valor ?? '')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLocaleLowerCase('pt-BR')
-}
-
+/** Admin: rotas, com ativação e confirmação ao desativar. */
 function RotasAdminPage() {
   const [rotas, setRotas] = useState([])
   const [areas, setAreas] = useState([])
   const [cronogramas, setCronogramas] = useState([])
   const [carregando, setCarregando] = useState(true)
   const [erroCarga, setErroCarga] = useState('')
-
   const [busca, setBusca] = useState('')
   const [situacao, setSituacao] = useState('todas')
   const [mensagem, setMensagem] = useState(null)
@@ -165,14 +149,8 @@ function RotasAdminPage() {
 
   if (carregando) {
     return (
-      <div
-        className="carregando"
-        role="status"
-      >
-        <span
-          className="carregando__spinner"
-          aria-hidden="true"
-        />
+      <div className="carregando" role="status">
+        <span className="carregando__spinner" aria-hidden="true" />
         Carregando rotas…
       </div>
     )
@@ -196,8 +174,8 @@ function RotasAdminPage() {
         <div>
           <h1 className="admin-pagina__titulo">Rotas</h1>
           <p className="admin-pagina__texto">
-            Uma rota reúne os bairros que têm a mesma coleta. Os horários ficam
-            em Cronogramas; os bairros, em Áreas atendidas.
+            Uma rota reúne os bairros que têm a mesma coleta. Os horários ficam em Cronogramas; os
+            bairros, em Áreas atendidas.
           </p>
         </div>
 
@@ -218,16 +196,10 @@ function RotasAdminPage() {
       {mensagem && <Alerta tipo={mensagem.tipo}>{mensagem.texto}</Alerta>}
 
       <div className={`admin-area ${painel ? 'admin-area--com-painel' : ''}`}>
-        <section
-          className="admin-quadro"
-          aria-label="Lista de rotas"
-        >
+        <section className="admin-quadro" aria-label="Lista de rotas">
           <div className="admin-filtros">
             <div className="campo-ds admin-filtros__busca">
-              <label
-                className="campo-ds__rotulo"
-                htmlFor="rotas-busca"
-              >
+              <label className="campo-ds__rotulo" htmlFor="rotas-busca">
                 Buscar rota
               </label>
               <input

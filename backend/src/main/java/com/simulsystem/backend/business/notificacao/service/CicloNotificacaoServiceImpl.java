@@ -6,14 +6,11 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
+/** Implementação de CicloNotificacaoService; uma etapa com erro não impede a outra. */
 @Service
 public class CicloNotificacaoServiceImpl
         implements CicloNotificacaoService {
-
-    private static final Logger LOGGER =
-            LoggerFactory.getLogger(
-                    CicloNotificacaoServiceImpl.class
-            );
+    private static final Logger LOGGER = LoggerFactory.getLogger(CicloNotificacaoServiceImpl.class);
 
     private final ProcessamentoNotificacaoLoteService
             processamentoNotificacaoLoteService;
@@ -27,52 +24,33 @@ public class CicloNotificacaoServiceImpl
             ProcessamentoRetryNotificacaoService
                     processamentoRetryNotificacaoService
     ) {
-        this.processamentoNotificacaoLoteService =
-                processamentoNotificacaoLoteService;
-
-        this.processamentoRetryNotificacaoService =
-                processamentoRetryNotificacaoService;
+        this.processamentoNotificacaoLoteService = processamentoNotificacaoLoteService;
+        this.processamentoRetryNotificacaoService = processamentoRetryNotificacaoService;
     }
 
     @Override
     public void executar(LocalDateTime referencia) {
         if (referencia == null) {
-            throw new IllegalArgumentException(
-                    "A data e hora de referência são obrigatórias."
-            );
+            throw new IllegalArgumentException("A data e hora de referência são obrigatórias.");
         }
 
         processarNotificacoesNormais(referencia);
         processarRetries(referencia);
     }
 
-    private void processarNotificacoesNormais(
-            LocalDateTime referencia
-    ) {
+    private void processarNotificacoesNormais(LocalDateTime referencia) {
         try {
-            processamentoNotificacaoLoteService
-                    .processar(referencia);
-
+            processamentoNotificacaoLoteService.processar(referencia);
         } catch (RuntimeException exception) {
-            LOGGER.error(
-                    "Falha geral ao processar notificações normais.",
-                    exception
-            );
+            LOGGER.error("Falha geral ao processar notificações normais.", exception);
         }
     }
 
-    private void processarRetries(
-            LocalDateTime referencia
-    ) {
+    private void processarRetries(LocalDateTime referencia) {
         try {
-            processamentoRetryNotificacaoService
-                    .processar(referencia);
-
+            processamentoRetryNotificacaoService.processar(referencia);
         } catch (RuntimeException exception) {
-            LOGGER.error(
-                    "Falha geral ao processar retries de notificações.",
-                    exception
-            );
+            LOGGER.error("Falha geral ao processar retries de notificações.", exception);
         }
     }
 }

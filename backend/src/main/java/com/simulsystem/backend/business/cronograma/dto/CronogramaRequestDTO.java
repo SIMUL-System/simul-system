@@ -1,10 +1,12 @@
 package com.simulsystem.backend.business.cronograma.dto;
 
 import com.simulsystem.backend.business.cronograma.model.DiaSemana;
+
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalTime;
 
+/** Corpo para criar ou editar um horário de coleta (rota, dia, início e fim). */
 public record CronogramaRequestDTO(
 
         @NotNull(message = "A rota é obrigatória.")

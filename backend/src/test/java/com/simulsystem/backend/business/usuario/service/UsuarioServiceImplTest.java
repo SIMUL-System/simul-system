@@ -15,6 +15,7 @@ import com.simulsystem.backend.core.exception.EmailNaoVerificadoException;
 import com.simulsystem.backend.core.exception.EnvioEmailException;
 import com.simulsystem.backend.core.exception.UsuarioNaoEncontradoException;
 import com.simulsystem.backend.core.security.JwtService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -60,8 +61,7 @@ class UsuarioServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        usuarioService =
-                new UsuarioServiceImpl(
+        usuarioService = new UsuarioServiceImpl(
                         usuarioRepository,
                         usuarioMapper,
                         usuarioValidation,
@@ -74,32 +74,18 @@ class UsuarioServiceImplTest {
 
     @Test
     void deveCadastrarUsuarioComSenhaCriptografadaEEmailNormalizado() {
-        UsuarioRequestDTO requestDTO =
-                new UsuarioRequestDTO(
-                        "Usuário Teste",
-                        "Usuario@SIMUL.Local",
-                        "senha123"
-                );
+        UsuarioRequestDTO requestDTO = new UsuarioRequestDTO("Usuário Teste", "Usuario@SIMUL.Local", "senha123");
 
-        Usuario usuario =
-                new Usuario();
+        Usuario usuario = new Usuario();
 
-        Usuario usuarioSalvo =
-                new Usuario();
+        Usuario usuarioSalvo = new Usuario();
 
         usuarioSalvo.setId(1L);
-        usuarioSalvo.setNome(
-                "Usuário Teste"
-        );
-        usuarioSalvo.setEmail(
-                "usuario@simul.local"
-        );
-        usuarioSalvo.setEmailVerificado(
-                false
-        );
+        usuarioSalvo.setNome("Usuário Teste");
+        usuarioSalvo.setEmail("usuario@simul.local");
+        usuarioSalvo.setEmailVerificado(false);
 
-        UsuarioResponseDTO responseDTO =
-                new UsuarioResponseDTO(
+        UsuarioResponseDTO responseDTO = new UsuarioResponseDTO(
                         1L,
                         "Usuário Teste",
                         "usuario@simul.local",
@@ -110,123 +96,46 @@ class UsuarioServiceImplTest {
                         null
                 );
 
-        when(
-                usuarioMapper.toEntity(
-                        requestDTO
-                )
-        ).thenReturn(
-                usuario
-        );
+        when(usuarioMapper.toEntity(requestDTO)).thenReturn(usuario);
 
-        when(
-                passwordEncoder.encode(
-                        "senha123"
-                )
-        ).thenReturn(
-                "$2a$10$senhaCriptografada"
-        );
+        when(passwordEncoder.encode("senha123")).thenReturn("$2a$10$senhaCriptografada");
 
-        when(
-                usuarioRepository.save(
-                        usuario
-                )
-        ).thenReturn(
-                usuarioSalvo
-        );
+        when(usuarioRepository.save(usuario)).thenReturn(usuarioSalvo);
 
-        when(
-                usuarioMapper.toResponseDTO(
-                        usuarioSalvo
-                )
-        ).thenReturn(
-                responseDTO
-        );
+        when(usuarioMapper.toResponseDTO(usuarioSalvo)).thenReturn(responseDTO);
 
-        UsuarioResponseDTO resultado =
-                usuarioService.cadastrar(
-                        requestDTO
-                );
+        UsuarioResponseDTO resultado = usuarioService.cadastrar(requestDTO);
 
-        assertSame(
-                responseDTO,
-                resultado
-        );
+        assertSame(responseDTO, resultado);
 
-        verify(
-                usuarioValidation
-        ).validarEmailNaoCadastrado(
-                "usuario@simul.local"
-        );
+        verify(usuarioValidation).validarEmailNaoCadastrado("usuario@simul.local");
 
-        verify(
-                passwordEncoder
-        ).encode(
-                "senha123"
-        );
+        verify(passwordEncoder).encode("senha123");
 
-        ArgumentCaptor<Usuario> captor =
-                ArgumentCaptor.forClass(
-                        Usuario.class
-                );
+        ArgumentCaptor<Usuario> captor = ArgumentCaptor.forClass(Usuario.class);
 
-        verify(
-                usuarioRepository
-        ).save(
-                captor.capture()
-        );
+        verify(usuarioRepository).save(captor.capture());
 
-        Usuario usuarioCapturado =
-                captor.getValue();
+        Usuario usuarioCapturado = captor.getValue();
 
-        assertEquals(
-                "usuario@simul.local",
-                usuarioCapturado.getEmail()
-        );
+        assertEquals("usuario@simul.local", usuarioCapturado.getEmail());
 
-        assertEquals(
-                "$2a$10$senhaCriptografada",
-                usuarioCapturado.getSenha()
-        );
+        assertEquals("$2a$10$senhaCriptografada", usuarioCapturado.getSenha());
 
-        assertFalse(
-                usuarioCapturado
-                        .getEmailVerificado()
-        );
+        assertFalse(usuarioCapturado.getEmailVerificado());
 
-        verify(
-                verificacaoEmailService
-        ).enviarVerificacao(
-                usuarioSalvo
-        );
+        verify(verificacaoEmailService).enviarVerificacao(usuarioSalvo);
     }
 
     @Test
     void naoDeveCadastrarQuandoEmailJaEstiverCadastrado() {
-        UsuarioRequestDTO requestDTO =
-                new UsuarioRequestDTO(
-                        "Usuário Teste",
-                        "Usuario@SIMUL.Local",
-                        "senha123"
-                );
+        UsuarioRequestDTO requestDTO = new UsuarioRequestDTO("Usuário Teste", "Usuario@SIMUL.Local", "senha123");
 
-        doThrow(
-                new EmailJaCadastradoException(
-                        "Já existe um usuário cadastrado com este e-mail."
-                )
-        ).when(
+        doThrow(new EmailJaCadastradoException("Já existe um usuário cadastrado com este e-mail.")).when(
                 usuarioValidation
-        ).validarEmailNaoCadastrado(
-                "usuario@simul.local"
-        );
+        ).validarEmailNaoCadastrado("usuario@simul.local");
 
-        assertThrows(
-                EmailJaCadastradoException.class,
-                () ->
-                        usuarioService
-                                .cadastrar(
-                                        requestDTO
-                                )
-        );
+        assertThrows(EmailJaCadastradoException.class, () -> usuarioService.cadastrar(requestDTO));
 
         verifyNoInteractions(
                 usuarioMapper,
@@ -240,262 +149,121 @@ class UsuarioServiceImplTest {
 
     @Test
     void deveAutenticarUsuarioVerificadoEGerarTokenJwt() {
-        LoginRequestDTO requestDTO =
-                new LoginRequestDTO(
-                        "Usuario@SIMUL.Local",
-                        "senha123"
-                );
+        LoginRequestDTO requestDTO = new LoginRequestDTO("Usuario@SIMUL.Local", "senha123");
 
-        Authentication authentication =
-                mock(
-                        Authentication.class
-                );
+        Authentication authentication = mock(Authentication.class);
 
-        Usuario usuario =
-                new Usuario();
+        Usuario usuario = new Usuario();
 
         usuario.setId(1L);
-        usuario.setEmail(
-                "usuario@simul.local"
-        );
-        usuario.setEmailVerificado(
-                true
-        );
+        usuario.setEmail("usuario@simul.local");
+        usuario.setEmailVerificado(true);
 
-        when(
-                authenticationManager.authenticate(
-                        any(Authentication.class)
-                )
-        ).thenReturn(
-                authentication
-        );
+        when(authenticationManager.authenticate(any(Authentication.class))).thenReturn(authentication);
 
-        when(
-                usuarioRepository
-                        .findByEmailIgnoreCase(
-                                "usuario@simul.local"
-                        )
-        ).thenReturn(
-                Optional.of(usuario)
-        );
+        when(usuarioRepository.findByEmailIgnoreCase("usuario@simul.local")).thenReturn(Optional.of(usuario));
 
-        when(
-                jwtService.gerarToken(
-                        authentication
-                )
-        ).thenReturn(
-                "token-jwt-teste"
-        );
+        when(jwtService.gerarToken(authentication)).thenReturn("token-jwt-teste");
 
-        LoginResponseDTO resultado =
-                usuarioService.autenticar(
-                        requestDTO
-                );
+        LoginResponseDTO resultado = usuarioService.autenticar(requestDTO);
 
-        assertEquals(
-                "token-jwt-teste",
-                resultado.token()
-        );
+        assertEquals("token-jwt-teste", resultado.token());
 
-        assertEquals(
-                "Bearer",
-                resultado.tipo()
-        );
+        assertEquals("Bearer", resultado.tipo());
 
-        verify(
-                jwtService
-        ).gerarToken(
-                authentication
-        );
+        verify(jwtService).gerarToken(authentication);
     }
 
     @Test
     void naoDeveGerarJwtQuandoEmailNaoEstiverVerificado() {
-        LoginRequestDTO requestDTO =
-                new LoginRequestDTO(
-                        "Usuario@SIMUL.Local",
-                        "senha123"
-                );
+        LoginRequestDTO requestDTO = new LoginRequestDTO("Usuario@SIMUL.Local", "senha123");
 
-        Authentication authentication =
-                mock(
-                        Authentication.class
-                );
+        Authentication authentication = mock(Authentication.class);
 
-        Usuario usuario =
-                new Usuario();
+        Usuario usuario = new Usuario();
 
         usuario.setId(1L);
-        usuario.setEmail(
-                "usuario@simul.local"
-        );
-        usuario.setEmailVerificado(
-                false
-        );
+        usuario.setEmail("usuario@simul.local");
+        usuario.setEmailVerificado(false);
 
-        when(
-                authenticationManager.authenticate(
-                        any(Authentication.class)
-                )
-        ).thenReturn(
-                authentication
-        );
+        when(authenticationManager.authenticate(any(Authentication.class))).thenReturn(authentication);
 
-        when(
-                usuarioRepository
-                        .findByEmailIgnoreCase(
-                                "usuario@simul.local"
-                        )
-        ).thenReturn(
-                Optional.of(usuario)
-        );
+        when(usuarioRepository.findByEmailIgnoreCase("usuario@simul.local")).thenReturn(Optional.of(usuario));
 
-        EmailNaoVerificadoException exception =
-                assertThrows(
+        EmailNaoVerificadoException exception = assertThrows(
                         EmailNaoVerificadoException.class,
                         () ->
                                 usuarioService
-                                        .autenticar(
-                                                requestDTO
-                                        )
+                                        .autenticar(requestDTO)
                 );
 
-        assertEquals(
-                "Confirme seu e-mail antes de entrar.",
-                exception.getMessage()
-        );
+        assertEquals("Confirme seu e-mail antes de entrar.", exception.getMessage());
 
-        verify(
-                jwtService,
-                never()
-        ).gerarToken(
-                any()
-        );
+        verify(jwtService, never()).gerarToken(any());
     }
 
     @Test
     void deveLancarCredenciaisInvalidasQuandoAutenticacaoFalhar() {
-        LoginRequestDTO requestDTO =
-                new LoginRequestDTO(
-                        "Usuario@SIMUL.Local",
-                        "senha-incorreta"
-                );
+        LoginRequestDTO requestDTO = new LoginRequestDTO("Usuario@SIMUL.Local", "senha-incorreta");
 
-        when(
-                authenticationManager.authenticate(
-                        any(Authentication.class)
-                )
-        ).thenThrow(
-                new BadCredentialsException(
-                        "Bad credentials"
-                )
+        when(authenticationManager.authenticate(any(Authentication.class))).thenThrow(
+                new BadCredentialsException("Bad credentials")
         );
 
-        CredenciaisInvalidasException exception =
-                assertThrows(
+        CredenciaisInvalidasException exception = assertThrows(
                         CredenciaisInvalidasException.class,
                         () ->
                                 usuarioService
-                                        .autenticar(
-                                                requestDTO
-                                        )
+                                        .autenticar(requestDTO)
                 );
 
-        assertEquals(
-                "E-mail ou senha inválidos.",
-                exception.getMessage()
-        );
+        assertEquals("E-mail ou senha inválidos.", exception.getMessage());
 
-        verifyNoInteractions(
-                jwtService
-        );
+        verifyNoInteractions(jwtService);
     }
 
     @Test
     void deveBuscarEntidadePorEmailQuandoUsuarioExistir() {
-        String emailInformado =
-                "Usuario@SIMUL.Local";
+        String emailInformado = "Usuario@SIMUL.Local";
 
-        String emailNormalizado =
-                "usuario@simul.local";
+        String emailNormalizado = "usuario@simul.local";
 
-        Usuario usuario =
-                new Usuario();
+        Usuario usuario = new Usuario();
 
         usuario.setId(1L);
-        usuario.setEmail(
-                emailNormalizado
-        );
+        usuario.setEmail(emailNormalizado);
 
-        when(
-                usuarioRepository
-                        .findByEmailIgnoreCase(
-                                emailNormalizado
-                        )
-        ).thenReturn(
-                Optional.of(usuario)
-        );
+        when(usuarioRepository.findByEmailIgnoreCase(emailNormalizado)).thenReturn(Optional.of(usuario));
 
-        Usuario resultado =
-                usuarioService
-                        .buscarEntidadePorEmail(
-                                emailInformado
-                        );
+        Usuario resultado = usuarioService.buscarEntidadePorEmail(emailInformado);
 
-        assertSame(
-                usuario,
-                resultado
-        );
+        assertSame(usuario, resultado);
     }
 
     @Test
     void deveLancarExcecaoQuandoUsuarioNaoForEncontradoPorEmail() {
-        String emailInformado =
-                "Inexistente@SIMUL.Local";
+        String emailInformado = "Inexistente@SIMUL.Local";
 
-        String emailNormalizado =
-                "inexistente@simul.local";
+        String emailNormalizado = "inexistente@simul.local";
 
-        when(
-                usuarioRepository
-                        .findByEmailIgnoreCase(
-                                emailNormalizado
-                        )
-        ).thenReturn(
-                Optional.empty()
-        );
+        when(usuarioRepository.findByEmailIgnoreCase(emailNormalizado)).thenReturn(Optional.empty());
 
-        assertThrows(
-                UsuarioNaoEncontradoException.class,
-                () ->
-                        usuarioService
-                                .buscarEntidadePorEmail(
-                                        emailInformado
-                                )
-        );
+        assertThrows(UsuarioNaoEncontradoException.class, () -> usuarioService.buscarEntidadePorEmail(emailInformado));
     }
 
     @Test
     void deveRetornarDtoDoUsuarioAutenticado() {
-        String emailInformado =
-                "Usuario@SIMUL.Local";
+        String emailInformado = "Usuario@SIMUL.Local";
 
-        String emailNormalizado =
-                "usuario@simul.local";
+        String emailNormalizado = "usuario@simul.local";
 
-        Usuario usuario =
-                new Usuario();
+        Usuario usuario = new Usuario();
 
         usuario.setId(1L);
-        usuario.setEmail(
-                emailNormalizado
-        );
-        usuario.setEmailVerificado(
-                true
-        );
+        usuario.setEmail(emailNormalizado);
+        usuario.setEmailVerificado(true);
 
-        UsuarioResponseDTO responseDTO =
-                new UsuarioResponseDTO(
+        UsuarioResponseDTO responseDTO = new UsuarioResponseDTO(
                         1L,
                         "Usuário Teste",
                         emailNormalizado,
@@ -506,43 +274,18 @@ class UsuarioServiceImplTest {
                         null
                 );
 
-        when(
-                usuarioRepository
-                        .findByEmailIgnoreCase(
-                                emailNormalizado
-                        )
-        ).thenReturn(
-                Optional.of(usuario)
-        );
+        when(usuarioRepository.findByEmailIgnoreCase(emailNormalizado)).thenReturn(Optional.of(usuario));
 
-        when(
-                usuarioMapper
-                        .toResponseDTO(
-                                usuario
-                        )
-        ).thenReturn(
-                responseDTO
-        );
+        when(usuarioMapper.toResponseDTO(usuario)).thenReturn(responseDTO);
 
-        UsuarioResponseDTO resultado =
-                usuarioService
-                        .buscarUsuarioAutenticado(
-                                emailInformado
-                        );
+        UsuarioResponseDTO resultado = usuarioService.buscarUsuarioAutenticado(emailInformado);
 
-        assertSame(
-                responseDTO,
-                resultado
-        );
+        assertSame(responseDTO, resultado);
     }
 
     @Test
     void deveConcluirCadastroMesmoQuandoEmailDeConfirmacaoFalhar() {
-        UsuarioRequestDTO requestDTO = new UsuarioRequestDTO(
-                "Usuário Teste",
-                "usuario@simul.local",
-                "senha123"
-        );
+        UsuarioRequestDTO requestDTO = new UsuarioRequestDTO("Usuário Teste", "usuario@simul.local", "senha123");
         Usuario usuario = new Usuario();
         Usuario usuarioSalvo = new Usuario();
         usuarioSalvo.setId(7L);
@@ -559,9 +302,7 @@ class UsuarioServiceImplTest {
                 .when(verificacaoEmailService)
                 .enviarVerificacao(usuarioSalvo);
 
-        UsuarioResponseDTO resposta = assertDoesNotThrow(
-                () -> usuarioService.cadastrar(requestDTO)
-        );
+        UsuarioResponseDTO resposta = assertDoesNotThrow(() -> usuarioService.cadastrar(requestDTO));
 
         assertEquals(7L, resposta.id());
         verify(usuarioRepository).save(usuario);

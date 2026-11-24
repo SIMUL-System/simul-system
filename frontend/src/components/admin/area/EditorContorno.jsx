@@ -1,18 +1,10 @@
-import {
-  lazy,
-  Suspense,
-  useEffect,
-  useState,
-} from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 
 import Alerta from '../../Alerta'
 import { atualizarGeometriaArea } from '../../../services/adminAreaService'
 import { buscarCoordenadasArea } from '../../../services/geocodingService'
 import { consultarColeta } from '../../../services/rotaService'
-import {
-  converterGeoJson,
-  validarGeometria,
-} from '../../../utils/areas'
+import { converterGeoJson, validarGeometria } from '../../../utils/areas'
 
 const MapaEdicaoArea = lazy(() => import('../../MapaEdicaoArea'))
 
@@ -21,11 +13,7 @@ const MapaEdicaoArea = lazy(() => import('../../MapaEdicaoArea'))
  * parte do contorno salvo no SIMUL; se não houver, do contorno que o
  * OpenStreetMap encontrar; se nada for achado, o mapa abre vazio.
  */
-function EditorContorno({
-  area,
-  onSalvo,
-  onCancelar,
-}) {
+function EditorContorno({ area, onSalvo, onCancelar }) {
   const [carregando, setCarregando] = useState(true)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
@@ -100,28 +88,15 @@ function EditorContorno({
   }[origem]
 
   return (
-    <div
-      className="editor-contorno"
-      aria-busy={carregando || salvando}
-    >
-      <p
-        id="editor-contorno-instrucoes"
-        className="editor-contorno__instrucoes"
-      >
-        Use as ferramentas no canto do mapa para desenhar, mover os pontos
-        ou apagar o contorno. Para mover o mapa enquanto desenha, arraste
-        com o botão direito.
+    <div className="editor-contorno" aria-busy={carregando || salvando}>
+      <p id="editor-contorno-instrucoes" className="editor-contorno__instrucoes">
+        Use as ferramentas no canto do mapa para desenhar, mover os pontos ou apagar o contorno.
+        Para mover o mapa enquanto desenha, arraste com o botão direito.
       </p>
 
       {carregando ? (
-        <div
-          className="carregando"
-          role="status"
-        >
-          <span
-            className="carregando__spinner"
-            aria-hidden="true"
-          />
+        <div className="carregando" role="status">
+          <span className="carregando__spinner" aria-hidden="true" />
           Preparando o mapa de {area.bairro}…
         </div>
       ) : (
@@ -131,14 +106,8 @@ function EditorContorno({
           <div aria-describedby="editor-contorno-instrucoes">
             <Suspense
               fallback={
-                <div
-                  className="carregando"
-                  role="status"
-                >
-                  <span
-                    className="carregando__spinner"
-                    aria-hidden="true"
-                  />
+                <div className="carregando" role="status">
+                  <span className="carregando__spinner" aria-hidden="true" />
                   Carregando o editor do mapa…
                 </div>
               }

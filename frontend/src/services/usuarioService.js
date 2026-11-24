@@ -1,6 +1,7 @@
 import { apiRequest } from './api'
 import { obterToken } from './authService'
 
+/** POST /api/usuarios */
 function cadastrarUsuario(dados) {
   return apiRequest('/api/usuarios', {
     method: 'POST',
@@ -8,38 +9,34 @@ function cadastrarUsuario(dados) {
   })
 }
 
+/** GET /api/usuarios/me */
 function obterUsuarioAtual() {
   return apiRequest('/api/usuarios/me', {
     token: obterToken(),
   })
 }
 
+/** POST /api/usuarios/verificar-email */
 function verificarEmail(token) {
-  return apiRequest(
-    '/api/usuarios/verificar-email',
-    {
-      method: 'POST',
-      body: {
-        token,
-      },
+  return apiRequest('/api/usuarios/verificar-email', {
+    method: 'POST',
+    body: {
+      token,
     },
-  )
+  })
 }
 
-function reenviarVerificacaoEmail(
-  email,
-) {
-  return apiRequest(
-    '/api/usuarios/reenviar-verificacao',
-    {
-      method: 'POST',
-      body: {
-        email,
-      },
+/** POST /api/usuarios/reenviar-verificacao */
+function reenviarVerificacaoEmail(email) {
+  return apiRequest('/api/usuarios/reenviar-verificacao', {
+    method: 'POST',
+    body: {
+      email,
     },
-  )
+  })
 }
 
+/** POST /api/usuarios/recuperar-senha */
 function solicitarRecuperacaoSenha(email) {
   return apiRequest('/api/usuarios/recuperar-senha', {
     method: 'POST',
@@ -49,14 +46,12 @@ function solicitarRecuperacaoSenha(email) {
   })
 }
 
+/** POST /api/usuarios/redefinir-senha */
 function redefinirSenha(dados) {
-  return apiRequest(
-    '/api/usuarios/redefinir-senha',
-    {
-      method: 'POST',
-      body: dados,
-    },
-  )
+  return apiRequest('/api/usuarios/redefinir-senha', {
+    method: 'POST',
+    body: dados,
+  })
 }
 
 export {

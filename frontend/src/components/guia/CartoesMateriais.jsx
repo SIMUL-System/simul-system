@@ -14,34 +14,19 @@ function CartoesMateriais() {
           style={{ '--cor-material': `var(--${material.cor})` }}
         >
           <summary className="material__resumo">
-            <Lixeira
-              cor={material.cor}
-              humor="feliz"
-              tamanho={44}
-            />
+            <Lixeira cor={material.cor} humor="feliz" tamanho={44} />
 
-            <span className="material__nome">
-              {material.nome}
-            </span>
+            <span className="material__nome">{material.nome}</span>
 
-            <span
-              className="material__seta"
-              aria-hidden="true"
-            >
-              <Icone
-                nome="seta"
-                tamanho={18}
-              />
+            <span className="material__seta" aria-hidden="true">
+              <Icone nome="seta" tamanho={18} />
             </span>
           </summary>
 
           <div className="material__conteudo">
             <div>
               <h4 className="material__titulo material__titulo--vai">
-                <Icone
-                  nome="sucesso"
-                  tamanho={18}
-                />
+                <Icone nome="sucesso" tamanho={18} />
                 Vai
               </h4>
 
@@ -54,10 +39,7 @@ function CartoesMateriais() {
 
             <div>
               <h4 className="material__titulo material__titulo--nao">
-                <Icone
-                  nome="erro"
-                  tamanho={18}
-                />
+                <Icone nome="erro" tamanho={18} />
                 Não vai
               </h4>
 
@@ -69,10 +51,7 @@ function CartoesMateriais() {
             </div>
 
             <p className="material__dica">
-              <Icone
-                nome="info"
-                tamanho={18}
-              />
+              <Icone nome="info" tamanho={18} />
               {material.dica}
             </p>
           </div>

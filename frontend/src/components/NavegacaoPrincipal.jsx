@@ -1,22 +1,10 @@
-import {
-  NavLink,
-  useNavigate,
-} from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 
-import {
-  useEffect,
-  useRef,
-  useState,
-} from 'react'
+import { useEffect, useRef, useState } from 'react'
 
-import {
-  logout,
-  obterToken,
-} from '../services/authService'
+import { logout, obterToken } from '../services/authService'
 
-import {
-  obterUsuarioAtual,
-} from '../services/usuarioService'
+import { obterUsuarioAtual } from '../services/usuarioService'
 
 import { useTema } from '../hooks/useTema'
 
@@ -25,19 +13,16 @@ import Icone from './Icone'
 import simboloClaro from '../assets/marca/simul-simbolo.svg'
 import simboloEscuro from '../assets/marca/simul-simbolo-escuro.svg'
 
+/** Cabeçalho com o menu do site, o tema claro/escuro e entrar/sair. */
 function NavegacaoPrincipal() {
   const navigate = useNavigate()
 
   const botaoMenuRef = useRef(null)
 
-  const [menuAberto, setMenuAberto] =
-    useState(false)
+  const [menuAberto, setMenuAberto] = useState(false)
+  const [usuario, setUsuario] = useState(null)
 
-  const [usuario, setUsuario] =
-    useState(null)
-
-  const { tema, alternarTema } =
-    useTema()
+  const { tema, alternarTema } = useTema()
 
   const token = obterToken()
 
@@ -54,8 +39,7 @@ function NavegacaoPrincipal() {
       }
 
       try {
-        const dados =
-          await obterUsuarioAtual()
+        const dados = await obterUsuarioAtual()
 
         if (componenteAtivo) {
           setUsuario(dados)
@@ -87,25 +71,15 @@ function NavegacaoPrincipal() {
       }
     }
 
-    document.addEventListener(
-      'keydown',
-      handleKeyDown,
-    )
+    document.addEventListener('keydown', handleKeyDown)
 
     return () => {
-      document.removeEventListener(
-        'keydown',
-        handleKeyDown,
-      )
+      document.removeEventListener('keydown', handleKeyDown)
     }
   }, [menuAberto])
 
-  function classeLink({
-    isActive,
-  }) {
-    return isActive
-      ? 'cabecalho__link cabecalho__link--ativo'
-      : 'cabecalho__link'
+  function classeLink({ isActive }) {
+    return isActive ? 'cabecalho__link cabecalho__link--ativo' : 'cabecalho__link'
   }
 
   function fecharMenu() {
@@ -113,10 +87,7 @@ function NavegacaoPrincipal() {
   }
 
   function alternarMenu() {
-    setMenuAberto(
-      (valorAtual) =>
-        !valorAtual,
-    )
+    setMenuAberto((valorAtual) => !valorAtual)
   }
 
   function handleLogout() {
@@ -125,28 +96,18 @@ function NavegacaoPrincipal() {
     setUsuario(null)
     setMenuAberto(false)
 
-    navigate(
-      '/',
-      {
-        replace: true,
-      },
-    )
+    navigate('/', {
+      replace: true,
+    })
   }
 
-  const autenticado =
-    Boolean(
-      token &&
-      usuario,
-    )
+  const autenticado = Boolean(token && usuario)
 
-  const admin =
-    usuario?.perfil === 'ADMIN'
+  const admin = usuario?.perfil === 'ADMIN'
 
-  const temaEscuro =
-    tema === 'dark'
+  const temaEscuro = tema === 'dark'
 
-  const primeiroNome =
-    usuario?.nome?.split(' ')[0]
+  const primeiroNome = usuario?.nome?.split(' ')[0]
 
   return (
     <header className="cabecalho">
@@ -157,20 +118,9 @@ function NavegacaoPrincipal() {
           onClick={fecharMenu}
           aria-label="SIMUL, página inicial"
         >
-          <img
-            src={
-              temaEscuro
-                ? simboloEscuro
-                : simboloClaro
-            }
-            alt=""
-            width="32"
-            height="32"
-          />
+          <img src={temaEscuro ? simboloEscuro : simboloClaro} alt="" width="32" height="32" />
 
-          <span className="cabecalho__nome">
-            SIMUL
-          </span>
+          <span className="cabecalho__nome">SIMUL</span>
         </NavLink>
 
         <div className="cabecalho__acoes">
@@ -178,87 +128,46 @@ function NavegacaoPrincipal() {
             type="button"
             className="botao-icone"
             onClick={alternarTema}
-            aria-label={
-              temaEscuro
-                ? 'Usar tema claro'
-                : 'Usar tema escuro'
-            }
-            title={
-              temaEscuro
-                ? 'Usar tema claro'
-                : 'Usar tema escuro'
-            }
+            aria-label={temaEscuro ? 'Usar tema claro' : 'Usar tema escuro'}
+            title={temaEscuro ? 'Usar tema claro' : 'Usar tema escuro'}
           >
-            <Icone
-              nome={
-                temaEscuro
-                  ? 'sol'
-                  : 'lua'
-              }
-            />
+            <Icone nome={temaEscuro ? 'sol' : 'lua'} />
           </button>
 
           <button
             ref={botaoMenuRef}
             type="button"
             className="botao-icone cabecalho__menu-botao"
-            aria-label={
-              menuAberto
-                ? 'Fechar menu de navegação'
-                : 'Abrir menu de navegação'
-            }
+            aria-label={menuAberto ? 'Fechar menu de navegação' : 'Abrir menu de navegação'}
             aria-expanded={menuAberto}
             aria-controls="menu-principal"
             onClick={alternarMenu}
           >
-            <Icone
-              nome={
-                menuAberto
-                  ? 'fechar'
-                  : 'menu'
-              }
-            />
+            <Icone nome={menuAberto ? 'fechar' : 'menu'} />
           </button>
         </div>
 
         <nav
           id="menu-principal"
           aria-label="Navegação principal"
-          className={
-            menuAberto
-              ? 'cabecalho__menu cabecalho__menu--aberto'
-              : 'cabecalho__menu'
-          }
+          className={menuAberto ? 'cabecalho__menu cabecalho__menu--aberto' : 'cabecalho__menu'}
         >
           <ul className="cabecalho__links">
             <li>
-              <NavLink
-                to="/"
-                end
-                className={classeLink}
-                onClick={fecharMenu}
-              >
+              <NavLink to="/" end className={classeLink} onClick={fecharMenu}>
                 Consultar coleta
               </NavLink>
             </li>
 
             <li>
-              <NavLink
-                to="/guia-de-descarte"
-                className={classeLink}
-                onClick={fecharMenu}
-              >
+              <NavLink to="/guia-de-descarte" className={classeLink} onClick={fecharMenu}>
                 Guia de descarte
               </NavLink>
             </li>
 
             {autenticado && (
               <li>
-                <NavLink
-                  to="/preferencias"
-                  className={classeLink}
-                  onClick={fecharMenu}
-                >
+                <NavLink to="/preferencias" className={classeLink} onClick={fecharMenu}>
                   Meus lembretes
                 </NavLink>
               </li>
@@ -266,11 +175,7 @@ function NavegacaoPrincipal() {
 
             {autenticado && (
               <li>
-                <NavLink
-                  to="/minha-conta"
-                  className={classeLink}
-                  onClick={fecharMenu}
-                >
+                <NavLink to="/minha-conta" className={classeLink} onClick={fecharMenu}>
                   Minha conta
                 </NavLink>
               </li>
@@ -278,11 +183,7 @@ function NavegacaoPrincipal() {
 
             {admin && (
               <li>
-                <NavLink
-                  to="/admin"
-                  className={classeLink}
-                  onClick={fecharMenu}
-                >
+                <NavLink to="/admin" className={classeLink} onClick={fecharMenu}>
                   Painel admin
                 </NavLink>
               </li>
@@ -293,10 +194,7 @@ function NavegacaoPrincipal() {
             {autenticado ? (
               <>
                 <span className="cabecalho__usuario">
-                  <Icone
-                    nome="usuario"
-                    tamanho={18}
-                  />
+                  <Icone nome="usuario" tamanho={18} />
                   {primeiroNome}
                 </span>
 
@@ -305,10 +203,7 @@ function NavegacaoPrincipal() {
                   className="botao botao--fantasma botao--pequeno"
                   onClick={handleLogout}
                 >
-                  <Icone
-                    nome="sair"
-                    tamanho={18}
-                  />
+                  <Icone nome="sair" tamanho={18} />
                   Sair
                 </button>
               </>
@@ -333,7 +228,6 @@ function NavegacaoPrincipal() {
             )}
           </div>
         </nav>
-
       </div>
     </header>
   )

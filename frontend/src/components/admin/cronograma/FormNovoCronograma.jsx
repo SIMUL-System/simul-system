@@ -2,26 +2,14 @@ import { useState } from 'react'
 
 import Icone from '../../Icone'
 import CamposHorario from './CamposHorario'
-import {
-  ATALHOS_DIAS,
-  DIAS_SEMANA,
-  diasOcupados,
-  listarDias,
-} from '../../../utils/cronogramas'
+import { ATALHOS_DIAS, DIAS_SEMANA, diasOcupados, listarDias } from '../../../utils/cronogramas'
 
 /**
  * Cria horários para vários dias de uma vez. Dias em que a rota já
  * tem horário ativo ficam bloqueados (a regra do back-end é um
  * horário ativo por rota e dia).
  */
-function FormNovoCronograma({
-  rotas,
-  cronogramas,
-  rotaInicial,
-  diasIniciais,
-  salvando,
-  onEnviar,
-}) {
+function FormNovoCronograma({ rotas, cronogramas, rotaInicial, diasIniciais, salvando, onEnviar }) {
   const [rotaId, setRotaId] = useState(rotaInicial ? String(rotaInicial) : '')
   const [dias, setDias] = useState(diasIniciais ?? [])
   const [horario, setHorario] = useState({ inicio: '06:00', fim: '18:00' })
@@ -33,9 +21,7 @@ function FormNovoCronograma({
   function alternarDia(valor) {
     setErro('')
     setDias((atuais) =>
-      atuais.includes(valor)
-        ? atuais.filter((dia) => dia !== valor)
-        : [...atuais, valor],
+      atuais.includes(valor) ? atuais.filter((dia) => dia !== valor) : [...atuais, valor],
     )
   }
 
@@ -59,9 +45,7 @@ function FormNovoCronograma({
 
     onEnviar({
       rotaId: Number(rotaId),
-      dias: DIAS_SEMANA
-        .map((dia) => dia.valor)
-        .filter((valor) => diasValidos.includes(valor)),
+      dias: DIAS_SEMANA.map((dia) => dia.valor).filter((valor) => diasValidos.includes(valor)),
       inicio: horario.inicio,
       fim: horario.fim,
     })
@@ -70,16 +54,9 @@ function FormNovoCronograma({
   const quantidade = diasValidos.length
 
   return (
-    <form
-      className="painel-form"
-      onSubmit={handleSubmit}
-      noValidate
-    >
+    <form className="painel-form" onSubmit={handleSubmit} noValidate>
       <div className="campo-ds">
-        <label
-          className="campo-ds__rotulo"
-          htmlFor="novo-cronograma-rota"
-        >
+        <label className="campo-ds__rotulo" htmlFor="novo-cronograma-rota">
           Rota
         </label>
 
@@ -95,10 +72,7 @@ function FormNovoCronograma({
         >
           <option value="">Selecione a rota</option>
           {rotas.map((rota) => (
-            <option
-              key={rota.id}
-              value={rota.id}
-            >
+            <option key={rota.id} value={rota.id}>
               {rota.nome}
             </option>
           ))}
@@ -119,11 +93,7 @@ function FormNovoCronograma({
                 type="button"
                 className="seletor-dias__dia"
                 aria-pressed={marcado}
-                aria-label={
-                  ocupado
-                    ? `${dia.longo}: a rota já tem horário neste dia`
-                    : dia.longo
-                }
+                aria-label={ocupado ? `${dia.longo}: a rota já tem horário neste dia` : dia.longo}
                 title={ocupado ? 'Já tem horário neste dia' : undefined}
                 onClick={() => alternarDia(dia.valor)}
                 disabled={ocupado || salvando}
@@ -134,11 +104,7 @@ function FormNovoCronograma({
           })}
         </div>
 
-        <div
-          className="atalhos"
-          role="group"
-          aria-label="Marcar dias"
-        >
+        <div className="atalhos" role="group" aria-label="Marcar dias">
           {ATALHOS_DIAS.map((atalho) => (
             <button
               key={atalho.rotulo}
@@ -157,8 +123,8 @@ function FormNovoCronograma({
 
         {ocupados.length > 0 && (
           <p className="campo-ds__dica">
-            Dias bloqueados já têm horário nesta rota. Para mudar um deles,
-            toque no horário na grade.
+            Dias bloqueados já têm horário nesta rota. Para mudar um deles, toque no horário na
+            grade.
           </p>
         )}
       </fieldset>
@@ -171,24 +137,15 @@ function FormNovoCronograma({
         disabled={salvando}
       />
 
-      <p
-        className="painel-form__resumo"
-        aria-live="polite"
-      >
+      <p className="painel-form__resumo" aria-live="polite">
         {quantidade === 0
           ? 'Escolha os dias para ver o resumo.'
           : `${quantidade === 1 ? 'Será criado 1 horário' : `Serão criados ${quantidade} horários`}: ${listarDias(diasValidos)}, das ${horario.inicio} às ${horario.fim}.`}
       </p>
 
       {erro && (
-        <p
-          className="campo-ds__erro"
-          role="alert"
-        >
-          <Icone
-            nome="erro"
-            tamanho={16}
-          />
+        <p className="campo-ds__erro" role="alert">
+          <Icone nome="erro" tamanho={16} />
           {erro}
         </p>
       )}
@@ -198,11 +155,7 @@ function FormNovoCronograma({
         className="botao botao--primario painel-form__principal"
         disabled={salvando}
       >
-        {salvando
-          ? 'Salvando…'
-          : quantidade > 1
-            ? `Criar ${quantidade} horários`
-            : 'Criar horário'}
+        {salvando ? 'Salvando…' : quantidade > 1 ? `Criar ${quantidade} horários` : 'Criar horário'}
       </button>
     </form>
   )

@@ -1,7 +1,5 @@
 package com.simulsystem.backend.business.usuario.dto;
 
-public record LoginResponseDTO(
-        String token,
-        String tipo
-) {
+/** Token JWT devolvido no login (tipo Bearer). */
+public record LoginResponseDTO(String token, String tipo) {
 }

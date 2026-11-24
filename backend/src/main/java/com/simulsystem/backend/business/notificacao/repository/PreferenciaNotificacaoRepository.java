@@ -1,17 +1,20 @@
 package com.simulsystem.backend.business.notificacao.repository;
 
 import com.simulsystem.backend.business.notificacao.model.PreferenciaNotificacao;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
 
+/** Acesso às preferências de lembrete. */
 public interface PreferenciaNotificacaoRepository
         extends JpaRepository<PreferenciaNotificacao, Long> {
-
+    /** Preferência do usuário. */
     Optional<PreferenciaNotificacao> findByUsuarioId(Long usuarioId);
 
+    /** O usuário já tem preferência? */
     boolean existsByUsuarioId(Long usuarioId);
 
     @Query("""
@@ -26,5 +29,6 @@ public interface PreferenciaNotificacaoRepository
                     OR p.webPushAtivo = true
                   )
             """)
+    /** Preferências de usuários e rotas ativos com algum canal ligado. */
     List<PreferenciaNotificacao> buscarElegiveisParaProcessamento();
 }
