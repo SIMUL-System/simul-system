@@ -3,6 +3,14 @@ import {
   useState,
 } from 'react'
 
+import Alerta from '../../components/Alerta'
+import DialogoConfirmacao from '../../components/admin/DialogoConfirmacao'
+import PainelLateral from '../../components/admin/PainelLateral'
+import FormRota from '../../components/admin/rota/FormRota'
+import TabelaRotas from '../../components/admin/rota/TabelaRotas'
+
+import { listarAreasAtendidas } from '../../services/adminAreaService'
+import { listarCronogramas } from '../../services/adminCronogramaService'
 import {
   alterarStatusRota,
   atualizarRota,
@@ -10,564 +18,297 @@ import {
   listarRotas,
 } from '../../services/adminRotaService'
 
+import {
+  ordenarTexto,
+  resumirColetaDaRota,
+} from '../../utils/areas'
+
+function comoLista(dados) {
+  return Array.isArray(dados) ? dados : []
+}
+
+function semAcento(valor) {
+  return (valor ?? '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLocaleLowerCase('pt-BR')
+}
+
 function RotasAdminPage() {
-  const [rotas, setRotas] =
-    useState([])
+  const [rotas, setRotas] = useState([])
+  const [areas, setAreas] = useState([])
+  const [cronogramas, setCronogramas] = useState([])
+  const [carregando, setCarregando] = useState(true)
+  const [erroCarga, setErroCarga] = useState('')
 
-  const [nome, setNome] =
-    useState('')
-
-  const [
-    descricao,
-    setDescricao,
-  ] = useState('')
-
-  const [
-    rotaEmEdicao,
-    setRotaEmEdicao,
-  ] = useState(null)
-
-  const [erro, setErro] =
-    useState('')
-
-  const [sucesso, setSucesso] =
-    useState('')
-
-  const [
-    carregando,
-    setCarregando,
-  ] = useState(true)
-
-  const [
-    salvando,
-    setSalvando,
-  ] = useState(false)
-
-  const [
-    alterandoStatusId,
-    setAlterandoStatusId,
-  ] = useState(null)
+  const [busca, setBusca] = useState('')
+  const [situacao, setSituacao] = useState('todas')
+  const [mensagem, setMensagem] = useState(null)
+  const [painel, setPainel] = useState(null)
+  const [salvando, setSalvando] = useState(false)
+  const [alterandoId, setAlterandoId] = useState(null)
+  const [confirmacao, setConfirmacao] = useState(null)
 
   useEffect(() => {
-    let componenteAtivo = true
+    let ativo = true
 
-    listarRotas()
-      .then((dados) => {
-        if (!componenteAtivo) {
-          return
-        }
-
-        setRotas(
-          Array.isArray(dados)
-            ? dados
-            : [],
-        )
+    Promise.all([listarRotas(), listarAreasAtendidas(), listarCronogramas()])
+      .then(([dadosRotas, dadosAreas, dadosCronogramas]) => {
+        if (!ativo) return
+        setRotas(comoLista(dadosRotas))
+        setAreas(comoLista(dadosAreas))
+        setCronogramas(comoLista(dadosCronogramas))
       })
       .catch((error) => {
-        if (!componenteAtivo) {
-          return
-        }
-
-        setErro(
-          error.message ||
-            'Não foi possível carregar as rotas.',
-        )
+        if (ativo) setErroCarga(error.message || 'Não foi possível carregar as rotas.')
       })
       .finally(() => {
-        if (componenteAtivo) {
-          setCarregando(false)
-        }
+        if (ativo) setCarregando(false)
       })
 
     return () => {
-      componenteAtivo = false
+      ativo = false
     }
   }, [])
 
   async function recarregarRotas() {
-    const dados =
-      await listarRotas()
-
-    setRotas(
-      Array.isArray(dados)
-        ? dados
-        : [],
-    )
+    const dados = comoLista(await listarRotas())
+    setRotas(dados)
+    return dados
   }
 
-  function limparMensagens() {
-    setErro('')
-    setSucesso('')
+  function quantidadeAreas(rotaId) {
+    return areas.filter((area) => area.rotaId === rotaId).length
   }
 
-  function limparFormulario() {
-    setNome('')
-    setDescricao('')
-    setRotaEmEdicao(null)
-  }
-
-  function iniciarEdicao(rota) {
-    limparMensagens()
-
-    setRotaEmEdicao(rota)
-
-    setNome(
-      rota.nome ?? '',
-    )
-
-    setDescricao(
-      rota.descricao ?? '',
-    )
-
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
+  const termo = semAcento(busca.trim())
+  const linhas = rotas
+    .filter((rota) => !termo || semAcento(rota.nome).includes(termo))
+    .filter((rota) => {
+      if (situacao === 'ativas') return rota.ativo
+      if (situacao === 'inativas') return !rota.ativo
+      return true
     })
-  }
+    .sort((a, b) => ordenarTexto(a.nome, b.nome))
+    .map((rota) => ({
+      rota,
+      quantidadeAreas: quantidadeAreas(rota.id),
+      coleta: resumirColetaDaRota(cronogramas, rota.id).replace(/^Coleta: /, ''),
+    }))
 
-  function cancelarEdicao() {
-    limparFormulario()
-    limparMensagens()
-  }
+  const totalAtivas = rotas.filter((rota) => rota.ativo).length
 
-  async function handleSubmit(
-    event,
-  ) {
-    event.preventDefault()
+  /* ---------- ações ---------- */
 
-    limparMensagens()
+  async function salvarRota(dados) {
+    const editando = Boolean(painel?.rota)
 
-    const nomeNormalizado =
-      nome
-        .trim()
-        .replace(/\s+/g, ' ')
-
-    const descricaoNormalizada =
-      descricao
-        .trim()
-        .replace(/\s+/g, ' ')
-
-    if (!nomeNormalizado) {
-      setErro(
-        'Informe o nome da rota.',
-      )
-
-      return
-    }
-
-    const rotaDuplicada =
-      rotas.find(
-        (rota) =>
-          rota.id !==
-            rotaEmEdicao?.id &&
-          rota.nome
-            ?.trim()
-            .toLocaleLowerCase(
-              'pt-BR',
-            ) ===
-            nomeNormalizado.toLocaleLowerCase(
-              'pt-BR',
-            ),
-      )
-
-    if (rotaDuplicada) {
-      setErro(
-        'Já existe uma rota cadastrada com esse nome.',
-      )
-
-      return
-    }
-
-    const dados = {
-      nome:
-        nomeNormalizado,
-
-      descricao:
-        descricaoNormalizada,
-    }
+    setSalvando(true)
+    setMensagem(null)
 
     try {
-      setSalvando(true)
-
-      if (rotaEmEdicao) {
-        await atualizarRota(
-          rotaEmEdicao.id,
-          dados,
-        )
-
-        setSucesso(
-          'Rota atualizada com sucesso.',
-        )
+      if (editando) {
+        await atualizarRota(painel.rota.id, dados)
       } else {
-        await criarRota(
-          dados,
-        )
-
-        setSucesso(
-          'Rota cadastrada com sucesso.',
-        )
+        await criarRota(dados)
       }
 
-      limparFormulario()
-
       await recarregarRotas()
+      setPainel(null)
+      setMensagem({
+        tipo: 'sucesso',
+        texto: editando
+          ? `Rota “${dados.nome}” atualizada.`
+          : `Rota “${dados.nome}” cadastrada. Agora crie os horários em Cronogramas.`,
+      })
     } catch (error) {
-      setErro(
-        error.message ||
-          'Não foi possível salvar a rota.',
-      )
+      setMensagem({ tipo: 'erro', texto: error.message || 'Não foi possível salvar a rota.' })
     } finally {
       setSalvando(false)
     }
   }
 
-  async function handleAlterarStatus(
-    rota,
-  ) {
-    limparMensagens()
-
-    const novoStatus =
-      !rota.ativo
-
-    if (!novoStatus) {
-      const confirmou =
-        window.confirm(
-          `Deseja realmente desativar a rota "${rota.nome}"? Áreas e cronogramas relacionados continuarão cadastrados, mas a rota ficará inativa.`,
-        )
-
-      if (!confirmou) {
-        return
-      }
+  function pedirAlteracaoStatus(rota) {
+    if (rota.ativo) {
+      setConfirmacao(rota)
+      return
     }
 
+    executarStatus(rota, true)
+  }
+
+  async function executarStatus(rota, ativar) {
+    setAlterandoId(rota.id)
+    setMensagem(null)
+
     try {
-      setAlterandoStatusId(
-        rota.id,
-      )
-
-      await alterarStatusRota(
-        rota.id,
-        novoStatus,
-      )
-
+      await alterarStatusRota(rota.id, ativar)
       await recarregarRotas()
-
-      setSucesso(
-        novoStatus
-          ? 'Rota ativada com sucesso.'
-          : 'Rota desativada com sucesso.',
-      )
+      setMensagem({
+        tipo: 'sucesso',
+        texto: ativar
+          ? `Rota “${rota.nome}” reativada. Os bairros dela voltam a aparecer na consulta.`
+          : `Rota “${rota.nome}” desativada.`,
+      })
     } catch (error) {
-      setErro(
-        error.message ||
-          'Não foi possível alterar o status da rota.',
-      )
+      setMensagem({
+        tipo: 'erro',
+        texto: error.message || 'Não foi possível alterar a situação da rota.',
+      })
     } finally {
-      setAlterandoStatusId(null)
+      setAlterandoId(null)
+      setConfirmacao(null)
     }
   }
 
-  const operacaoEmAndamento =
-    salvando ||
-    alterandoStatusId !== null
+  /* ---------- tela ---------- */
 
-  const totalAtivas =
-    rotas.filter(
-      (rota) =>
-        rota.ativo,
-    ).length
+  if (carregando) {
+    return (
+      <div
+        className="carregando"
+        role="status"
+      >
+        <span
+          className="carregando__spinner"
+          aria-hidden="true"
+        />
+        Carregando rotas…
+      </div>
+    )
+  }
 
-  const totalInativas =
-    rotas.length -
-    totalAtivas
+  if (erroCarga) {
+    return <Alerta tipo="erro">{erroCarga}</Alerta>
+  }
+
+  const opcoesSituacao = [
+    { valor: 'todas', rotulo: `Todas (${rotas.length})` },
+    { valor: 'ativas', rotulo: `Ativas (${totalAtivas})` },
+    { valor: 'inativas', rotulo: `Inativas (${rotas.length - totalAtivas})` },
+  ]
+
+  const bairrosDaConfirmacao = confirmacao ? quantidadeAreas(confirmacao.id) : 0
 
   return (
-    <>
-      <header
-        className="admin-secao__cabecalho"
-        aria-labelledby="titulo-rotas-admin"
-      >
-        <h2 id="titulo-rotas-admin">
-          Rotas
-        </h2>
+    <div className="admin-pagina">
+      <header className="admin-pagina__cabecalho">
+        <div>
+          <h1 className="admin-pagina__titulo">Rotas</h1>
+          <p className="admin-pagina__texto">
+            Uma rota reúne os bairros que têm a mesma coleta. Os horários ficam
+            em Cronogramas; os bairros, em Áreas atendidas.
+          </p>
+        </div>
 
-        <p>
-          Crie e mantenha as rotas de
-          referência usadas para
-          organizar as áreas e os
-          cronogramas de coleta.
-        </p>
+        <div className="admin-pagina__acoes">
+          <button
+            type="button"
+            className="botao botao--primario"
+            onClick={() => {
+              setMensagem(null)
+              setPainel({ chave: `nova-${Date.now()}` })
+            }}
+          >
+            Nova rota
+          </button>
+        </div>
       </header>
 
-      {erro && (
-        <div
-          className="mensagem mensagem--erro"
-          role="alert"
-          aria-live="assertive"
+      {mensagem && <Alerta tipo={mensagem.tipo}>{mensagem.texto}</Alerta>}
+
+      <div className={`admin-area ${painel ? 'admin-area--com-painel' : ''}`}>
+        <section
+          className="admin-quadro"
+          aria-label="Lista de rotas"
         >
-          {erro}
-        </div>
-      )}
+          <div className="admin-filtros">
+            <div className="campo-ds admin-filtros__busca">
+              <label
+                className="campo-ds__rotulo"
+                htmlFor="rotas-busca"
+              >
+                Buscar rota
+              </label>
+              <input
+                id="rotas-busca"
+                type="search"
+                className="campo-ds__controle"
+                placeholder="Nome da rota"
+                value={busca}
+                onChange={(event) => setBusca(event.target.value)}
+              />
+            </div>
 
-      {sucesso && (
-        <div
-          className="mensagem mensagem--sucesso"
-          role="status"
-          aria-live="polite"
-        >
-          {sucesso}
-        </div>
-      )}
-
-      <section
-        className="resultado"
-        aria-labelledby="titulo-formulario-rota"
-        aria-busy={salvando}
-      >
-        <h3 id="titulo-formulario-rota">
-          {rotaEmEdicao
-            ? 'Editar rota'
-            : 'Cadastrar nova rota'}
-        </h3>
-
-        <form
-          className="consulta__formulario"
-          onSubmit={handleSubmit}
-          noValidate
-        >
-          <div className="campo">
-            <label htmlFor="nomeRota">
-              Nome da rota
-            </label>
-
-            <input
-              id="nomeRota"
-              type="text"
-              value={nome}
-              onChange={(event) => {
-                setNome(
-                  event.target.value,
-                )
-
-                limparMensagens()
-              }}
-              placeholder="Ex.: Rota Jardim Nova Goiânia"
-              autoComplete="off"
-              disabled={
-                operacaoEmAndamento
-              }
-              aria-describedby="ajuda-nome-rota"
-            />
-
-            <small id="ajuda-nome-rota">
-              Use um nome que permita
-              identificar facilmente a
-              região ou operação da rota.
-            </small>
-          </div>
-
-          <div className="campo">
-            <label htmlFor="descricaoRota">
-              Descrição
-            </label>
-
-            <textarea
-              id="descricaoRota"
-              value={descricao}
-              onChange={(event) => {
-                setDescricao(
-                  event.target.value,
-                )
-
-                limparMensagens()
-              }}
-              placeholder="Descrição opcional da rota"
-              rows="4"
-              disabled={
-                operacaoEmAndamento
-              }
-              aria-describedby="ajuda-descricao-rota"
-            />
-
-            <small id="ajuda-descricao-rota">
-              Campo opcional para
-              observações administrativas
-              sobre a rota.
-            </small>
-          </div>
-
-          <button
-            type="submit"
-            disabled={
-              operacaoEmAndamento
-            }
-          >
-            {salvando
-              ? 'Salvando...'
-              : rotaEmEdicao
-                ? 'Salvar alterações'
-                : 'Cadastrar rota'}
-          </button>
-
-          {rotaEmEdicao && (
-            <button
-              type="button"
-              onClick={
-                cancelarEdicao
-              }
-              disabled={
-                operacaoEmAndamento
-              }
+            <div
+              className="atalhos admin-filtros__mapa"
+              role="group"
+              aria-label="Filtrar por situação"
             >
-              Cancelar edição
-            </button>
-          )}
-        </form>
-      </section>
-
-      <section
-        className="resultado"
-        aria-labelledby="titulo-lista-rotas"
-        aria-busy={carregando}
-      >
-        <h3 id="titulo-lista-rotas">
-          Rotas cadastradas
-        </h3>
-
-        {!carregando && (
-          <div className="resultado__informacoes">
-            <p>
-              <strong>
-                Total:
-              </strong>{' '}
-              {rotas.length}
-            </p>
-
-            <p>
-              <strong>
-                Ativas:
-              </strong>{' '}
-              {totalAtivas}
-            </p>
-
-            <p>
-              <strong>
-                Inativas:
-              </strong>{' '}
-              {totalInativas}
-            </p>
-          </div>
-        )}
-
-        {carregando ? (
-          <p
-            role="status"
-            aria-live="polite"
-          >
-            Carregando rotas...
-          </p>
-        ) : rotas.length === 0 ? (
-          <p>
-            Nenhuma rota cadastrada.
-          </p>
-        ) : (
-          <div className="lista-rotas">
-            {rotas.map(
-              (rota) => (
-                <article
-                  className="rota-admin"
-                  key={rota.id}
-                  aria-labelledby={
-                    `rota-${rota.id}`
-                  }
+              {opcoesSituacao.map((opcao) => (
+                <button
+                  key={opcao.valor}
+                  type="button"
+                  className="atalho"
+                  aria-pressed={situacao === opcao.valor}
+                  onClick={() => setSituacao(opcao.valor)}
                 >
-                  <div className="rota-admin__conteudo">
-                    <h3
-                      id={
-                        `rota-${rota.id}`
-                      }
-                    >
-                      {rota.nome}
-                    </h3>
-
-                    <p>
-                      {rota.descricao ||
-                        'Sem descrição.'}
-                    </p>
-
-                    <p>
-                      <strong>
-                        Status:
-                      </strong>{' '}
-
-                      <span
-                        className={
-                          rota.ativo
-                            ? 'status-admin status-admin--ativo'
-                            : 'status-admin status-admin--inativo'
-                        }
-                      >
-                        {rota.ativo
-                          ? 'Ativa'
-                          : 'Inativa'}
-                      </span>
-                    </p>
-                  </div>
-
-                  <div
-                    className="rota-admin__acoes"
-                    aria-label={
-                      `Ações da rota ${rota.nome}`
-                    }
-                  >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        iniciarEdicao(
-                          rota,
-                        )
-                      }
-                      disabled={
-                        operacaoEmAndamento
-                      }
-                      aria-label={
-                        `Editar rota ${rota.nome}`
-                      }
-                    >
-                      Editar
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleAlterarStatus(
-                          rota,
-                        )
-                      }
-                      disabled={
-                        operacaoEmAndamento
-                      }
-                      aria-label={
-                        rota.ativo
-                          ? `Desativar rota ${rota.nome}`
-                          : `Ativar rota ${rota.nome}`
-                      }
-                    >
-                      {alterandoStatusId ===
-                      rota.id
-                        ? 'Alterando...'
-                        : rota.ativo
-                          ? 'Desativar'
-                          : 'Ativar'}
-                    </button>
-                  </div>
-                </article>
-              ),
-            )}
+                  {opcao.rotulo}
+                </button>
+              ))}
+            </div>
           </div>
+
+          <TabelaRotas
+            linhas={linhas}
+            rotaAberta={painel?.rota?.id ?? null}
+            alterandoId={alterandoId}
+            onEditar={(rota) => {
+              setMensagem(null)
+              setPainel({ rota, chave: `editar-${rota.id}` })
+            }}
+            onAlternarStatus={pedirAlteracaoStatus}
+          />
+        </section>
+
+        {painel && (
+          <PainelLateral
+            titulo={painel.rota ? 'Editar rota' : 'Nova rota'}
+            chave={painel.chave}
+            onFechar={() => setPainel(null)}
+          >
+            <FormRota
+              key={painel.chave}
+              rota={painel.rota ?? null}
+              rotas={rotas}
+              salvando={salvando}
+              onEnviar={salvarRota}
+            />
+          </PainelLateral>
         )}
-      </section>
-    </>
+      </div>
+
+      <DialogoConfirmacao
+        aberto={Boolean(confirmacao)}
+        titulo="Desativar esta rota?"
+        textoConfirmar="Desativar rota"
+        textoCancelar="Manter ativa"
+        perigo
+        processando={alterandoId !== null}
+        onConfirmar={() => executarStatus(confirmacao, false)}
+        onCancelar={() => setConfirmacao(null)}
+      >
+        {confirmacao && (
+          <p>
+            <strong>{confirmacao.nome}</strong>
+            {bairrosDaConfirmacao > 0
+              ? ` atende ${bairrosDaConfirmacao === 1 ? '1 bairro' : `${bairrosDaConfirmacao} bairros`}. Enquanto estiver inativa, esses bairros não aparecem na consulta e quem escolheu esta rota não recebe lembretes.`
+              : ' não tem bairros ligados a ela.'}{' '}
+            Nada é apagado: ao reativar, tudo volta como estava.
+          </p>
+        )}
+      </DialogoConfirmacao>
+    </div>
   )
 }
 

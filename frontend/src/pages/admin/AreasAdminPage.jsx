@@ -2,6 +2,7 @@ import {
   useEffect,
   useState,
 } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import Alerta from '../../components/Alerta'
 import PainelLateral from '../../components/admin/PainelLateral'
@@ -35,7 +36,13 @@ function AreasAdminPage() {
   const [carregando, setCarregando] = useState(true)
   const [erroCarga, setErroCarga] = useState('')
 
-  const [filtros, setFiltros] = useState({ busca: '', rotaId: '', mapa: 'todas' })
+  // "/admin/areas?rota=3" (link da tela de Rotas) já abre filtrado.
+  const [parametros] = useSearchParams()
+  const [filtros, setFiltros] = useState({
+    busca: '',
+    rotaId: parametros.get('rota') ?? '',
+    mapa: 'todas',
+  })
   const [pagina, setPagina] = useState(1)
   const [mensagem, setMensagem] = useState(null)
   const [painel, setPainel] = useState(null)
