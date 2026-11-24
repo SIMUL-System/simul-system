@@ -5,9 +5,8 @@ target/
 *.war
 *.ear
 *.log
-.mvn/
-mvnw
-mvnw.cmd
+# mvnw, mvnw.cmd e .mvn/wrapper/maven-wrapper.properties DEVEM ser versionados:
+# o Dockerfile da Render usa ./mvnw. O .jar do wrapper já é ignorado em backend/.gitignore.
 *.iml
 .classpath
 .project
@@ -34,7 +33,9 @@ coverage/
 *.key
 application-secrets.properties
 
-### === IDEs e editores === ###
+### === IDEs, editores e assistentes (configurações locais) === ###
+.openclaude/
+.claude/settings.local.json
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json

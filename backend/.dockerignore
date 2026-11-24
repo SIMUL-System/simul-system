@@ -1,0 +1,10 @@
+# Arquivos que não precisam ir para o contexto do build Docker na Render
+target/
+.idea/
+.vscode/
+*.iml
+HELP.md
+*.log
+.env
+.env.*
+src/test/backend/

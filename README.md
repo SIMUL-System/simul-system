@@ -1633,6 +1633,17 @@ npm run lint
 npm run build
 ```
 
+## Integração contínua (GitHub Actions)
+
+O arquivo `.github/workflows/ci.yml` roda automaticamente em todo push e pull request para a `main`:
+
+| Job | O que faz |
+|---|---|
+| Back-end | sobe um PostgreSQL 16 temporário, gera `JWT_SECRET` e chaves VAPID descartáveis e executa `./mvnw clean test` |
+| Front-end | `npm ci`, `npm run lint` e `npm run build` |
+
+Nenhum segredo real é usado no CI. O resultado aparece na aba **Actions** do GitHub e ao lado de cada commit.
+
 ---
 
 # 23. Deploy na Render
@@ -1668,7 +1679,12 @@ server.port=${PORT:8080}
 ```text
 Root Directory: backend
 Runtime: Docker
+Auto-Deploy: After CI Checks Pass
 ```
+
+Com **After CI Checks Pass**, a Render só publica um commit depois que os jobs do GitHub Actions passarem. Um push com teste quebrado não chega ao ar.
+
+O Dockerfile baixa as dependências numa camada separada (builds mais rápidos quando só o código muda), executa a aplicação sem root e limita o heap da JVM com `JAVA_OPTS` (`-XX:MaxRAMPercentage=70`), porque a instância gratuita tem 512 MB de RAM.
 
 Cadastre todas as variáveis de ambiente necessárias.
 

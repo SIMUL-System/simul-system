@@ -1,0 +1,103 @@
+name: CI
+
+# Roda em todo push e pull request para a main.
+# Com o Auto-Deploy da Render em "After CI Checks Pass", o deploy só
+# acontece se estes dois jobs passarem.
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend:
+    name: Back-end (./mvnw clean test)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: simul_ci
+          POSTGRES_USER: simul
+          POSTGRES_PASSWORD: simul
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U simul -d simul_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      DB_URL: jdbc:postgresql://localhost:5432/simul_ci
+      DB_USERNAME: simul
+      DB_PASSWORD: simul
+      SMTP_HOST: localhost
+      SMTP_PORT: "2525"
+      SMTP_USERNAME: teste
+      SMTP_PASSWORD: teste
+      SMTP_FROM: ci@simul.local
+      NOTIFICACAO_SCHEDULER_ENABLED: "false"
+      WEB_PUSH_VAPID_SUBJECT: mailto:ci@simul.local
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      # Segredos descartáveis, gerados a cada execução (nunca versionados).
+      - name: Gerar JWT_SECRET e chaves VAPID temporárias
+        run: |
+          echo "JWT_SECRET=$(openssl rand -base64 48 | tr -d '\n')" >> "$GITHUB_ENV"
+          node -e '
+            const { generateKeyPairSync } = require("crypto");
+            const { publicKey, privateKey } = generateKeyPairSync("ec", { namedCurve: "prime256v1" });
+            const pub = publicKey.export({ format: "jwk" });
+            const priv = privateKey.export({ format: "jwk" });
+            const raw = Buffer.concat([
+              Buffer.from([4]),
+              Buffer.from(pub.x, "base64url"),
+              Buffer.from(pub.y, "base64url")
+            ]);
+            console.log("WEB_PUSH_VAPID_PUBLIC_KEY=" + raw.toString("base64url"));
+            console.log("WEB_PUSH_VAPID_PRIVATE_KEY=" + priv.d);
+          ' >> "$GITHUB_ENV"
+
+      - name: Testes
+        run: |
+          chmod +x mvnw
+          ./mvnw -B clean test
+
+  frontend:
+    name: Front-end (lint + build)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    env:
+      # Valor fictício: o build de produção exige a variável, mas o CI não chama a API.
+      VITE_API_URL: https://api.exemplo.invalid
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
