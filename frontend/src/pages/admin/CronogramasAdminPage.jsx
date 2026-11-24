@@ -3,765 +3,568 @@ import {
   useState,
 } from 'react'
 
+import Alerta from '../../components/Alerta'
+import DialogoConfirmacao from '../../components/admin/DialogoConfirmacao'
+import PainelLateral from '../../components/admin/PainelLateral'
+import FormEditarCronograma from '../../components/admin/cronograma/FormEditarCronograma'
+import FormHorarioLote from '../../components/admin/cronograma/FormHorarioLote'
+import FormNovoCronograma from '../../components/admin/cronograma/FormNovoCronograma'
+import GradeCronogramas from '../../components/admin/cronograma/GradeCronogramas'
+
 import {
+  alterarHorariosEmLote,
   alterarStatusCronograma,
   atualizarCronograma,
   criarCronograma,
   listarCronogramas,
 } from '../../services/adminCronogramaService'
 
+import { listarRotas } from '../../services/adminRotaService'
+
 import {
-  listarRotas,
-} from '../../services/adminRotaService'
+  horaCurta,
+  horaParaApi,
+  listarDias,
+  montarGrade,
+  nomeDia,
+} from '../../utils/cronogramas'
 
-const DIAS_SEMANA = [
-  {
-    valor: 'SEGUNDA',
-    rotulo: 'Segunda-feira',
-  },
-  {
-    valor: 'TERCA',
-    rotulo: 'Terça-feira',
-  },
-  {
-    valor: 'QUARTA',
-    rotulo: 'Quarta-feira',
-  },
-  {
-    valor: 'QUINTA',
-    rotulo: 'Quinta-feira',
-  },
-  {
-    valor: 'SEXTA',
-    rotulo: 'Sexta-feira',
-  },
-  {
-    valor: 'SABADO',
-    rotulo: 'Sábado',
-  },
-  {
-    valor: 'DOMINGO',
-    rotulo: 'Domingo',
-  },
-]
-
-function obterRotuloDia(
-  valor,
-) {
-  return (
-    DIAS_SEMANA.find(
-      (dia) =>
-        dia.valor === valor,
-    )?.rotulo || valor
-  )
+function comoLista(dados) {
+  return Array.isArray(dados) ? dados : []
 }
 
 function CronogramasAdminPage() {
-  const [rotas, setRotas] =
-    useState([])
+  const [rotas, setRotas] = useState([])
+  const [cronogramas, setCronogramas] = useState([])
+  const [carregando, setCarregando] = useState(true)
+  const [erroCarga, setErroCarga] = useState('')
 
-  const [
-    cronogramas,
-    setCronogramas,
-  ] = useState([])
-
-  const [
-    cronogramaEmEdicao,
-    setCronogramaEmEdicao,
-  ] = useState(null)
-
-  const [
-    rotaCronogramaId,
-    setRotaCronogramaId,
-  ] = useState('')
-
-  const [
-    diaSemana,
-    setDiaSemana,
-  ] = useState('SEGUNDA')
-
-  const [
-    horarioInicio,
-    setHorarioInicio,
-  ] = useState('')
-
-  const [
-    horarioFim,
-    setHorarioFim,
-  ] = useState('')
-
-  const [erro, setErro] =
-    useState('')
-
-  const [sucesso, setSucesso] =
-    useState('')
-
-  const [
-    carregando,
-    setCarregando,
-  ] = useState(true)
-
-  const [
-    salvando,
-    setSalvando,
-  ] = useState(false)
-
-  const [
-    alterandoStatusId,
-    setAlterandoStatusId,
-  ] = useState(null)
+  const [mensagem, setMensagem] = useState(null)
+  const [mostrarInativos, setMostrarInativos] = useState(false)
+  const [selecionadas, setSelecionadas] = useState([])
+  const [painel, setPainel] = useState(null)
+  const [salvando, setSalvando] = useState(false)
+  const [confirmacao, setConfirmacao] = useState(null)
 
   useEffect(() => {
-    let componenteAtivo = true
+    let ativo = true
 
-    Promise.all([
-      listarRotas(),
-      listarCronogramas(),
-    ])
-      .then(
-        ([
-          dadosRotas,
-          dadosCronogramas,
-        ]) => {
-          if (!componenteAtivo) {
-            return
-          }
-
-          setRotas(
-            Array.isArray(
-              dadosRotas,
-            )
-              ? dadosRotas
-              : [],
-          )
-
-          setCronogramas(
-            Array.isArray(
-              dadosCronogramas,
-            )
-              ? dadosCronogramas
-              : [],
-          )
-        },
-      )
-      .catch((error) => {
-        if (!componenteAtivo) {
-          return
+    Promise.all([listarRotas(), listarCronogramas()])
+      .then(([dadosRotas, dadosCronogramas]) => {
+        if (ativo) {
+          setRotas(comoLista(dadosRotas))
+          setCronogramas(comoLista(dadosCronogramas))
         }
-
-        setErro(
-          error.message ||
-            'Não foi possível carregar os cronogramas.',
-        )
+      })
+      .catch((error) => {
+        if (ativo) {
+          setErroCarga(error.message || 'Não foi possível carregar os cronogramas.')
+        }
       })
       .finally(() => {
-        if (componenteAtivo) {
+        if (ativo) {
           setCarregando(false)
         }
       })
 
     return () => {
-      componenteAtivo = false
+      ativo = false
     }
   }, [])
 
-  async function recarregarCronogramas() {
-    const dados =
-      await listarCronogramas()
+  async function recarregar() {
+    const [dadosRotas, dadosCronogramas] = await Promise.all([
+      listarRotas(),
+      listarCronogramas(),
+    ])
 
-    setCronogramas(
-      Array.isArray(dados)
-        ? dados
-        : [],
+    setRotas(comoLista(dadosRotas))
+    setCronogramas(comoLista(dadosCronogramas))
+  }
+
+  const linhas = montarGrade(rotas, cronogramas, mostrarInativos)
+  const rotasAtivas = rotas
+    .filter((rota) => rota.ativo)
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+
+  const linhasSelecionadas = linhas.filter((linha) =>
+    selecionadas.includes(linha.rota.id),
+  )
+  const idsSelecionados = linhasSelecionadas.flatMap((linha) =>
+    linha.ativos.map((item) => item.id),
+  )
+
+  function nomeRota(rotaId) {
+    return rotas.find((rota) => rota.id === rotaId)?.nome ?? `Rota ${rotaId}`
+  }
+
+  /* ---------- seleção ---------- */
+
+  function alternarRota(rotaId) {
+    setSelecionadas((atuais) =>
+      atuais.includes(rotaId)
+        ? atuais.filter((id) => id !== rotaId)
+        : [...atuais, rotaId],
     )
   }
 
-  function limparMensagens() {
-    setErro('')
-    setSucesso('')
+  function selecionar(filtro) {
+    setSelecionadas(
+      linhas
+        .filter((linha) => linha.ativos.length > 0 && filtro(linha))
+        .map((linha) => linha.rota.id),
+    )
   }
 
-  function limparFormulario({
-    manterRota = false,
-  } = {}) {
-    setCronogramaEmEdicao(null)
+  function limparSelecao() {
+    setSelecionadas([])
 
-    if (!manterRota) {
-      setRotaCronogramaId('')
+    if (painel?.modo === 'lote') {
+      setPainel(null)
     }
-
-    setDiaSemana('SEGUNDA')
-    setHorarioInicio('')
-    setHorarioFim('')
   }
 
-  function iniciarEdicao(
-    cronograma,
-  ) {
-    limparMensagens()
+  /* ---------- painel ---------- */
 
-    setCronogramaEmEdicao(
-      cronograma,
-    )
-
-    setRotaCronogramaId(
-      String(
-        cronograma.rotaId ?? '',
-      ),
-    )
-
-    setDiaSemana(
-      cronograma.diaSemana ??
-        'SEGUNDA',
-    )
-
-    setHorarioInicio(
-      cronograma.horarioInicio?.slice(0,5)
-        ?.slice(0, 5) ?? '',
-    )
-
-    setHorarioFim(
-      cronograma.horarioFim?.slice(0,5)
-        ?.slice(0, 5) ?? '',
-    )
-
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
+  function abrirNovo(rotaId = null, dia = null) {
+    setMensagem(null)
+    setPainel({
+      modo: 'novo',
+      rotaId,
+      dias: dia ? [dia] : [],
+      chave: `novo-${rotaId}-${dia}-${Date.now()}`,
     })
   }
 
-  function cancelarEdicao() {
-    limparFormulario()
-    limparMensagens()
+  function abrirEdicao(cronograma) {
+    setMensagem(null)
+    setPainel({ modo: 'editar', cronograma, chave: `editar-${cronograma.id}` })
   }
 
-  async function handleSubmit(
-    event,
-  ) {
-    event.preventDefault()
+  function abrirLote() {
+    setMensagem(null)
+    setPainel({ modo: 'lote', chave: `lote-${selecionadas.join('-')}` })
+  }
 
-    limparMensagens()
+  /* ---------- ações ---------- */
 
-    if (
-      !rotaCronogramaId ||
-      !diaSemana ||
-      !horarioInicio ||
-      !horarioFim
-    ) {
-      setErro(
-        'Informe a rota, o dia da semana e os horários.',
-      )
+  async function criar({ rotaId, dias, inicio, fim }) {
+    setSalvando(true)
+    setMensagem(null)
 
-      return
-    }
+    const criados = []
+    const falhas = []
 
-    if (
-      horarioInicio === horarioFim
-    ) {
-      setErro(
-        'O horário inicial e o horário final não podem ser iguais.',
-      )
-
-      return
-    }
-
-    const rotaId =
-      Number(rotaCronogramaId)
-
-    if (
-      !Number.isInteger(
-        rotaId,
-      )
-    ) {
-      setErro(
-        'Selecione uma rota válida.',
-      )
-
-      return
-    }
-
-    const dados = {
-      rotaId,
-      diaSemana,
-      horarioInicio:
-        `${horarioInicio}:00`,
-      horarioFim:
-        `${horarioFim}:00`,
+    // Um POST por dia, no endpoint que já existe.
+    for (const dia of dias) {
+      try {
+        await criarCronograma({
+          rotaId,
+          diaSemana: dia,
+          horarioInicio: horaParaApi(inicio),
+          horarioFim: horaParaApi(fim),
+        })
+        criados.push(dia)
+      } catch (error) {
+        falhas.push({ dia, motivo: error.message })
+      }
     }
 
     try {
-      setSalvando(true)
+      await recarregar()
+    } catch {
+      // A grade fica como estava; a mensagem abaixo já diz o que foi salvo.
+    }
 
-      if (
-        cronogramaEmEdicao
-      ) {
-        await atualizarCronograma(
-          cronogramaEmEdicao.id,
-          dados,
-        )
+    setSalvando(false)
 
-        setSucesso(
-          'Cronograma atualizado com sucesso.',
-        )
+    if (falhas.length === 0) {
+      setPainel(null)
+      setMensagem({
+        tipo: 'sucesso',
+        texto: `${criados.length === 1 ? 'Horário criado' : `${criados.length} horários criados`} em ${nomeRota(rotaId)}: ${listarDias(criados)}, das ${inicio} às ${fim}.`,
+      })
+      return
+    }
 
-        limparFormulario()
-      } else {
-        await criarCronograma(
-          dados,
-        )
+    setMensagem({
+      tipo: criados.length > 0 ? 'aviso' : 'erro',
+      texto: [
+        criados.length > 0 ? `Criados: ${listarDias(criados)}.` : '',
+        `Não foi possível criar: ${falhas
+          .map((falha) => `${nomeDia(falha.dia)} (${falha.motivo || 'erro desconhecido'})`)
+          .join('; ')}.`,
+      ].join(' ').trim(),
+    })
+  }
 
-        setSucesso(
-          'Cronograma cadastrado com sucesso. Você pode adicionar outro horário para a mesma rota.',
-        )
+  async function salvarEdicao({ rotaId, diaSemana, inicio, fim }) {
+    const { cronograma } = painel
 
-        limparFormulario({
-          manterRota: true,
-        })
-      }
+    setSalvando(true)
+    setMensagem(null)
 
-      await recarregarCronogramas()
+    try {
+      await atualizarCronograma(cronograma.id, {
+        rotaId,
+        diaSemana,
+        horarioInicio: horaParaApi(inicio),
+        horarioFim: horaParaApi(fim),
+      })
+      await recarregar()
+      setPainel(null)
+      setMensagem({
+        tipo: 'sucesso',
+        texto: `Horário atualizado: ${nomeRota(rotaId)}, ${nomeDia(diaSemana)}, das ${inicio} às ${fim}.`,
+      })
     } catch (error) {
-      setErro(
-        error.message ||
-          'Não foi possível salvar o cronograma.',
-      )
+      setMensagem({
+        tipo: 'erro',
+        texto: error.message || 'Não foi possível salvar o horário.',
+      })
     } finally {
       setSalvando(false)
     }
   }
 
-  async function handleAlterarStatus(
-    cronograma,
-  ) {
-    limparMensagens()
+  function pedirAlteracaoStatus(cronograma, ativar) {
+    if (ativar) {
+      executarStatus(cronograma, true)
+      return
+    }
 
-    const novoStatus =
-      !cronograma.ativo
+    setConfirmacao({ tipo: 'status', cronograma })
+  }
 
-    if (!novoStatus) {
-      const confirmou =
-        window.confirm(
-          `Deseja realmente desativar o cronograma de ${obterNomeRota(
-            cronograma.rotaId,
-          )} em ${obterRotuloDia(
-            cronograma.diaSemana,
-          )}?`,
-        )
+  async function executarStatus(cronograma, ativar) {
+    setSalvando(true)
+    setMensagem(null)
 
-      if (!confirmou) {
-        return
+    try {
+      await alterarStatusCronograma(cronograma.id, ativar)
+      await recarregar()
+      setPainel(null)
+      setConfirmacao(null)
+      setMensagem({
+        tipo: 'sucesso',
+        texto: `${ativar ? 'Horário reativado' : 'Horário desativado'}: ${nomeRota(cronograma.rotaId)}, ${nomeDia(cronograma.diaSemana)}.`,
+      })
+    } catch (error) {
+      setConfirmacao(null)
+      setMensagem({
+        tipo: 'erro',
+        texto: error.message || 'Não foi possível alterar o status do horário.',
+      })
+    } finally {
+      setSalvando(false)
+    }
+  }
+
+  async function alterarLote({ inicio, fim }) {
+    setSalvando(true)
+    setMensagem(null)
+
+    try {
+      await alterarHorariosEmLote(
+        idsSelecionados,
+        horaParaApi(inicio),
+        horaParaApi(fim),
+      )
+      await recarregar()
+      setPainel(null)
+      setSelecionadas([])
+      setMensagem({
+        tipo: 'sucesso',
+        texto: `${idsSelecionados.length} horários agora vão das ${inicio} às ${fim}.`,
+      })
+    } catch (error) {
+      setMensagem({
+        tipo: 'erro',
+        texto: `${error.message || 'Não foi possível alterar os horários.'} Nenhum horário foi alterado.`,
+      })
+    } finally {
+      setSalvando(false)
+    }
+  }
+
+  async function desativarLote() {
+    setSalvando(true)
+    setMensagem(null)
+
+    const falhas = []
+
+    for (const id of idsSelecionados) {
+      try {
+        await alterarStatusCronograma(id, false)
+      } catch {
+        falhas.push(id)
       }
     }
 
     try {
-      setAlterandoStatusId(
-        cronograma.id,
-      )
-
-      await alterarStatusCronograma(
-        cronograma.id,
-        novoStatus,
-      )
-
-      await recarregarCronogramas()
-
-      setSucesso(
-        novoStatus
-          ? 'Cronograma ativado com sucesso.'
-          : 'Cronograma desativado com sucesso.',
-      )
-    } catch (error) {
-      setErro(
-        error.message ||
-          'Não foi possível alterar o status do cronograma.',
-      )
-    } finally {
-      setAlterandoStatusId(null)
+      await recarregar()
+    } catch {
+      // Mantém a grade anterior; a mensagem informa o resultado.
     }
+
+    setSalvando(false)
+    setConfirmacao(null)
+    setSelecionadas([])
+    setPainel(null)
+
+    const feitos = idsSelecionados.length - falhas.length
+
+    setMensagem(
+      falhas.length === 0
+        ? { tipo: 'sucesso', texto: `${feitos} horários desativados.` }
+        : {
+            tipo: 'aviso',
+            texto: `${feitos} horários desativados; ${falhas.length} não puderam ser desativados. Tente de novo.`,
+          },
+    )
   }
 
-  function obterNomeRota(
-    rotaId,
-  ) {
-    const rota = rotas.find(
-      (item) =>
-        item.id === rotaId,
-    )
+  /* ---------- tela ---------- */
 
+  if (carregando) {
     return (
-      rota?.nome ||
-      `Rota ${rotaId}`
+      <div
+        className="carregando"
+        role="status"
+      >
+        <span
+          className="carregando__spinner"
+          aria-hidden="true"
+        />
+        Carregando cronogramas…
+      </div>
     )
   }
 
-  const operacaoEmAndamento =
-    salvando ||
-    alterandoStatusId !== null
+  if (erroCarga) {
+    return <Alerta tipo="erro">{erroCarga}</Alerta>
+  }
+
+  const tituloPainel = {
+    novo: 'Novo cronograma',
+    editar: 'Editar horário',
+    lote: 'Alterar em massa',
+  }[painel?.modo]
 
   return (
-    <>
-      <header
-        className="admin-secao__cabecalho"
-        aria-labelledby="titulo-cronogramas-admin"
-      >
-        <h2 id="titulo-cronogramas-admin">
-          Cronogramas
-        </h2>
-
-        <p>
-          Configure os dias e horários
-          de coleta associados a cada
-          rota.
-        </p>
-      </header>
-
-      {erro && (
-        <div
-          className="mensagem mensagem--erro"
-          role="alert"
-          aria-live="assertive"
-        >
-          {erro}
+    <div className="admin-pagina">
+      <header className="admin-pagina__cabecalho">
+        <div>
+          <h1 className="admin-pagina__titulo">Cronogramas</h1>
+          <p className="admin-pagina__texto">
+            Cada linha é uma rota e cada coluna, um dia. Toque num horário para
+            editar ou num espaço vazio para criar.
+          </p>
         </div>
-      )}
 
-      {sucesso && (
-        <div
-          className="mensagem mensagem--sucesso"
-          role="status"
-          aria-live="polite"
-        >
-          {sucesso}
-        </div>
-      )}
-
-      <section
-        className="resultado"
-        aria-labelledby="titulo-formulario-cronograma"
-        aria-busy={salvando}
-      >
-        <h3 id="titulo-formulario-cronograma">
-          {cronogramaEmEdicao
-            ? 'Editar cronograma'
-            : 'Cadastrar cronograma'}
-        </h3>
-
-        <form
-          className="consulta__formulario"
-          onSubmit={handleSubmit}
-          noValidate
-        >
-          <div className="campo">
-            <label htmlFor="rotaCronograma">
-              Rota
-            </label>
-
-            <select
-              id="rotaCronograma"
-              value={
-                rotaCronogramaId
-              }
-              onChange={(event) => {
-                setRotaCronogramaId(
-                  event.target.value,
-                )
-
-                limparMensagens()
-              }}
-              disabled={
-                carregando ||
-                operacaoEmAndamento
-              }
-              required
-            >
-              <option value="">
-                Selecione uma rota
-              </option>
-
-              {rotas.map(
-                (rota) => (
-                  <option
-                    key={rota.id}
-                    value={rota.id}
-                    disabled={
-                      !rota.ativo &&
-                      Number(
-                        rotaCronogramaId,
-                      ) !== rota.id
-                    }
-                  >
-                    {rota.nome}
-
-                    {!rota.ativo
-                      ? ' — Inativa'
-                      : ''}
-                  </option>
-                ),
-              )}
-            </select>
-          </div>
-
-          <div className="campo">
-            <label htmlFor="diaSemana">
-              Dia da semana
-            </label>
-
-            <select
-              id="diaSemana"
-              value={diaSemana}
-              onChange={(event) => {
-                setDiaSemana(
-                  event.target.value,
-                )
-
-                limparMensagens()
-              }}
-              disabled={
-                operacaoEmAndamento
-              }
-            >
-              {DIAS_SEMANA.map(
-                (dia) => (
-                  <option
-                    key={
-                      dia.valor
-                    }
-                    value={
-                      dia.valor
-                    }
-                  >
-                    {dia.rotulo}
-                  </option>
-                ),
-              )}
-            </select>
-          </div>
-
-          <div className="campo">
-            <label htmlFor="horarioInicio">
-              Horário inicial
-            </label>
-
+        <div className="admin-pagina__acoes">
+          <label className="caixa-opcao">
             <input
-              id="horarioInicio"
-              type="time"
-              value={
-                horarioInicio
-              }
-              onChange={(event) => {
-                setHorarioInicio(
-                  event.target.value,
-                )
-
-                limparMensagens()
-              }}
-              disabled={
-                operacaoEmAndamento
-              }
-              required
+              type="checkbox"
+              checked={mostrarInativos}
+              onChange={(event) => setMostrarInativos(event.target.checked)}
             />
-          </div>
-
-          <div className="campo">
-            <label htmlFor="horarioFim">
-              Horário final
-            </label>
-
-            <input
-              id="horarioFim"
-              type="time"
-              value={horarioFim}
-              onChange={(event) => {
-                setHorarioFim(
-                  event.target.value,
-                )
-
-                limparMensagens()
-              }}
-              disabled={
-                operacaoEmAndamento
-              }
-              required
-            />
-          </div>
+            Mostrar inativos
+          </label>
 
           <button
-            type="submit"
-            disabled={
-              operacaoEmAndamento
-            }
+            type="button"
+            className="botao botao--primario"
+            onClick={() => abrirNovo()}
           >
-            {salvando
-              ? 'Salvando...'
-              : cronogramaEmEdicao
-                ? 'Salvar alterações'
-                : 'Cadastrar cronograma'}
+            Novo cronograma
           </button>
+        </div>
+      </header>
 
-          {cronogramaEmEdicao && (
+      {mensagem && (
+        <Alerta tipo={mensagem.tipo}>{mensagem.texto}</Alerta>
+      )}
+
+      <div className={`admin-area ${painel ? 'admin-area--com-painel' : ''}`}>
+        <section
+          className="admin-quadro"
+          aria-label="Grade semanal de cronogramas"
+        >
+          <div className="admin-quadro__barra">
+            <span className="admin-quadro__rotulo">Selecionar:</span>
             <button
               type="button"
-              onClick={
-                cancelarEdicao
-              }
-              disabled={
-                operacaoEmAndamento
-              }
+              className="atalho"
+              onClick={() => selecionar(() => true)}
             >
-              Cancelar edição
+              Todas
             </button>
-          )}
-        </form>
-      </section>
-
-      <section
-        className="resultado"
-        aria-labelledby="titulo-lista-cronogramas"
-        aria-busy={carregando}
-      >
-        <h3 id="titulo-lista-cronogramas">
-          Cronogramas cadastrados
-        </h3>
-
-        {carregando ? (
-          <p
-            role="status"
-            aria-live="polite"
-          >
-            Carregando cronogramas...
-          </p>
-        ) : cronogramas.length ===
-          0 ? (
-          <p>
-            Nenhum cronograma
-            cadastrado.
-          </p>
-        ) : (
-          <div className="lista-rotas">
-            {cronogramas.map(
-              (cronograma) => {
-                const nomeRota =
-                  obterNomeRota(
-                    cronograma.rotaId,
-                  )
-
-                const dia =
-                  obterRotuloDia(
-                    cronograma.diaSemana,
-                  )
-
-                return (
-                  <article
-                    className="rota-admin"
-                    key={cronograma.id}
-                    aria-labelledby={
-                      `cronograma-${cronograma.id}`
-                    }
-                  >
-                    <div className="rota-admin__conteudo">
-                      <h3
-                        id={
-                          `cronograma-${cronograma.id}`
-                        }
-                      >
-                        {nomeRota}
-                      </h3>
-
-                      <p>
-                        <strong>
-                          Dia:
-                        </strong>{' '}
-                        {dia}
-                      </p>
-
-                      <p>
-                        <strong>
-                          Horário:
-                        </strong>{' '}
-                        {
-                          cronograma.horarioInicio?.slice(0,5)
-                        }
-                        {' — '}
-                        {
-                          cronograma.horarioFim?.slice(0,5)
-                        }
-                      </p>
-
-                      <p>
-                        <strong>
-                          Status:
-                        </strong>{' '}
-
-                        <span
-                          className={
-                            cronograma.ativo
-                              ? 'status-admin status-admin--ativo'
-                              : 'status-admin status-admin--inativo'
-                          }
-                        >
-                          {cronograma.ativo
-                            ? 'Ativo'
-                            : 'Inativo'}
-                        </span>
-                      </p>
-                    </div>
-
-                    <div
-                      className="rota-admin__acoes"
-                      aria-label={
-                        `Ações do cronograma de ${nomeRota} em ${dia}`
-                      }
-                    >
-                      <button
-                        type="button"
-                        onClick={() =>
-                          iniciarEdicao(
-                            cronograma,
-                          )
-                        }
-                        disabled={
-                          operacaoEmAndamento
-                        }
-                        aria-label={
-                          `Editar cronograma de ${nomeRota} em ${dia}`
-                        }
-                      >
-                        Editar
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleAlterarStatus(
-                            cronograma,
-                          )
-                        }
-                        disabled={
-                          operacaoEmAndamento
-                        }
-                        aria-label={
-                          cronograma.ativo
-                            ? `Desativar cronograma de ${nomeRota} em ${dia}`
-                            : `Ativar cronograma de ${nomeRota} em ${dia}`
-                        }
-                      >
-                        {alterandoStatusId ===
-                        cronograma.id
-                          ? 'Alterando...'
-                          : cronograma.ativo
-                            ? 'Desativar'
-                            : 'Ativar'}
-                      </button>
-                    </div>
-                  </article>
-                )
-              },
-            )}
+            <button
+              type="button"
+              className="atalho"
+              onClick={() => selecionar((linha) => !linha.noturna)}
+            >
+              Todas as diurnas
+            </button>
+            <button
+              type="button"
+              className="atalho"
+              onClick={() => selecionar((linha) => linha.noturna)}
+            >
+              Todas as noturnas
+            </button>
           </div>
+
+          {selecionadas.length > 0 && (
+            <div
+              className="barra-selecao"
+              role="status"
+            >
+              <strong className="barra-selecao__texto">
+                {idsSelecionados.length} horários selecionados em{' '}
+                {selecionadas.length === 1 ? '1 rota' : `${selecionadas.length} rotas`}
+              </strong>
+
+              <button
+                type="button"
+                className="botao botao--pequeno botao--destaque"
+                onClick={abrirLote}
+                disabled={idsSelecionados.length === 0}
+              >
+                Alterar horário
+              </button>
+
+              <button
+                type="button"
+                className="botao botao--pequeno botao--contorno-claro"
+                onClick={() => setConfirmacao({ tipo: 'lote' })}
+                disabled={idsSelecionados.length === 0}
+              >
+                Desativar
+              </button>
+
+              <button
+                type="button"
+                className="botao botao--pequeno botao--link-claro"
+                onClick={limparSelecao}
+              >
+                Limpar
+              </button>
+            </div>
+          )}
+
+          {linhas.length === 0 ? (
+            <p className="admin-quadro__vazio">
+              Nenhuma rota ativa. Cadastre uma rota antes de criar horários.
+            </p>
+          ) : (
+            <GradeCronogramas
+              linhas={linhas}
+              selecionadas={selecionadas}
+              cronogramaAberto={painel?.modo === 'editar' ? painel.cronograma.id : null}
+              onAlternarRota={alternarRota}
+              onAbrirCronograma={abrirEdicao}
+              onCriar={abrirNovo}
+            />
+          )}
+
+          <ul
+            className="legenda-horarios"
+            aria-label="Legenda"
+          >
+            <li><span className="legenda-horarios__amostra legenda-horarios__amostra--diurno" />Diurno</li>
+            <li><span className="legenda-horarios__amostra legenda-horarios__amostra--noturno" />Noturno</li>
+            <li><span className="legenda-horarios__amostra legenda-horarios__amostra--vazio" />Sem coleta</li>
+            {mostrarInativos && (
+              <li><span className="legenda-horarios__amostra legenda-horarios__amostra--inativo" />Inativo</li>
+            )}
+          </ul>
+        </section>
+
+        {painel && (
+          <PainelLateral
+            titulo={tituloPainel}
+            chave={painel.chave}
+            onFechar={() => setPainel(null)}
+          >
+            {painel.modo === 'novo' && (
+              <FormNovoCronograma
+                key={painel.chave}
+                rotas={rotasAtivas}
+                cronogramas={cronogramas}
+                rotaInicial={painel.rotaId}
+                diasIniciais={painel.dias}
+                salvando={salvando}
+                onEnviar={criar}
+              />
+            )}
+
+            {painel.modo === 'editar' && (
+              <FormEditarCronograma
+                key={painel.chave}
+                cronograma={painel.cronograma}
+                rotas={rotas}
+                cronogramas={cronogramas}
+                salvando={salvando}
+                onSalvar={salvarEdicao}
+                onAlterarStatus={pedirAlteracaoStatus}
+              />
+            )}
+
+            {painel.modo === 'lote' && (
+              <FormHorarioLote
+                key={painel.chave}
+                rotasSelecionadas={linhasSelecionadas.map((linha) => linha.rota)}
+                quantidade={idsSelecionados.length}
+                salvando={salvando}
+                onEnviar={alterarLote}
+              />
+            )}
+          </PainelLateral>
         )}
-      </section>
-    </>
+      </div>
+
+      <DialogoConfirmacao
+        aberto={confirmacao?.tipo === 'status'}
+        titulo="Desativar este horário?"
+        textoConfirmar="Desativar horário"
+        textoCancelar="Manter ativo"
+        perigo
+        processando={salvando}
+        onConfirmar={() => executarStatus(confirmacao.cronograma, false)}
+        onCancelar={() => setConfirmacao(null)}
+      >
+        {confirmacao?.tipo === 'status' && (
+          <p>
+            <strong>{nomeRota(confirmacao.cronograma.rotaId)}</strong>, na{' '}
+            {nomeDia(confirmacao.cronograma.diaSemana)}, das{' '}
+            {horaCurta(confirmacao.cronograma.horarioInicio)} às{' '}
+            {horaCurta(confirmacao.cronograma.horarioFim)}. Os moradores deixam
+            de ver este horário na consulta e de receber lembrete para ele.
+            Você pode reativar depois.
+          </p>
+        )}
+      </DialogoConfirmacao>
+
+      <DialogoConfirmacao
+        aberto={confirmacao?.tipo === 'lote'}
+        titulo={`Desativar ${idsSelecionados.length} horários?`}
+        textoConfirmar="Desativar horários"
+        textoCancelar="Manter ativos"
+        perigo
+        processando={salvando}
+        onConfirmar={desativarLote}
+        onCancelar={() => setConfirmacao(null)}
+      >
+        <p>
+          Todos os horários ativos de{' '}
+          {linhasSelecionadas.map((linha) => linha.rota.nome).join(', ')}{' '}
+          deixam de aparecer na consulta e de gerar lembretes. Você pode
+          reativar cada um depois.
+        </p>
+      </DialogoConfirmacao>
+    </div>
   )
 }
 

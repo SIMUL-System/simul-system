@@ -3,91 +3,52 @@ import {
   Outlet,
 } from 'react-router-dom'
 
+import Icone from '../components/Icone'
+
 import '../App.css'
+import '../styles/admin.css'
 
+const SECOES = [
+  { para: '/admin', rotulo: 'Visão geral', icone: 'grade', fim: true },
+  { para: '/admin/rotas', rotulo: 'Rotas', icone: 'rota' },
+  { para: '/admin/areas', rotulo: 'Áreas atendidas', icone: 'local' },
+  { para: '/admin/cronogramas', rotulo: 'Cronogramas', icone: 'calendario' },
+]
+
+/**
+ * Estrutura do painel administrativo: menu das seções ao lado
+ * (no celular, em faixa rolável no topo) e o conteúdo da seção.
+ */
 function AdminPage() {
-  function obterClasseLink({
-    isActive,
-  }) {
-    return isActive
-      ? 'admin-nav__link admin-nav__link--ativo'
-      : 'admin-nav__link'
-  }
-
   return (
-    <main className="app">
-      <section
-        className="consulta"
-        aria-labelledby="titulo-painel-administrativo"
+    <main className="admin-layout">
+      <nav
+        className="admin-menu"
+        aria-label="Seções do painel administrativo"
       >
-        <header className="consulta__cabecalho">
-          <span
-            className="consulta__marca"
-            aria-hidden="true"
-          >
-            SIMUL
-          </span>
+        <p className="admin-menu__titulo">Painel administrativo</p>
 
-          <h1 id="titulo-painel-administrativo">
-            Painel administrativo
-          </h1>
+        <ul className="admin-menu__lista">
+          {SECOES.map((secao) => (
+            <li key={secao.para}>
+              <NavLink
+                to={secao.para}
+                end={secao.fim}
+                className={({ isActive }) =>
+                  `admin-menu__link ${isActive ? 'admin-menu__link--ativo' : ''}`
+                }
+              >
+                <Icone nome={secao.icone} />
+                {secao.rotulo}
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+      </nav>
 
-          <p>
-            Gerencie rotas, áreas
-            atendidas e cronogramas da
-            coleta seletiva.
-          </p>
-        </header>
-
-        <nav
-          className="admin-nav"
-          aria-label="Seções do painel administrativo"
-        >
-          <NavLink
-            to="/admin"
-            end
-            className={
-              obterClasseLink
-            }
-          >
-            Visão geral
-          </NavLink>
-
-          <NavLink
-            to="/admin/rotas"
-            className={
-              obterClasseLink
-            }
-          >
-            Rotas
-          </NavLink>
-
-          <NavLink
-            to="/admin/areas"
-            className={
-              obterClasseLink
-            }
-          >
-            Áreas atendidas
-          </NavLink>
-
-          <NavLink
-            to="/admin/cronogramas"
-            className={
-              obterClasseLink
-            }
-          >
-            Cronogramas
-          </NavLink>
-        </nav>
-
-        <section
-          className="admin-conteudo"
-          aria-label="Conteúdo da seção administrativa"
-        >
-          <Outlet />
-        </section>
-      </section>
+      <div className="admin-layout__conteudo">
+        <Outlet />
+      </div>
     </main>
   )
 }

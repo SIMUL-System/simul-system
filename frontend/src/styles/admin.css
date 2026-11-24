@@ -1,0 +1,691 @@
+/* =========================================
+   Painel administrativo (redesign v1)
+   Só tokens: funciona nos temas claro e escuro.
+   ========================================= */
+
+/* ---------- Estrutura: menu + conteúdo ---------- */
+.admin-layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: var(--space-8);
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6) var(--space-12);
+}
+
+.admin-layout__conteudo {
+  min-width: 0;
+}
+
+.admin-menu {
+  position: sticky;
+  top: var(--space-6);
+  align-self: start;
+}
+
+.admin-menu__titulo {
+  margin: 0 0 var(--space-3);
+  padding: 0 var(--space-3);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand-green);
+}
+
+.admin-menu__lista {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-menu__link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.admin-menu__link:hover {
+  background: var(--surface-sunken);
+}
+
+.admin-menu__link--ativo {
+  background: var(--brand-blue-tint);
+  color: var(--brand-blue);
+  font-weight: 700;
+}
+
+@media (max-width: 1023px) {
+  .admin-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+    padding: var(--space-6) var(--space-4) var(--space-12);
+  }
+
+  .admin-menu {
+    position: static;
+  }
+
+  .admin-menu__lista {
+    display: flex;
+    gap: var(--space-2);
+    overflow-x: auto;
+    padding-bottom: var(--space-1);
+  }
+
+  .admin-menu__link {
+    white-space: nowrap;
+    border: 1px solid var(--border);
+    background: var(--surface-raised);
+  }
+}
+
+/* ---------- Cabeçalho de cada seção ---------- */
+.admin-pagina {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.admin-pagina__cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.admin-pagina__titulo {
+  margin: 0 0 var(--space-2);
+  font-size: 30px;
+  line-height: 36px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.admin-pagina__texto {
+  margin: 0;
+  max-width: 640px;
+  color: var(--ink-muted);
+}
+
+.admin-pagina__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.caixa-opcao {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.caixa-opcao input,
+.grade-cronogramas__caixa {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--brand-blue);
+  flex-shrink: 0;
+}
+
+/* ---------- Área com painel lateral ---------- */
+.admin-area {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .admin-area--com-painel {
+    grid-template-columns: minmax(0, 1fr) 380px;
+  }
+}
+
+.admin-quadro {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.admin-quadro__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-quadro__rotulo {
+  margin-right: var(--space-1);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-quadro__vazio {
+  margin: 0;
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+  color: var(--ink-muted);
+}
+
+/* ---------- Atalhos (pílulas) ---------- */
+.atalhos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.atalho {
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-full);
+  background: var(--surface-raised);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.atalho:hover {
+  background: var(--surface-sunken);
+}
+
+.atalho[aria-pressed='true'] {
+  border-color: var(--brand-blue);
+  background: var(--brand-blue-tint);
+  color: var(--brand-blue);
+  font-weight: 600;
+}
+
+.atalho:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- Barra de seleção em massa ---------- */
+.barra-selecao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--ink);
+  color: var(--surface);
+}
+
+.barra-selecao__texto {
+  flex-grow: 1;
+  font-size: 15px;
+}
+
+.botao--destaque {
+  background: var(--brand-yellow);
+  color: var(--on-accent);
+}
+
+.botao--destaque:hover {
+  filter: brightness(0.95);
+}
+
+.botao--contorno-claro {
+  border-color: var(--surface);
+  background: transparent;
+  color: var(--surface);
+}
+
+.botao--link-claro {
+  background: transparent;
+  color: var(--surface);
+  text-decoration: underline;
+}
+
+.barra-selecao .botao:focus-visible {
+  outline-color: var(--brand-yellow);
+}
+
+/* ---------- Grade semanal ---------- */
+.grade-cronogramas__rolagem {
+  overflow-x: auto;
+}
+
+.grade-cronogramas {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.grade-cronogramas thead th {
+  padding: var(--space-3) var(--space-2);
+  background: var(--surface-sunken);
+  font-weight: 600;
+  text-align: center;
+}
+
+.grade-cronogramas abbr {
+  text-decoration: none;
+}
+
+.grade-cronogramas tbody tr {
+  border-top: 1px solid var(--border);
+}
+
+.grade-cronogramas td {
+  padding: var(--space-2) var(--space-1);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.grade-cronogramas .grade-cronogramas__rota {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  width: 240px;
+  min-width: 240px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-raised);
+  text-align: left;
+}
+
+.grade-cronogramas thead .grade-cronogramas__rota {
+  background: var(--surface-sunken);
+}
+
+.grade-cronogramas__rota-conteudo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.grade-cronogramas__rota-conteudo label {
+  display: grid;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.grade-cronogramas__nome {
+  font-weight: 600;
+}
+
+.grade-cronogramas__meta {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-muted);
+}
+
+.grade-cronogramas__linha--inativa .grade-cronogramas__nome {
+  color: var(--ink-muted);
+}
+
+.horario-chip,
+.horario-vazio {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.horario-chip--diurno {
+  border: 1px solid var(--brand-blue);
+  background: var(--brand-blue-tint);
+  color: var(--brand-blue);
+}
+
+.horario-chip--noturno {
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--surface);
+}
+
+.horario-chip--inativo {
+  border-style: dashed;
+  background: transparent;
+  color: var(--ink-muted);
+  border-color: var(--border-strong);
+  text-decoration: line-through;
+}
+
+.horario-chip--aberto {
+  outline: 3px solid var(--brand-yellow);
+  outline-offset: 2px;
+}
+
+.horario-vazio {
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--ink-muted);
+  font-size: 18px;
+}
+
+.horario-vazio:hover {
+  border-color: var(--brand-blue);
+  color: var(--brand-blue);
+  background: var(--brand-blue-tint);
+}
+
+.legenda-horarios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border);
+  list-style: none;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.legenda-horarios li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.legenda-horarios__amostra {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.legenda-horarios__amostra--diurno {
+  border: 1px solid var(--brand-blue);
+  background: var(--brand-blue-tint);
+}
+
+.legenda-horarios__amostra--noturno {
+  background: var(--ink);
+}
+
+.legenda-horarios__amostra--vazio,
+.legenda-horarios__amostra--inativo {
+  border: 1px dashed var(--border-strong);
+}
+
+/* ---------- Painel lateral ---------- */
+.painel-lateral {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-overlay);
+}
+
+@media (min-width: 1024px) {
+  .painel-lateral {
+    position: sticky;
+    top: var(--space-6);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+  }
+}
+
+.painel-lateral__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.painel-lateral__titulo {
+  margin: 0;
+  font-size: 20px;
+  line-height: 28px;
+}
+
+.painel-lateral__titulo:focus {
+  outline: none;
+}
+
+.painel-form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.painel-form select.campo-ds__controle {
+  background: var(--surface-raised);
+  color: var(--ink);
+}
+
+.painel-form__situacao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.painel-form__selecao {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  font-size: 14px;
+}
+
+.painel-form__selecao ul {
+  margin: 0;
+  padding-left: var(--space-4);
+}
+
+.painel-form__selecao span {
+  color: var(--ink-muted);
+}
+
+.painel-form__resumo {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--brand-blue-tint);
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.painel-form__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.painel-form__principal {
+  flex-grow: 1;
+}
+
+.botao--texto-perigo {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.botao--texto-perigo:hover {
+  background: var(--danger-tint);
+  color: var(--danger);
+}
+
+.campo-ds__rotulo--leve {
+  font-weight: 500;
+}
+
+.campos-horario,
+.seletor-dias {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.campos-horario legend,
+.seletor-dias legend {
+  margin-bottom: var(--space-2);
+  padding: 0;
+}
+
+.campos-horario__linha {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.seletor-dias__grade {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+
+.seletor-dias__dia {
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.seletor-dias__dia[aria-pressed='true'] {
+  border-color: var(--brand-blue);
+  background: var(--brand-blue);
+  color: var(--on-brand);
+}
+
+.seletor-dias__dia:disabled {
+  border-style: dashed;
+  background: var(--surface-sunken);
+  color: var(--ink-muted);
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+/* ---------- Diálogo de confirmação ---------- */
+.dialogo {
+  width: min(460px, calc(100vw - 32px));
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  color: var(--ink);
+  box-shadow: var(--shadow-overlay);
+}
+
+.dialogo::backdrop {
+  background: rgba(19, 33, 49, 0.5);
+}
+
+.dialogo__conteudo {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-6);
+}
+
+.dialogo__icone {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  background: var(--brand-yellow-tint);
+  color: var(--warning-ink);
+}
+
+.dialogo__icone--perigo {
+  background: var(--danger-tint);
+  color: var(--danger);
+}
+
+.dialogo__titulo {
+  margin: 0;
+  font-size: 22px;
+  line-height: 28px;
+}
+
+.dialogo__texto p {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+.dialogo__texto strong {
+  color: var(--ink);
+}
+
+.dialogo__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dialogo[open] {
+    animation: dialogo-entrada 0.16s ease-out;
+  }
+}
+
+@keyframes dialogo-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Celular: coluna da rota mais estreita para caber mais dias. */
+@media (max-width: 640px) {
+  .grade-cronogramas .grade-cronogramas__rota {
+    width: 150px;
+    min-width: 150px;
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .grade-cronogramas__rota-conteudo {
+    gap: var(--space-2);
+  }
+
+  .grade-cronogramas__nome {
+    font-size: 13px;
+  }
+}
+
+.painel-form select.campo-ds__controle {
+  appearance: auto;
+}
