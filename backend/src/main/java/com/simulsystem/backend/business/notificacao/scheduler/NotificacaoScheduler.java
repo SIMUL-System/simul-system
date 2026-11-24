@@ -12,6 +12,7 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
+/** Dispara o ciclo de lembretes a cada minuto (ligado por NOTIFICACAO_SCHEDULER_ENABLED). */
 @Component
 @ConditionalOnProperty(
         prefix = "simul.notificacao.scheduler",
@@ -19,7 +20,6 @@ import java.time.temporal.ChronoUnit;
         havingValue = "true",
         matchIfMissing = true
 )
-/** Dispara o ciclo de lembretes a cada minuto (ligado por NOTIFICACAO_SCHEDULER_ENABLED). */
 public class NotificacaoScheduler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NotificacaoScheduler.class);

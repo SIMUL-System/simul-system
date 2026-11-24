@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { Link, useSearchParams } from 'react-router-dom'
 
@@ -16,6 +16,11 @@ function VerificarEmailPage() {
   const [carregando, setCarregando] = useState(true)
   const [sucesso, setSucesso] = useState(false)
   const [mensagem, setMensagem] = useState('')
+
+  // Um único pedido por token. Em desenvolvimento o React (StrictMode) roda o
+  // efeito duas vezes: sem isto, o segundo pedido chegava com o link já usado
+  // e a tela mostrava erro mesmo com o e-mail confirmado.
+  const pedidoRef = useRef({ token: null, promessa: null })
 
   useEffect(() => {
     let componenteAtivo = true
@@ -38,7 +43,11 @@ function VerificarEmailPage() {
       }
 
       try {
-        const resposta = await verificarEmail(token)
+        if (pedidoRef.current.token !== token) {
+          pedidoRef.current = { token, promessa: verificarEmail(token) }
+        }
+
+        const resposta = await pedidoRef.current.promessa
 
         if (!componenteAtivo) {
           return

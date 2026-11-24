@@ -17,6 +17,7 @@ public interface PreferenciaNotificacaoRepository
     /** O usuário já tem preferência? */
     boolean existsByUsuarioId(Long usuarioId);
 
+    /** Preferências de usuários e rotas ativos com algum canal ligado. */
     @Query("""
             SELECT p
             FROM PreferenciaNotificacao p
@@ -29,6 +30,5 @@ public interface PreferenciaNotificacaoRepository
                     OR p.webPushAtivo = true
                   )
             """)
-    /** Preferências de usuários e rotas ativos com algum canal ligado. */
     List<PreferenciaNotificacao> buscarElegiveisParaProcessamento();
 }

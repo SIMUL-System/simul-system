@@ -22,6 +22,7 @@ public interface HistoricoNotificacaoRepository
             CanalNotificacao canal
     );
 
+    /** Falhas com tentativa agendada até a referência e abaixo do limite. */
     @Query("""
             SELECT h
             FROM HistoricoNotificacao h
@@ -33,7 +34,6 @@ public interface HistoricoNotificacaoRepository
               AND h.numeroTentativas < :limiteTentativas
             ORDER BY h.proximaTentativa ASC, h.id ASC
             """)
-    /** Falhas com tentativa agendada até a referência e abaixo do limite. */
     List<HistoricoNotificacao> buscarFalhasElegiveisParaRetry(
             @Param("status") StatusNotificacao status,
             @Param("referencia") LocalDateTime referencia,

@@ -10,6 +10,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+/** Registro de cada lembrete (um por usuário, rota, coleta e canal): evita duplicidade e guarda as tentativas. */
 @Entity
 @Table(
         name = "historico_notificacoes",
@@ -25,7 +26,6 @@ import java.time.LocalDateTime;
                 )
         }
 )
-/** Registro de cada lembrete (um por usuário, rota, coleta e canal): evita duplicidade e guarda as tentativas. */
 @Getter
 @Setter
 @NoArgsConstructor

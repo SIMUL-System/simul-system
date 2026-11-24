@@ -10,9 +10,8 @@ import java.util.Optional;
 /** Acesso às áreas atendidas. */
 public interface AreaAtendidaRepository
         extends JpaRepository<AreaAtendida, Long> {
-    Optional<AreaAtendida>
     /** Área do bairro, só se a rota estiver ativa. */
-    findByCidadeIgnoreCaseAndBairroIgnoreCaseAndRota_AtivoTrue(String cidade, String bairro);
+    Optional<AreaAtendida> findByCidadeIgnoreCaseAndBairroIgnoreCaseAndRota_AtivoTrue(String cidade, String bairro);
 
     /** Cidade e bairro já cadastrados? */
     boolean existsByCidadeIgnoreCaseAndBairroIgnoreCase(String cidade, String bairro);
@@ -20,7 +19,6 @@ public interface AreaAtendidaRepository
     /** Mesma pergunta, ignorando o próprio registro (edição). */
     boolean existsByCidadeIgnoreCaseAndBairroIgnoreCaseAndIdNot(String cidade, String bairro, Long id);
 
-    List<AreaAtendida>
     /** Áreas de rotas ativas, em ordem de cidade e bairro. */
-    findAllByRota_AtivoTrueOrderByCidadeAscBairroAsc();
+    List<AreaAtendida> findAllByRota_AtivoTrueOrderByCidadeAscBairroAsc();
 }

@@ -9,6 +9,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+/** Navegador inscrito para receber Web Push. */
 @Entity
 @Table(
         name = "push_subscriptions",
@@ -16,7 +17,6 @@ import java.time.LocalDateTime;
                 @UniqueConstraint(name = "uk_push_subscription_endpoint", columnNames = "endpoint")
         }
 )
-/** Navegador inscrito para receber Web Push. */
 @Getter
 @Setter
 @NoArgsConstructor

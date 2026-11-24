@@ -83,14 +83,24 @@ public class VerificacaoEmailServiceImpl implements VerificacaoEmailService {
             return new VerificacaoEmailResponseDTO(false, "O token de verificação é inválido.");
         }
 
-        Optional<TokenVerificacaoEmail> tokenOptional =
-                tokenRepository.findByTokenHashAndUtilizadoFalse(tokenSeguro.hash(token.trim()));
+        Optional<TokenVerificacaoEmail> tokenOptional = tokenRepository.findByTokenHash(tokenSeguro.hash(token.trim()));
 
         if (tokenOptional.isEmpty()) {
-            return new VerificacaoEmailResponseDTO(false, "O link de verificação é inválido ou já foi utilizado.");
+            return new VerificacaoEmailResponseDTO(
+                    false, "O link de verificação é inválido ou já foi substituído por um mais recente.");
         }
 
         TokenVerificacaoEmail tokenVerificacao = tokenOptional.get();
+        Usuario usuario = tokenVerificacao.getUsuario();
+
+        // Link aberto de novo (página recarregada, clique duplo, pedido repetido pelo navegador):
+        // se a conta já está confirmada, o resultado é o mesmo da primeira vez.
+        if (Boolean.TRUE.equals(tokenVerificacao.getUtilizado())) {
+            return usuarioValidation.emailJaVerificado(usuario)
+                    ? new VerificacaoEmailResponseDTO(true, "Este e-mail já está confirmado.")
+                    : new VerificacaoEmailResponseDTO(false, "O link de verificação já foi utilizado.");
+        }
+
         LocalDateTime agora = LocalDateTime.now(clock);
 
         if (tokenVerificacao.getDataExpiracao().isBefore(agora)) {
@@ -98,10 +108,7 @@ public class VerificacaoEmailServiceImpl implements VerificacaoEmailService {
                     false, "O link de verificação expirou. Solicite um novo e-mail de confirmação.");
         }
 
-        Usuario usuario = tokenVerificacao.getUsuario();
-        boolean jaEstavaConfirmado = usuarioValidation.emailJaVerificado(usuario);
-
-        if (!jaEstavaConfirmado) {
+        if (!usuarioValidation.emailJaVerificado(usuario)) {
             usuario.setEmailVerificado(true);
             usuarioRepository.save(usuario);
         }
@@ -110,8 +117,7 @@ public class VerificacaoEmailServiceImpl implements VerificacaoEmailService {
         tokenVerificacao.setDataUtilizacao(agora);
         tokenRepository.save(tokenVerificacao);
 
-        return new VerificacaoEmailResponseDTO(
-                true, jaEstavaConfirmado ? "Este e-mail já está confirmado." : "E-mail confirmado com sucesso.");
+        return new VerificacaoEmailResponseDTO(true, "E-mail confirmado com sucesso.");
     }
 
     @Override

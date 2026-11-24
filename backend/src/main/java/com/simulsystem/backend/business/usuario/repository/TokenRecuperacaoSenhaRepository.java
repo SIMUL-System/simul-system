@@ -9,9 +9,8 @@ import java.util.Optional;
 /** Acesso aos tokens de recuperação de senha. */
 public interface TokenRecuperacaoSenhaRepository
         extends JpaRepository<TokenRecuperacaoSenha, Long> {
-    Optional<TokenRecuperacaoSenha>
     /** Token ainda não usado pelo hash. */
-    findByTokenHashAndUtilizadoFalse(String tokenHash);
+    Optional<TokenRecuperacaoSenha> findByTokenHashAndUtilizadoFalse(String tokenHash);
 
     /** Apaga os tokens anteriores do usuário. */
     void deleteByUsuarioId(Long usuarioId);
