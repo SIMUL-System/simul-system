@@ -711,7 +711,7 @@ Portanto, o Hibernate **não deve criar ou alterar o schema**.
 
 Toda alteração estrutural deve ser feita por Flyway.
 
-O snapshot atual contém migrations de `V1` até `V13`:
+As migrations ficam em `backend/src/main/resources/db/migration` e são o **histórico** de como o banco chegou ao estado atual. Elas não são reescritas: cada mudança entra numa versão nova.
 
 ```text
 V1   usuarios
@@ -727,6 +727,35 @@ V10  push_subscriptions
 V11  email_verificado
 V12  tokens_verificacao_email
 V13  tokens_recuperacao_senha
+V14  horários dos cronogramas sem segundos
+V15  carga acadêmica de Senador Canedo (109 bairros)
+V16  conta admin de teste (legado)
+V17  integridade e índices
+V18  consolidação das rotas de Senador Canedo (109 → 5)
+V19  conta admin fixa do sistema
+```
+
+## Integridade garantida pelo banco (V17)
+
+As regras abaixo valem no banco, não apenas no código Java:
+
+| Regra | Como |
+|---|---|
+| E-mail único, sem diferenciar maiúsculas | índice único em `UPPER(email)` |
+| Um bairro por cidade | índice único em `UPPER(cidade), UPPER(bairro)` |
+| Um cronograma **ativo** por rota e dia | índice único parcial `(rota_id, dia_semana) WHERE ativo` |
+| Antecedência de 0 a 72 horas | `CHECK` |
+| Canal e status de notificação válidos | `CHECK` com os valores dos enums |
+| Início do cronograma diferente do fim | `CHECK` (fim menor que início é permitido: coleta que passa da meia-noite) |
+
+Também há índices nas chaves estrangeiras `rota_id`, usadas pela consulta pública e pelo ciclo de lembretes.
+
+Diagnóstico de duplicidades (cada consulta deve voltar vazia):
+
+```sql
+SELECT UPPER(email), COUNT(*) FROM usuarios GROUP BY 1 HAVING COUNT(*) > 1;
+SELECT UPPER(cidade), UPPER(bairro), COUNT(*) FROM areas_atendidas GROUP BY 1,2 HAVING COUNT(*) > 1;
+SELECT rota_id, dia_semana, COUNT(*) FROM cronogramas WHERE ativo GROUP BY 1,2 HAVING COUNT(*) > 1;
 ```
 
 Principais tabelas:
@@ -1485,65 +1514,39 @@ npm run preview
 
 # 20. Carga acadêmica de Senador Canedo
 
-As migrations criam a estrutura do banco, mas não inserem automaticamente o conjunto acadêmico de coleta.
+A carga é aplicada **automaticamente** pelo Flyway:
 
-O projeto contém:
+1. **V15** cadastra os 109 bairros de Senador Canedo, inicialmente com uma rota por bairro.
+2. **V18** agrupa os bairros que têm os mesmos dias e horários, resultando em **5 rotas e 18 cronogramas**:
 
-```text
-backend/src/main/resources/db/dev/popular-coleta-senador-canedo.sql
-```
+| Rota | Bairros | Dias | Horário |
+|---|---:|---|---|
+| Senador Canedo - Diurna (seg, qua e sex) | 47 | seg, qua, sex | 06:00 – 18:00 |
+| Senador Canedo - Diurna (ter, qui e sáb) | 35 | ter, qui, sáb | 06:00 – 18:00 |
+| Senador Canedo - Noturna (seg, qua e sex) | 19 | seg, qua, sex | 18:00 – 23:59 |
+| Senador Canedo - Noturna (ter, qui e sáb) | 6 | ter, qui, sáb | 18:00 – 23:59 |
+| Senador Canedo - Noturna (seg a sáb) | 2 | seg a sáb | 18:00 – 23:59 |
 
-Essa carga foi construída para o ambiente acadêmico.
+A rota é o **grupo de dias e horários** da coleta e não representa a trajetória física do caminhão. Para mudar o horário de um bairro, basta associá-lo a outra rota no painel administrativo. Para mudar o horário de um grupo inteiro, edite o cronograma da rota.
 
-Ela valida:
-
-```text
-109 áreas
-109 rotas internas
-333 cronogramas
-```
-
-Convenções utilizadas no script:
-
-```text
-DIURNO
-06:00 até 18:00
-
-NOTURNO
-18:00 até 23:59
-```
-
-A rota interna criada por área serve para administração do cronograma e **não representa necessariamente a trajetória física do caminhão**.
-
-## Executar pelo pgAdmin
-
-1. Conecte ao banco `simul`.
-2. Abra Query Tool.
-3. Abra `popular-coleta-senador-canedo.sql`.
-4. Execute o script.
-5. Verifique a saída.
-
-## Executar pelo psql
-
-A partir da raiz:
-
-```powershell
-psql -U postgres -d simul -f backend/src/main/resources/db/dev/popular-coleta-senador-canedo.sql
-```
-
-> Execute essa carga somente em ambiente apropriado e preferencialmente sobre uma base de desenvolvimento sem a mesma carga já duplicada.
-
-Existe também:
-
-```text
-backend/src/main/resources/db/dev/limpar-dados-coleta.sql
-```
-
-Esse arquivo é destrutivo e deve ser usado **somente em desenvolvimento**.
+Os scripts em `backend/src/main/resources/db/dev/` (`popular-coleta-senador-canedo.sql` e `limpar-dados-coleta.sql`) são **legado** e não devem ser executados: a carga já vem das migrations. Se forem executados, as restrições da V17 impedem bairros duplicados.
 
 ---
 
 # 21. Criando um administrador local
+
+## Conta administrativa fixa (V19)
+
+Todo banco criado pelas migrations já tem uma conta ADMIN:
+
+```text
+E-mail: simul.sistema@gmail.com
+Senha:  combinada com a equipe (não fica no repositório)
+```
+
+A senha fica gravada apenas em BCrypt. Depois da apresentação, troque-a pelo fluxo **Esqueci minha senha**.
+
+## Promover outra conta
 
 O cadastro público sempre cria `USUARIO`.
 
