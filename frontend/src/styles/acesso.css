@@ -1,0 +1,261 @@
+/* =========================================
+   Telas de acesso: login, cadastro,
+   verificação de e-mail e senha (redesign v1)
+   ========================================= */
+
+.acesso {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  min-height: calc(100vh - var(--altura-cabecalho));
+}
+
+/* ---------- Painel da marca ---------- */
+.acesso__marca {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-6);
+  padding: var(--space-12);
+  background: var(--brand-blue);
+  color: var(--on-brand);
+}
+
+.acesso__marca img {
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--on-brand) 25%, transparent);
+}
+
+.acesso__slogan {
+  margin: 0;
+  max-width: 14ch;
+  font-size: 36px;
+  line-height: 40px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.acesso__beneficios {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.acesso__beneficios li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.acesso__beneficios .icone {
+  flex: none;
+  margin-top: 2px;
+  color: var(--brand-yellow); /* 3,7:1 sobre brand-blue no tema claro */
+}
+
+/* No escuro o azul fica claro: o amarelo cairia para 1,6:1. */
+[data-theme='dark'] .acesso__beneficios .icone {
+  color: var(--on-brand);
+}
+
+/* ---------- Conteúdo ---------- */
+.acesso__conteudo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-6);
+  padding: var(--space-12) var(--space-6);
+}
+
+.acesso__cartao {
+  display: grid;
+  gap: var(--space-6);
+  width: 100%;
+  max-width: 440px;
+  padding: var(--space-8);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.acesso__cabecalho {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.acesso__titulo {
+  margin: 0;
+  font-size: 30px;
+  line-height: 36px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.acesso__descricao {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.acesso__form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.acesso__form .botao {
+  width: 100%;
+  margin-top: var(--space-2);
+}
+
+.acesso__link-direita {
+  justify-self: end;
+  margin-top: calc(var(--space-2) * -1);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.acesso__bloco {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.acesso__bloco p {
+  margin: 0;
+}
+
+.acesso__destaque-email {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.acesso__destaque-email .icone {
+  flex: none;
+  color: var(--brand-blue);
+}
+
+.acesso__nota {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ink-muted);
+}
+
+.acesso__separador {
+  height: 1px;
+  margin: 0;
+  border: 0;
+  background: var(--border);
+}
+
+.acesso__rodape {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  font-size: 15px;
+  color: var(--ink-muted);
+  text-align: center;
+}
+
+.acesso__rodape p {
+  margin: 0;
+}
+
+.acesso__rodape a {
+  font-weight: 600;
+}
+
+.acesso__voltar {
+  font-size: 14px;
+}
+
+.acesso__carregando {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--ink-muted);
+}
+
+.acesso__spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid var(--border);
+  border-top-color: var(--brand-blue);
+  border-radius: 50%;
+  animation: acesso-girar 0.8s linear infinite;
+}
+
+@keyframes acesso-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Campo de senha (botão de mostrar) ---------- */
+.campo-ds__senha {
+  position: relative;
+}
+
+.campo-ds__senha .campo-ds__controle {
+  padding-right: 52px;
+}
+
+.campo-ds__mostrar {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  bottom: 2px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+.campo-ds__mostrar:hover {
+  color: var(--brand-blue);
+}
+
+.campo-ds__mostrar:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ---------- Responsivo ---------- */
+@media (max-width: 900px) {
+  .acesso {
+    grid-template-columns: 1fr;
+  }
+
+  .acesso__marca {
+    display: none;
+  }
+
+  .acesso__conteudo {
+    justify-content: flex-start;
+    padding: var(--space-8) var(--space-4) var(--space-12);
+  }
+}
+
+@media (max-width: 480px) {
+  .acesso__cartao {
+    padding: var(--space-6) var(--space-4);
+  }
+
+  .acesso__titulo {
+    font-size: 26px;
+    line-height: 32px;
+  }
+}

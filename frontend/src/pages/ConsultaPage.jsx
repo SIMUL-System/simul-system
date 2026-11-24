@@ -816,6 +816,19 @@ function ConsultaPage() {
   const usuarioLogado =
     Boolean(obterToken())
 
+  // "Senador Canedo - Diurna (seg, qua e sex)" → "Diurna (seg, qua e sex)",
+  // já que a cidade aparece ao lado.
+  const prefixoCidade =
+    resultado?.cidade
+      ? `${resultado.cidade} - `
+      : null
+
+  const rotaExibida =
+    prefixoCidade &&
+    resultado?.nomeRota?.startsWith(prefixoCidade)
+      ? resultado.nomeRota.slice(prefixoCidade.length)
+      : resultado?.nomeRota
+
   const textoLocalizacao = {
     buscando:
       'Procurando sua localização para mostrar no mapa…',
@@ -1050,10 +1063,10 @@ function ConsultaPage() {
 
                 <p className="consulta-resultado__local">
                   {resultado.cidade}
-                  {resultado.nomeRota && (
+                  {rotaExibida && (
                     <>
-                      {' · '}
-                      {resultado.nomeRota}
+                      {' · Rota '}
+                      {rotaExibida}
                     </>
                   )}
                 </p>

@@ -14,6 +14,9 @@ import {
 
 import '../App.css'
 
+import Alerta from '../components/Alerta'
+import LayoutAcesso from '../components/auth/LayoutAcesso'
+
 function VerificarEmailPage() {
   const [searchParams] =
     useSearchParams()
@@ -96,91 +99,84 @@ function VerificarEmailPage() {
   }, [searchParams])
 
   return (
-    <main className="app">
-      <section
-        className="consulta"
-        aria-labelledby="titulo-verificacao-email"
-        aria-busy={carregando}
-      >
-        <header className="consulta__cabecalho">
+    <LayoutAcesso
+      idTitulo="titulo-verificacao-email"
+      titulo="Confirmação de e-mail"
+      descricao={
+        carregando
+          ? 'Estamos conferindo o link que você recebeu.'
+          : undefined
+      }
+      ocupado={carregando}
+      rodape={
+        !carregando && !sucesso ? (
+          <p>
+            Precisa de um novo link? Entre com
+            seu e-mail e escolha reenviar.
+          </p>
+        ) : null
+      }
+    >
+      {carregando && (
+        <p
+          className="acesso__carregando"
+          role="status"
+        >
           <span
-            className="consulta__marca"
-            aria-label="SIMUL"
-          >
-            SIMUL
-          </span>
+            className="acesso__spinner"
+            aria-hidden="true"
+          />
+          Confirmando seu e-mail…
+        </p>
+      )}
 
-          <h1 id="titulo-verificacao-email">
-            Confirmação de e-mail
-          </h1>
+      {!carregando && sucesso && (
+        <>
+          <Alerta
+            tipo="sucesso"
+            titulo="E-mail confirmado"
+          >
+            {mensagem}
+          </Alerta>
 
           <p>
-            Estamos verificando o link
-            enviado para o seu e-mail.
+            Sua conta está pronta. Entre para
+            escolher sua rota e ativar o
+            lembrete.
           </p>
-        </header>
 
-        {carregando && (
-          <div
-            className="mensagem"
-            role="status"
-            aria-live="polite"
+          <Link
+            to="/login"
+            className="botao botao--primario"
           >
-            Confirmando seu e-mail...
-          </div>
-        )}
+            Entrar
+          </Link>
+        </>
+      )}
 
-        {!carregando &&
-          sucesso && (
-            <>
-              <div
-                className="mensagem mensagem--sucesso"
-                role="status"
-                aria-live="polite"
-              >
-                {mensagem}
-              </div>
+      {!carregando && !sucesso && (
+        <>
+          <Alerta
+            tipo="erro"
+            titulo="Não foi possível confirmar"
+          >
+            {mensagem}
+          </Alerta>
 
-              <p className="navegacao-secundaria">
-                Sua conta está pronta
-                para ser utilizada.
-              </p>
+          <p className="acesso__nota">
+            O link pode ter expirado, já ter
+            sido usado ou estar incompleto.
+          </p>
 
-              <p className="navegacao-secundaria">
-                <Link to="/login">
-                  Ir para o login
-                </Link>
-              </p>
-            </>
-          )}
-
-        {!carregando &&
-          !sucesso && (
-            <>
-              <div
-                className="mensagem mensagem--erro"
-                role="alert"
-                aria-live="assertive"
-              >
-                {mensagem}
-              </div>
-
-              <p className="navegacao-secundaria">
-                O link pode ter
-                expirado, já ter sido
-                utilizado ou estar
-                incorreto.
-              </p>
-
-              <p className="navegacao-secundaria">
-                <Link to="/login">
-                  Voltar para o login
-                </Link>
-              </p>
-            </>
-          )}
-      </section>
-    </main>
+          <Link
+            to="/login"
+            className="botao botao--secundario"
+          >
+            Ir para o login
+          </Link>
+        </>
+      )}
+    </LayoutAcesso>
   )
 }
 

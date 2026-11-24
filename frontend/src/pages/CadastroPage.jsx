@@ -8,6 +8,12 @@ import {
 
 import '../App.css'
 
+import Alerta from '../components/Alerta'
+import Icone from '../components/Icone'
+import LayoutAcesso from '../components/auth/LayoutAcesso'
+import CampoSenha from '../components/form/CampoSenha'
+import CampoTexto from '../components/form/CampoTexto'
+
 function emailValido(valor) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
     valor,
@@ -22,16 +28,6 @@ function CadastroPage() {
     confirmacaoSenha,
     setConfirmacaoSenha,
   ] = useState('')
-
-  const [
-    mostrarSenha,
-    setMostrarSenha,
-  ] = useState(false)
-
-  const [
-    mostrarConfirmacaoSenha,
-    setMostrarConfirmacaoSenha,
-  ] = useState(false)
 
   const [erroNome, setErroNome] =
     useState('')
@@ -126,6 +122,15 @@ function CadastroPage() {
       )
 
       formularioValido = false
+    } else if (
+      senha.length < 8 ||
+      senha.length > 100
+    ) {
+      setErroSenha(
+        'A senha deve ter entre 8 e 100 caracteres.',
+      )
+
+      formularioValido = false
     }
 
     if (!confirmacaoSenha) {
@@ -182,11 +187,6 @@ function CadastroPage() {
       setEmail('')
       setSenha('')
       setConfirmacaoSenha('')
-
-      setMostrarSenha(false)
-      setMostrarConfirmacaoSenha(
-        false,
-      )
     } catch (error) {
       setErro(
         error.message ||
@@ -228,398 +228,204 @@ function CadastroPage() {
   }
 
   return (
-    <main className="app">
-      <section
-        className="consulta"
-        aria-labelledby="titulo-cadastro"
-      >
-        <header className="consulta__cabecalho">
-          <span
-            className="consulta__marca"
-            aria-label="SIMUL"
-          >
-            SIMUL
-          </span>
+    <LayoutAcesso
+      idTitulo="titulo-cadastro"
+      titulo={
+        cadastroConcluido
+          ? 'Confirme seu e-mail'
+          : 'Criar conta'
+      }
+      descricao={
+        cadastroConcluido
+          ? 'Falta só um passo para ativar sua conta.'
+          : 'Cadastre-se para receber lembretes da coleta seletiva do seu bairro.'
+      }
+      ocupado={carregando || reenviando}
+      rodape={
+        cadastroConcluido ? (
+          <p>
+            Já confirmou?{' '}
+            <Link to="/login">
+              Entrar
+            </Link>
+          </p>
+        ) : (
+          <p>
+            Já tem conta?{' '}
+            <Link to="/login">
+              Entrar
+            </Link>
+          </p>
+        )
+      }
+    >
+      {erro && (
+        <Alerta
+          tipo="erro"
+          titulo={
+            cadastroConcluido
+              ? 'Não foi possível reenviar'
+              : 'Não foi possível criar a conta'
+          }
+        >
+          {erro}
+        </Alerta>
+      )}
 
-          <h1 id="titulo-cadastro">
-            Crie sua conta
-          </h1>
+      {!cadastroConcluido && (
+        <form
+          className="acesso__form"
+          onSubmit={handleSubmit}
+          noValidate
+        >
+          <CampoTexto
+            id="nome"
+            rotulo="Nome"
+            type="text"
+            value={nome}
+            onChange={(event) => {
+              setNome(event.target.value)
+
+              if (erroNome) {
+                setErroNome('')
+              }
+            }}
+            autoComplete="name"
+            maxLength={120}
+            erro={erroNome}
+            disabled={carregando}
+          />
+
+          <CampoTexto
+            id="email"
+            rotulo="E-mail"
+            type="email"
+            value={email}
+            onChange={(event) => {
+              setEmail(event.target.value)
+
+              if (erroEmail) {
+                setErroEmail('')
+              }
+            }}
+            autoComplete="email"
+            inputMode="email"
+            placeholder="voce@exemplo.com"
+            maxLength={150}
+            dica="Os lembretes da coleta chegam neste endereço."
+            erro={erroEmail}
+            disabled={carregando}
+          />
+
+          <CampoSenha
+            id="senha"
+            rotulo="Senha"
+            value={senha}
+            onChange={(event) => {
+              setSenha(event.target.value)
+
+              if (erroSenha) {
+                setErroSenha('')
+              }
+
+              if (erroConfirmacaoSenha) {
+                setErroConfirmacaoSenha('')
+              }
+            }}
+            autoComplete="new-password"
+            maxLength={100}
+            dica="Use pelo menos 8 caracteres."
+            erro={erroSenha}
+            disabled={carregando}
+          />
+
+          <CampoSenha
+            id="confirmacaoSenha"
+            rotulo="Confirmação da senha"
+            value={confirmacaoSenha}
+            onChange={(event) => {
+              setConfirmacaoSenha(event.target.value)
+
+              if (erroConfirmacaoSenha) {
+                setErroConfirmacaoSenha('')
+              }
+            }}
+            autoComplete="new-password"
+            maxLength={100}
+            erro={erroConfirmacaoSenha}
+            disabled={carregando}
+          />
+
+          <button
+            type="submit"
+            className="botao botao--primario"
+            disabled={carregando}
+          >
+            {carregando
+              ? 'Criando conta…'
+              : 'Criar conta'}
+          </button>
+        </form>
+      )}
+
+      {cadastroConcluido && (
+        <section
+          className="acesso__bloco"
+          aria-labelledby="titulo-confirmar-cadastro"
+        >
+          <h2
+            id="titulo-confirmar-cadastro"
+            className="visualmente-oculto"
+          >
+            Confirmação pendente
+          </h2>
+
+          {sucesso && (
+            <Alerta
+              tipo="sucesso"
+              titulo="Conta criada"
+            >
+              Enviamos um link de confirmação para:
+            </Alerta>
+          )}
+
+          <p className="acesso__destaque-email">
+            <Icone nome="email" />
+            {emailCadastro}
+          </p>
 
           <p>
-            Cadastre-se para configurar
-            suas preferências de
-            notificação da coleta
-            seletiva.
+            Abra o e-mail e clique no link.
+            Depois disso, você já pode entrar.
           </p>
-        </header>
 
-        {!cadastroConcluido && (
-          <form
-            className="consulta__formulario"
-            onSubmit={handleSubmit}
-            noValidate
-          >
-            <div className="campo">
-              <label htmlFor="nome">
-                Nome
-              </label>
+          <p className="acesso__nota">
+            Não encontrou? Confira a pasta de
+            spam ou lixo eletrônico.
+          </p>
 
-              <input
-                id="nome"
-                type="text"
-                value={nome}
-                onChange={(event) => {
-                  setNome(
-                    event.target.value,
-                  )
-
-                  if (erroNome) {
-                    setErroNome('')
-                  }
-                }}
-                autoComplete="name"
-                placeholder="Seu nome"
-                aria-invalid={
-                  Boolean(erroNome)
-                }
-                aria-describedby={
-                  erroNome
-                    ? 'erro-nome-cadastro'
-                    : undefined
-                }
-                disabled={carregando}
-              />
-
-              {erroNome && (
-                <p
-                  id="erro-nome-cadastro"
-                  className="campo__erro"
-                  role="alert"
-                >
-                  {erroNome}
-                </p>
-              )}
-            </div>
-
-            <div className="campo">
-              <label htmlFor="email">
-                E-mail
-              </label>
-
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(event) => {
-                  setEmail(
-                    event.target.value,
-                  )
-
-                  if (erroEmail) {
-                    setErroEmail('')
-                  }
-                }}
-                autoComplete="email"
-                placeholder="seuemail@exemplo.com"
-                inputMode="email"
-                aria-invalid={
-                  Boolean(erroEmail)
-                }
-                aria-describedby={
-                  erroEmail
-                    ? 'erro-email-cadastro'
-                    : undefined
-                }
-                disabled={carregando}
-              />
-
-              {erroEmail && (
-                <p
-                  id="erro-email-cadastro"
-                  className="campo__erro"
-                  role="alert"
-                >
-                  {erroEmail}
-                </p>
-              )}
-            </div>
-
-            <div className="campo">
-              <label htmlFor="senha">
-                Senha
-              </label>
-
-              <div className="campo-senha">
-                <input
-                  id="senha"
-                  type={
-                    mostrarSenha
-                      ? 'text'
-                      : 'password'
-                  }
-                  value={senha}
-                  onChange={(event) => {
-                    setSenha(
-                      event.target.value,
-                    )
-
-                    if (erroSenha) {
-                      setErroSenha('')
-                    }
-
-                    if (
-                      erroConfirmacaoSenha
-                    ) {
-                      setErroConfirmacaoSenha(
-                        '',
-                      )
-                    }
-                  }}
-                  autoComplete="new-password"
-                  placeholder="Digite sua senha"
-                  aria-invalid={
-                    Boolean(erroSenha)
-                  }
-                  aria-describedby={
-                    erroSenha
-                      ? 'erro-senha-cadastro'
-                      : undefined
-                  }
-                  disabled={carregando}
-                />
-
-                <button
-                  type="button"
-                  className="botao-mostrar-senha"
-                  onClick={() =>
-                    setMostrarSenha(
-                      (valorAtual) =>
-                        !valorAtual,
-                    )
-                  }
-                  aria-pressed={
-                    mostrarSenha
-                  }
-                  aria-label={
-                    mostrarSenha
-                      ? 'Ocultar senha'
-                      : 'Mostrar senha'
-                  }
-                  disabled={carregando}
-                >
-                  {mostrarSenha
-                    ? 'Ocultar'
-                    : 'Mostrar'}
-                </button>
-              </div>
-
-              {erroSenha && (
-                <p
-                  id="erro-senha-cadastro"
-                  className="campo__erro"
-                  role="alert"
-                >
-                  {erroSenha}
-                </p>
-              )}
-            </div>
-
-            <div className="campo">
-              <label htmlFor="confirmacaoSenha">
-                Confirme sua senha
-              </label>
-
-              <div className="campo-senha">
-                <input
-                  id="confirmacaoSenha"
-                  type={
-                    mostrarConfirmacaoSenha
-                      ? 'text'
-                      : 'password'
-                  }
-                  value={
-                    confirmacaoSenha
-                  }
-                  onChange={(event) => {
-                    setConfirmacaoSenha(
-                      event.target.value,
-                    )
-
-                    if (
-                      erroConfirmacaoSenha
-                    ) {
-                      setErroConfirmacaoSenha(
-                        '',
-                      )
-                    }
-                  }}
-                  autoComplete="new-password"
-                  placeholder="Digite a senha novamente"
-                  aria-invalid={
-                    Boolean(
-                      erroConfirmacaoSenha,
-                    )
-                  }
-                  aria-describedby={
-                    erroConfirmacaoSenha
-                      ? 'erro-confirmacao-senha-cadastro'
-                      : undefined
-                  }
-                  disabled={carregando}
-                />
-
-                <button
-                  type="button"
-                  className="botao-mostrar-senha"
-                  onClick={() =>
-                    setMostrarConfirmacaoSenha(
-                      (valorAtual) =>
-                        !valorAtual,
-                    )
-                  }
-                  aria-pressed={
-                    mostrarConfirmacaoSenha
-                  }
-                  aria-label={
-                    mostrarConfirmacaoSenha
-                      ? 'Ocultar confirmação da senha'
-                      : 'Mostrar confirmação da senha'
-                  }
-                  disabled={carregando}
-                >
-                  {mostrarConfirmacaoSenha
-                    ? 'Ocultar'
-                    : 'Mostrar'}
-                </button>
-              </div>
-
-              {erroConfirmacaoSenha && (
-                <p
-                  id="erro-confirmacao-senha-cadastro"
-                  className="campo__erro"
-                  role="alert"
-                >
-                  {
-                    erroConfirmacaoSenha
-                  }
-                </p>
-              )}
-            </div>
-
-            <button
-              type="submit"
-              disabled={carregando}
+          {mensagemReenvio && (
+            <Alerta
+              tipo="info"
+              titulo="Pedido enviado"
             >
-              {carregando
-                ? 'Cadastrando...'
-                : 'Criar conta'}
-            </button>
-          </form>
-        )}
+              {mensagemReenvio}
+            </Alerta>
+          )}
 
-        {erro && (
-          <div
-            className="mensagem mensagem--erro"
-            role="alert"
-            aria-live="assertive"
+          <button
+            type="button"
+            className="botao botao--secundario"
+            onClick={handleReenviarVerificacao}
+            disabled={reenviando}
           >
-            {erro}
-          </div>
-        )}
-
-        {cadastroConcluido && (
-          <section
-            className="rota-selecionada"
-            aria-labelledby="titulo-confirmar-cadastro"
-          >
-            <h2 id="titulo-confirmar-cadastro">
-              Confirme seu e-mail
-            </h2>
-
-            {sucesso && (
-              <div
-                className="mensagem mensagem--sucesso"
-                role="status"
-                aria-live="polite"
-              >
-                {sucesso}
-              </div>
-            )}
-
-            <p>
-              Enviamos a confirmação para:
-            </p>
-
-            <p>
-              <strong>
-                {emailCadastro}
-              </strong>
-            </p>
-
-            <p>
-              Abra sua caixa de entrada
-              e clique no link de
-              confirmação. Depois disso,
-              sua conta estará liberada
-              para login.
-            </p>
-
-            <p>
-              Se não encontrar a
-              mensagem, verifique também
-              a pasta de spam ou lixo
-              eletrônico.
-            </p>
-
-            <button
-              type="button"
-              className="botao-salvar"
-              onClick={
-                handleReenviarVerificacao
-              }
-              disabled={reenviando}
-            >
-              {reenviando
-                ? 'Reenviando...'
-                : 'Reenviar e-mail de confirmação'}
-            </button>
-
-            {mensagemReenvio && (
-              <div
-                className="mensagem mensagem--sucesso"
-                role="status"
-                aria-live="polite"
-              >
-                {mensagemReenvio}
-              </div>
-            )}
-
-            <p className="navegacao-secundaria">
-              <Link to="/login">
-                Ir para o login
-              </Link>
-            </p>
-          </section>
-        )}
-
-        {!cadastroConcluido && (
-          <>
-            <p className="navegacao-secundaria">
-              Já possui conta?{' '}
-              <Link to="/login">
-                Entrar
-              </Link>
-            </p>
-
-            <p className="navegacao-secundaria">
-              <Link to="/">
-                Voltar para consulta
-              </Link>
-            </p>
-          </>
-        )}
-      </section>
-    </main>
+            {reenviando
+              ? 'Reenviando…'
+              : 'Reenviar e-mail de confirmação'}
+          </button>
+        </section>
+      )}
+    </LayoutAcesso>
   )
 }
 

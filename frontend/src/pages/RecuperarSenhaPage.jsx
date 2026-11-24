@@ -7,6 +7,10 @@ import {
 
 import '../App.css'
 
+import Alerta from '../components/Alerta'
+import LayoutAcesso from '../components/auth/LayoutAcesso'
+import CampoTexto from '../components/form/CampoTexto'
+
 function emailValido(valor) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
     valor,
@@ -88,131 +92,82 @@ function RecuperarSenhaPage() {
   }
 
   return (
-    <main className="app">
-      <section
-        className="consulta"
-        aria-labelledby="titulo-recuperacao-senha"
-      >
-        <header className="consulta__cabecalho">
-          <span
-            className="consulta__marca"
-            aria-label="SIMUL"
-          >
-            SIMUL
-          </span>
-
-          <h1 id="titulo-recuperacao-senha">
-            Esqueci minha senha
-          </h1>
-
-          <p>
-            Informe o e-mail da sua
-            conta. Se houver uma conta
-            associada a esse endereço,
-            enviaremos um link para
-            redefinir sua senha.
-          </p>
-        </header>
-
-        <form
-          className="consulta__formulario"
-          onSubmit={handleSubmit}
-          noValidate
-        >
-          <div className="campo">
-            <label htmlFor="emailRecuperacao">
-              E-mail
-            </label>
-
-            <input
-              id="emailRecuperacao"
-              type="email"
-              value={email}
-              onChange={(event) => {
-                setEmail(
-                  event.target.value,
-                )
-
-                if (erroEmail) {
-                  setErroEmail('')
-                }
-
-                if (erro) {
-                  setErro('')
-                }
-
-                if (mensagem) {
-                  setMensagem('')
-                }
-              }}
-              autoComplete="email"
-              inputMode="email"
-              placeholder="seuemail@exemplo.com"
-              aria-invalid={
-                Boolean(erroEmail)
-              }
-              aria-describedby={
-                erroEmail
-                  ? 'erro-email-recuperacao'
-                  : 'ajuda-email-recuperacao'
-              }
-              disabled={carregando}
-            />
-
-            <small id="ajuda-email-recuperacao">
-              Use o mesmo e-mail
-              cadastrado na sua conta do
-              SIMUL.
-            </small>
-
-            {erroEmail && (
-              <p
-                id="erro-email-recuperacao"
-                className="campo__erro"
-                role="alert"
-              >
-                {erroEmail}
-              </p>
-            )}
-          </div>
-
-          <button
-            type="submit"
-            disabled={carregando}
-          >
-            {carregando
-              ? 'Enviando...'
-              : 'Enviar link de recuperação'}
-          </button>
-        </form>
-
-        {erro && (
-          <div
-            className="mensagem mensagem--erro"
-            role="alert"
-            aria-live="assertive"
-          >
-            {erro}
-          </div>
-        )}
-
-        {mensagem && (
-          <div
-            className="mensagem mensagem--sucesso"
-            role="status"
-            aria-live="polite"
-          >
-            {mensagem}
-          </div>
-        )}
-
-        <p className="navegacao-secundaria">
+    <LayoutAcesso
+      idTitulo="titulo-recuperacao-senha"
+      titulo="Esqueci minha senha"
+      descricao="Informe o e-mail da sua conta. Se ele estiver cadastrado, enviaremos um link para criar uma nova senha."
+      ocupado={carregando}
+      rodape={
+        <p>
+          Lembrou a senha?{' '}
           <Link to="/login">
-            Voltar para o login
+            Entrar
           </Link>
         </p>
-      </section>
-    </main>
+      }
+    >
+      {erro && (
+        <Alerta
+          tipo="erro"
+          titulo="Não foi possível enviar"
+        >
+          {erro}
+        </Alerta>
+      )}
+
+      {mensagem && (
+        <Alerta
+          tipo="sucesso"
+          titulo="Confira seu e-mail"
+        >
+          {mensagem}
+        </Alerta>
+      )}
+
+      <form
+        className="acesso__form"
+        onSubmit={handleSubmit}
+        noValidate
+      >
+        <CampoTexto
+          id="emailRecuperacao"
+          rotulo="E-mail"
+          type="email"
+          value={email}
+          onChange={(event) => {
+            setEmail(event.target.value)
+
+            if (erroEmail) {
+              setErroEmail('')
+            }
+
+            if (erro) {
+              setErro('')
+            }
+
+            if (mensagem) {
+              setMensagem('')
+            }
+          }}
+          autoComplete="email"
+          inputMode="email"
+          placeholder="voce@exemplo.com"
+          dica="Use o mesmo e-mail cadastrado no SIMUL."
+          erro={erroEmail}
+          disabled={carregando}
+        />
+
+        <button
+          type="submit"
+          className="botao botao--primario"
+          disabled={carregando}
+        >
+          {carregando
+            ? 'Enviando…'
+            : 'Enviar link'}
+        </button>
+      </form>
+    </LayoutAcesso>
   )
 }
 

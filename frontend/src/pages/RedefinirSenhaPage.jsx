@@ -10,6 +10,10 @@ import {
 
 import '../App.css'
 
+import Alerta from '../components/Alerta'
+import LayoutAcesso from '../components/auth/LayoutAcesso'
+import CampoSenha from '../components/form/CampoSenha'
+
 function RedefinirSenhaPage() {
   const [searchParams] =
     useSearchParams()
@@ -26,16 +30,6 @@ function RedefinirSenhaPage() {
     confirmacaoSenha,
     setConfirmacaoSenha,
   ] = useState('')
-
-  const [
-    mostrarNovaSenha,
-    setMostrarNovaSenha,
-  ] = useState(false)
-
-  const [
-    mostrarConfirmacao,
-    setMostrarConfirmacao,
-  ] = useState(false)
 
   const [
     erroNovaSenha,
@@ -149,8 +143,6 @@ function RedefinirSenhaPage() {
 
       setNovaSenha('')
       setConfirmacaoSenha('')
-      setMostrarNovaSenha(false)
-      setMostrarConfirmacao(false)
     } catch (error) {
       setSenhaAlterada(false)
 
@@ -164,279 +156,124 @@ function RedefinirSenhaPage() {
   }
 
   return (
-    <main className="app">
-      <section
-        className="consulta"
-        aria-labelledby="titulo-redefinir-senha"
-      >
-        <header className="consulta__cabecalho">
-          <span
-            className="consulta__marca"
-            aria-label="SIMUL"
-          >
-            SIMUL
-          </span>
-
-          <h1 id="titulo-redefinir-senha">
-            Redefinir senha
-          </h1>
-
+    <LayoutAcesso
+      idTitulo="titulo-redefinir-senha"
+      titulo={
+        senhaAlterada
+          ? 'Senha alterada'
+          : 'Criar nova senha'
+      }
+      descricao={
+        senhaAlterada
+          ? undefined
+          : 'Escolha uma nova senha para sua conta.'
+      }
+      ocupado={carregando}
+      rodape={
+        senhaAlterada ? null : (
           <p>
-            Crie uma nova senha para sua
-            conta.
-          </p>
-        </header>
-
-        {!token && (
-          <div
-            className="mensagem mensagem--erro"
-            role="alert"
-            aria-live="assertive"
-          >
-            O link de recuperação é
-            inválido ou está incompleto.
-          </div>
-        )}
-
-        {token &&
-          !senhaAlterada && (
-            <form
-              className="consulta__formulario"
-              onSubmit={handleSubmit}
-              noValidate
-            >
-              <div className="campo">
-                <label htmlFor="novaSenha">
-                  Nova senha
-                </label>
-
-                <div className="campo-senha">
-                  <input
-                    id="novaSenha"
-                    type={
-                      mostrarNovaSenha
-                        ? 'text'
-                        : 'password'
-                    }
-                    value={novaSenha}
-                    onChange={(event) => {
-                      setNovaSenha(
-                        event.target.value,
-                      )
-
-                      if (
-                        erroNovaSenha
-                      ) {
-                        setErroNovaSenha(
-                          '',
-                        )
-                      }
-
-                      if (
-                        erroConfirmacao
-                      ) {
-                        setErroConfirmacao(
-                          '',
-                        )
-                      }
-                    }}
-                    autoComplete="new-password"
-                    placeholder="Digite a nova senha"
-                    aria-invalid={
-                      Boolean(
-                        erroNovaSenha,
-                      )
-                    }
-                    aria-describedby={
-                      erroNovaSenha
-                        ? 'erro-nova-senha'
-                        : 'ajuda-nova-senha'
-                    }
-                    disabled={carregando}
-                  />
-
-                  <button
-                    type="button"
-                    className="botao-mostrar-senha"
-                    onClick={() =>
-                      setMostrarNovaSenha(
-                        (
-                          valorAtual,
-                        ) =>
-                          !valorAtual,
-                      )
-                    }
-                    aria-pressed={
-                      mostrarNovaSenha
-                    }
-                    aria-label={
-                      mostrarNovaSenha
-                        ? 'Ocultar nova senha'
-                        : 'Mostrar nova senha'
-                    }
-                    disabled={carregando}
-                  >
-                    {mostrarNovaSenha
-                      ? 'Ocultar'
-                      : 'Mostrar'}
-                  </button>
-                </div>
-
-                <small id="ajuda-nova-senha">
-                  A senha deve possuir
-                  entre 8 e 100
-                  caracteres.
-                </small>
-
-                {erroNovaSenha && (
-                  <p
-                    id="erro-nova-senha"
-                    className="campo__erro"
-                    role="alert"
-                  >
-                    {erroNovaSenha}
-                  </p>
-                )}
-              </div>
-
-              <div className="campo">
-                <label htmlFor="confirmacaoNovaSenha">
-                  Confirme a nova senha
-                </label>
-
-                <div className="campo-senha">
-                  <input
-                    id="confirmacaoNovaSenha"
-                    type={
-                      mostrarConfirmacao
-                        ? 'text'
-                        : 'password'
-                    }
-                    value={
-                      confirmacaoSenha
-                    }
-                    onChange={(event) => {
-                      setConfirmacaoSenha(
-                        event.target.value,
-                      )
-
-                      if (
-                        erroConfirmacao
-                      ) {
-                        setErroConfirmacao(
-                          '',
-                        )
-                      }
-                    }}
-                    autoComplete="new-password"
-                    placeholder="Digite a nova senha novamente"
-                    aria-invalid={
-                      Boolean(
-                        erroConfirmacao,
-                      )
-                    }
-                    aria-describedby={
-                      erroConfirmacao
-                        ? 'erro-confirmacao-nova-senha'
-                        : undefined
-                    }
-                    disabled={carregando}
-                  />
-
-                  <button
-                    type="button"
-                    className="botao-mostrar-senha"
-                    onClick={() =>
-                      setMostrarConfirmacao(
-                        (
-                          valorAtual,
-                        ) =>
-                          !valorAtual,
-                      )
-                    }
-                    aria-pressed={
-                      mostrarConfirmacao
-                    }
-                    aria-label={
-                      mostrarConfirmacao
-                        ? 'Ocultar confirmação da nova senha'
-                        : 'Mostrar confirmação da nova senha'
-                    }
-                    disabled={carregando}
-                  >
-                    {mostrarConfirmacao
-                      ? 'Ocultar'
-                      : 'Mostrar'}
-                  </button>
-                </div>
-
-                {erroConfirmacao && (
-                  <p
-                    id="erro-confirmacao-nova-senha"
-                    className="campo__erro"
-                    role="alert"
-                  >
-                    {
-                      erroConfirmacao
-                    }
-                  </p>
-                )}
-              </div>
-
-              <button
-                type="submit"
-                disabled={carregando}
-              >
-                {carregando
-                  ? 'Alterando senha...'
-                  : 'Redefinir senha'}
-              </button>
-            </form>
-          )}
-
-        {erro && (
-          <div
-            className="mensagem mensagem--erro"
-            role="alert"
-            aria-live="assertive"
-          >
-            {erro}
-          </div>
-        )}
-
-        {senhaAlterada && (
-          <>
-            <div
-              className="mensagem mensagem--sucesso"
-              role="status"
-              aria-live="polite"
-            >
-              {mensagem}
-            </div>
-
-            <p className="navegacao-secundaria">
-              Sua nova senha já pode ser
-              usada para entrar no
-              SIMUL.
-            </p>
-
-            <p className="navegacao-secundaria">
-              <Link to="/login">
-                Ir para o login
-              </Link>
-            </p>
-          </>
-        )}
-
-        {!senhaAlterada && (
-          <p className="navegacao-secundaria">
             <Link to="/login">
               Voltar para o login
             </Link>
           </p>
-        )}
-      </section>
-    </main>
+        )
+      }
+    >
+      {!token && (
+        <Alerta
+          tipo="erro"
+          titulo="Link inválido"
+        >
+          O link de recuperação está
+          incompleto. Peça um novo em
+          “Esqueci minha senha”.
+        </Alerta>
+      )}
+
+      {erro && (
+        <Alerta
+          tipo="erro"
+          titulo="Não foi possível alterar"
+        >
+          {erro}
+        </Alerta>
+      )}
+
+      {token && !senhaAlterada && (
+        <form
+          className="acesso__form"
+          onSubmit={handleSubmit}
+          noValidate
+        >
+          <CampoSenha
+            id="novaSenha"
+            rotulo="Nova senha"
+            value={novaSenha}
+            onChange={(event) => {
+              setNovaSenha(event.target.value)
+
+              if (erroNovaSenha) {
+                setErroNovaSenha('')
+              }
+
+              if (erroConfirmacao) {
+                setErroConfirmacao('')
+              }
+            }}
+            autoComplete="new-password"
+            maxLength={100}
+            dica="Use pelo menos 8 caracteres."
+            erro={erroNovaSenha}
+            disabled={carregando}
+          />
+
+          <CampoSenha
+            id="confirmacaoNovaSenha"
+            rotulo="Confirmação da nova senha"
+            value={confirmacaoSenha}
+            onChange={(event) => {
+              setConfirmacaoSenha(event.target.value)
+
+              if (erroConfirmacao) {
+                setErroConfirmacao('')
+              }
+            }}
+            autoComplete="new-password"
+            maxLength={100}
+            erro={erroConfirmacao}
+            disabled={carregando}
+          />
+
+          <button
+            type="submit"
+            className="botao botao--primario"
+            disabled={carregando}
+          >
+            {carregando
+              ? 'Salvando…'
+              : 'Salvar nova senha'}
+          </button>
+        </form>
+      )}
+
+      {senhaAlterada && (
+        <>
+          <Alerta
+            tipo="sucesso"
+            titulo="Tudo certo"
+          >
+            {mensagem}
+          </Alerta>
+
+          <Link
+            to="/login"
+            className="botao botao--primario"
+          >
+            Entrar com a nova senha
+          </Link>
+        </>
+      )}
+    </LayoutAcesso>
   )
 }
 

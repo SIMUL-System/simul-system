@@ -7,10 +7,17 @@ import {
 import { login } from '../services/authService'
 
 import {
+  obterUsuarioAtual,
   reenviarVerificacaoEmail,
 } from '../services/usuarioService'
 
 import '../App.css'
+
+import Alerta from '../components/Alerta'
+import Icone from '../components/Icone'
+import LayoutAcesso from '../components/auth/LayoutAcesso'
+import CampoSenha from '../components/form/CampoSenha'
+import CampoTexto from '../components/form/CampoTexto'
 
 function emailValido(valor) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
@@ -23,11 +30,6 @@ function LoginPage() {
 
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
-
-  const [
-    mostrarSenha,
-    setMostrarSenha,
-  ] = useState(false)
 
   const [
     erroEmail,
@@ -124,8 +126,22 @@ function LoginPage() {
         senha,
       )
 
+      // Administrador vai direto para o painel.
+      let destino = '/minha-conta'
+
+      try {
+        const usuario =
+          await obterUsuarioAtual()
+
+        if (usuario?.perfil === 'ADMIN') {
+          destino = '/admin'
+        }
+      } catch {
+        // Sem os dados do usuário, segue para Minha conta.
+      }
+
       navigate(
-        '/minha-conta',
+        destino,
         {
           replace: true,
         },
@@ -200,258 +216,146 @@ function LoginPage() {
     }
   }
 
+  const ocupado =
+    carregando ||
+    reenviando
+
   return (
-    <main className="app">
-      <section
-        className="consulta"
-        aria-labelledby="titulo-login"
-      >
-        <header className="consulta__cabecalho">
-          <span
-            className="consulta__marca"
-            aria-label="SIMUL"
-          >
-            SIMUL
-          </span>
-
-          <h1 id="titulo-login">
-            Entrar
-          </h1>
-
-          <p>
-            Acesse sua conta para
-            gerenciar suas preferências
-            de notificação.
-          </p>
-        </header>
-
-        <form
-          className="consulta__formulario"
-          onSubmit={handleSubmit}
-          noValidate
-        >
-          <div className="campo">
-            <label htmlFor="email">
-              E-mail
-            </label>
-
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(event) => {
-                setEmail(
-                  event.target.value,
-                )
-
-                if (erroEmail) {
-                  setErroEmail('')
-                }
-
-                if (
-                  mostrarReenvio ||
-                  mensagemReenvio
-                ) {
-                  limparEstadoReenvio()
-                }
-              }}
-              autoComplete="email"
-              placeholder="seuemail@exemplo.com"
-              inputMode="email"
-              aria-invalid={
-                Boolean(erroEmail)
-              }
-              aria-describedby={
-                erroEmail
-                  ? 'erro-email-login'
-                  : undefined
-              }
-              disabled={
-                carregando ||
-                reenviando
-              }
-            />
-
-            {erroEmail && (
-              <p
-                id="erro-email-login"
-                className="campo__erro"
-                role="alert"
-              >
-                {erroEmail}
-              </p>
-            )}
-          </div>
-
-          <div className="campo">
-            <label htmlFor="senha">
-              Senha
-            </label>
-
-            <div className="campo-senha">
-              <input
-                id="senha"
-                type={
-                  mostrarSenha
-                    ? 'text'
-                    : 'password'
-                }
-                value={senha}
-                onChange={(event) => {
-                  setSenha(
-                    event.target.value,
-                  )
-
-                  if (erroSenha) {
-                    setErroSenha('')
-                  }
-                }}
-                autoComplete="current-password"
-                placeholder="Digite sua senha"
-                aria-invalid={
-                  Boolean(erroSenha)
-                }
-                aria-describedby={
-                  erroSenha
-                    ? 'erro-senha-login'
-                    : undefined
-                }
-                disabled={
-                  carregando ||
-                  reenviando
-                }
-              />
-
-              <button
-                type="button"
-                className="botao-mostrar-senha"
-                onClick={() =>
-                  setMostrarSenha(
-                    (valorAtual) =>
-                      !valorAtual,
-                  )
-                }
-                aria-pressed={
-                  mostrarSenha
-                }
-                aria-label={
-                  mostrarSenha
-                    ? 'Ocultar senha'
-                    : 'Mostrar senha'
-                }
-                disabled={
-                  carregando ||
-                  reenviando
-                }
-              >
-                {mostrarSenha
-                  ? 'Ocultar'
-                  : 'Mostrar'}
-              </button>
-            </div>
-
-            {erroSenha && (
-              <p
-                id="erro-senha-login"
-                className="campo__erro"
-                role="alert"
-              >
-                {erroSenha}
-              </p>
-            )}
-          </div>
-
-          <p className="navegacao-secundaria">
-            <Link to="/recuperar-senha">
-              Esqueci minha senha
-            </Link>
-          </p>
-
-          <button
-            type="submit"
-            disabled={
-              carregando ||
-              reenviando
-            }
-          >
-            {carregando
-              ? 'Entrando...'
-              : 'Entrar'}
-          </button>
-        </form>
-
-        {erro && (
-          <div
-            className="mensagem mensagem--erro"
-            role="alert"
-            aria-live="assertive"
-          >
-            {erro}
-          </div>
-        )}
-
-        {mostrarReenvio && (
-          <section
-            className="rota-selecionada"
-            aria-labelledby="titulo-reenvio-email"
-          >
-            <h2 id="titulo-reenvio-email">
-              Não recebeu o e-mail?
-            </h2>
-
-            <p>
-              Podemos enviar um novo
-              link de confirmação para:
-            </p>
-
-            <p>
-              <strong>
-                {email.trim()}
-              </strong>
-            </p>
-
-            <button
-              type="button"
-              className="botao-salvar"
-              onClick={
-                handleReenviarVerificacao
-              }
-              disabled={
-                reenviando ||
-                carregando
-              }
-            >
-              {reenviando
-                ? 'Enviando...'
-                : 'Reenviar e-mail de confirmação'}
-            </button>
-          </section>
-        )}
-
-        {mensagemReenvio && (
-          <div
-            className="mensagem mensagem--sucesso"
-            role="status"
-            aria-live="polite"
-          >
-            {mensagemReenvio}
-          </div>
-        )}
-
-        <p className="navegacao-secundaria">
-          Ainda não possui conta?{' '}
+    <LayoutAcesso
+      idTitulo="titulo-login"
+      titulo="Entrar"
+      descricao="Acesse sua conta para gerenciar os lembretes da coleta."
+      ocupado={ocupado}
+      rodape={
+        <p>
+          Ainda não tem conta?{' '}
           <Link to="/cadastro">
             Criar conta
           </Link>
         </p>
+      }
+    >
+      {erro && (
+        <Alerta
+          tipo="erro"
+          titulo={
+            mostrarReenvio
+              ? 'E-mail não confirmado'
+              : 'Não foi possível entrar'
+          }
+        >
+          {erro}
+        </Alerta>
+      )}
 
-        <p className="navegacao-secundaria">
-          <Link to="/">
-            Voltar para consulta
-          </Link>
-        </p>
-      </section>
-    </main>
+      {mensagemReenvio && (
+        <Alerta
+          tipo="sucesso"
+          titulo="Pedido enviado"
+        >
+          {mensagemReenvio}
+        </Alerta>
+      )}
+
+      <form
+        className="acesso__form"
+        onSubmit={handleSubmit}
+        noValidate
+      >
+        <CampoTexto
+          id="email"
+          rotulo="E-mail"
+          type="email"
+          value={email}
+          onChange={(event) => {
+            setEmail(event.target.value)
+
+            if (erroEmail) {
+              setErroEmail('')
+            }
+
+            if (
+              mostrarReenvio ||
+              mensagemReenvio
+            ) {
+              limparEstadoReenvio()
+            }
+          }}
+          autoComplete="email"
+          inputMode="email"
+          placeholder="voce@exemplo.com"
+          erro={erroEmail}
+          disabled={ocupado}
+        />
+
+        <CampoSenha
+          id="senha"
+          rotulo="Senha"
+          value={senha}
+          onChange={(event) => {
+            setSenha(event.target.value)
+
+            if (erroSenha) {
+              setErroSenha('')
+            }
+          }}
+          autoComplete="current-password"
+          erro={erroSenha}
+          disabled={ocupado}
+        />
+
+        <Link
+          to="/recuperar-senha"
+          className="acesso__link-direita"
+        >
+          Esqueci minha senha
+        </Link>
+
+        <button
+          type="submit"
+          className="botao botao--primario"
+          disabled={ocupado}
+        >
+          {carregando
+            ? 'Entrando…'
+            : 'Entrar'}
+        </button>
+      </form>
+
+      {mostrarReenvio && (
+        <>
+          <hr className="acesso__separador" />
+
+          <section
+            className="acesso__bloco"
+            aria-labelledby="titulo-reenvio-email"
+          >
+            <h2
+              id="titulo-reenvio-email"
+              className="titulo-cartao"
+            >
+              Não recebeu o e-mail?
+            </h2>
+
+            <p className="acesso__destaque-email">
+              <Icone nome="email" />
+              {email.trim()}
+            </p>
+
+            <button
+              type="button"
+              className="botao botao--secundario"
+              onClick={handleReenviarVerificacao}
+              disabled={ocupado}
+            >
+              {reenviando
+                ? 'Enviando…'
+                : 'Reenviar e-mail de confirmação'}
+            </button>
+          </section>
+        </>
+      )}
+    </LayoutAcesso>
   )
 }
 
