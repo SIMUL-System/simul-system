@@ -430,3 +430,9 @@
     height: 320px;
   }
 }
+
+.como-funciona__link {
+  display: inline-block;
+  margin-top: var(--space-2);
+  font-weight: 600;
+}

@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 const PASSOS = [
   {
     titulo: 'Consulte seu bairro',
@@ -8,6 +10,10 @@ const PASSOS = [
     titulo: 'Separe os recicláveis',
     texto:
       'Papel, plástico, vidro e metal limpos e secos, separados do lixo comum.',
+    link: {
+      para: '/guia-de-descarte',
+      texto: 'Aprenda jogando no guia de descarte',
+    },
   },
   {
     titulo: 'Receba o lembrete',
@@ -45,6 +51,15 @@ function ComoFunciona() {
             <div>
               <h3>{passo.titulo}</h3>
               <p>{passo.texto}</p>
+
+              {passo.link && (
+                <Link
+                  to={passo.link.para}
+                  className="como-funciona__link"
+                >
+                  {passo.link.texto}
+                </Link>
+              )}
             </div>
           </li>
         ))}

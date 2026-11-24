@@ -242,6 +242,16 @@ function NavegacaoPrincipal() {
               </NavLink>
             </li>
 
+            <li>
+              <NavLink
+                to="/guia-de-descarte"
+                className={classeLink}
+                onClick={fecharMenu}
+              >
+                Guia de descarte
+              </NavLink>
+            </li>
+
             {autenticado && (
               <li>
                 <NavLink

@@ -1,0 +1,814 @@
+/* =========================================
+   Guia de descarte consciente (RF08)
+   Tom lúdico, dentro da identidade SIMUL.
+   ========================================= */
+
+.guia {
+  max-width: var(--largura-conteudo);
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-6);
+  display: grid;
+  gap: var(--space-12);
+}
+
+/* ---------- Lixeira-personagem ---------- */
+.lixeira__corpo,
+.lixeira__tampa {
+  fill: var(--cor-lixeira);
+}
+
+.lixeira__tampa {
+  filter: brightness(0.85);
+}
+
+.lixeira__olho {
+  fill: var(--surface-raised);
+}
+
+.lixeira__pupila {
+  fill: var(--ink);
+}
+
+[data-theme='dark'] .lixeira__olho {
+  fill: #ffffff;
+}
+
+[data-theme='dark'] .lixeira__pupila {
+  fill: #132131;
+}
+
+.lixeira__boca {
+  fill: none;
+  stroke: var(--surface-raised);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+[data-theme='dark'] .lixeira__boca {
+  stroke: #132131;
+}
+
+/* ---------- Topo ---------- */
+.guia-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: center;
+  padding: var(--space-8);
+  border-radius: var(--radius-lg);
+  background: var(--brand-green-tint);
+}
+
+.guia-hero__texto {
+  display: grid;
+  gap: var(--space-4);
+  justify-items: start;
+}
+
+.guia-hero__titulo {
+  margin: 0;
+  font-size: 40px;
+  line-height: 44px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.guia-hero__lead {
+  margin: 0;
+  font-size: 17px;
+  line-height: 26px;
+  color: var(--ink-muted);
+}
+
+.guia-hero__turma {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4) var(--space-2);
+  justify-items: center;
+}
+
+.guia-hero__lixeira {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-muted);
+  animation: guia-pulo 2.4s ease-in-out infinite;
+  animation-delay: var(--atraso);
+}
+
+@keyframes guia-pulo {
+  0%,
+  70%,
+  100% {
+    transform: translateY(0);
+  }
+
+  80% {
+    transform: translateY(-8px);
+  }
+}
+
+/* ---------- Seções ---------- */
+.guia-secao {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.guia-secao__cabecalho {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.guia-secao__cabecalho .titulo-secao {
+  margin: 0;
+  font-size: 28px;
+  line-height: 34px;
+}
+
+.guia-secao__cabecalho p {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+/* ---------- Jogo ---------- */
+.jogo {
+  display: grid;
+  gap: var(--space-6);
+  padding: var(--space-8);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-card);
+}
+
+.jogo--inicio,
+.jogo--fim {
+  justify-items: center;
+  text-align: center;
+}
+
+.jogo--fim:focus {
+  outline: none;
+}
+
+.jogo__turma {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.jogo__convite {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 18px;
+  line-height: 28px;
+}
+
+.botao--grande {
+  min-height: 52px;
+  padding: var(--space-3) var(--space-8);
+  font-size: 18px;
+}
+
+.jogo__barra {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+
+.jogo__acertos {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--brand-green);
+}
+
+.jogo__progresso {
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: var(--surface-sunken);
+  overflow: hidden;
+  margin-top: calc(var(--space-4) * -1);
+}
+
+.jogo__progresso span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--brand-green);
+  transition: width 0.3s ease;
+}
+
+.jogo__item {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  padding: var(--space-6);
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.jogo__item:focus {
+  outline: none;
+}
+
+.jogo__item--certo {
+  border-style: solid;
+  border-color: var(--brand-green);
+  background: var(--brand-green-tint);
+  animation: guia-comemora 0.5s ease;
+}
+
+.jogo__item--errado {
+  border-style: solid;
+  border-color: var(--danger);
+  background: var(--danger-tint);
+  animation: guia-balanca 0.4s ease;
+}
+
+.jogo__pergunta {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+
+.jogo__nome-item {
+  margin: 0;
+  font-size: 32px;
+  line-height: 38px;
+  font-weight: 800;
+}
+
+.jogo__lixeiras {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.jogo__lixeira {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: var(--space-2);
+  min-height: 120px;
+  padding: var(--space-3) var(--space-1);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 18px;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.jogo__lixeira:hover:not(:disabled) {
+  transform: translateY(-4px);
+  border-color: var(--brand-blue);
+}
+
+.jogo__lixeira:disabled {
+  cursor: default;
+}
+
+.jogo__lixeira--certa {
+  border-color: var(--brand-green);
+  background: var(--brand-green-tint);
+  animation: guia-comemora 0.5s ease;
+}
+
+.jogo__lixeira--errada {
+  border-color: var(--danger);
+  background: var(--danger-tint);
+}
+
+.jogo__lixeira-nome {
+  text-align: center;
+}
+
+.jogo__retorno-area:empty {
+  display: none;
+}
+
+.jogo__retorno {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  padding: var(--space-4) var(--space-6);
+  border-radius: var(--radius-md);
+}
+
+.jogo__retorno:focus {
+  outline: none;
+}
+
+.jogo__retorno p {
+  margin: 0;
+}
+
+.jogo__retorno--certo {
+  background: var(--brand-green-tint);
+}
+
+.jogo__retorno--errado {
+  background: var(--brand-yellow-tint);
+}
+
+.jogo__veredito {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.jogo__retorno--certo .jogo__veredito {
+  color: var(--brand-green);
+}
+
+.jogo__retorno--errado .jogo__veredito {
+  color: var(--warning-ink);
+}
+
+.jogo__placar {
+  display: grid;
+  place-items: center;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: conic-gradient(var(--brand-green) var(--porcentagem), var(--surface-sunken) 0);
+}
+
+.jogo__placar span {
+  display: grid;
+  place-items: center;
+  width: 108px;
+  height: 108px;
+  border-radius: 50%;
+  background: var(--surface-raised);
+  font-size: 30px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.jogo__nivel {
+  margin: 0;
+  font-size: 26px;
+  line-height: 32px;
+  font-weight: 800;
+  color: var(--brand-green);
+}
+
+.jogo--fim p {
+  margin: 0;
+  max-width: 48ch;
+}
+
+.jogo__impacto {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  background: var(--brand-green-tint);
+  font-weight: 700;
+}
+
+.jogo__impacto .icone {
+  color: var(--brand-green);
+}
+
+.jogo__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: center;
+}
+
+@keyframes guia-comemora {
+  40% {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes guia-balanca {
+  25% {
+    transform: translateX(-6px);
+  }
+
+  75% {
+    transform: translateX(6px);
+  }
+}
+
+/* ---------- 4 passos ---------- */
+.guia-passos {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guia-passo {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  padding: var(--space-6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+}
+
+.guia-passo__numero {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--brand-blue);
+  color: var(--on-brand);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.guia-passo:nth-child(2) .guia-passo__numero {
+  background: var(--brand-green);
+}
+
+.guia-passo:nth-child(3) .guia-passo__numero {
+  background: var(--brand-yellow);
+  color: var(--on-accent);
+}
+
+.guia-passo:nth-child(4) .guia-passo__numero {
+  background: var(--recycle-plastic);
+}
+
+.guia-passo h3 {
+  margin: var(--space-2) 0 0;
+  font-size: 20px;
+  line-height: 26px;
+}
+
+.guia-passo p {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.guia-nota {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--brand-blue-tint);
+}
+
+.guia-nota .icone {
+  flex: none;
+  color: var(--brand-blue);
+}
+
+.guia-nota a {
+  font-weight: 600;
+}
+
+/* ---------- Materiais ---------- */
+.materiais {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.material {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  overflow: hidden;
+}
+
+.material__resumo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  list-style: none;
+  border-top: 6px solid var(--cor-material);
+}
+
+.material__resumo::-webkit-details-marker {
+  display: none;
+}
+
+.material__nome {
+  flex: 1;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.material__seta {
+  display: grid;
+  color: var(--ink-muted);
+  transition: transform 0.2s ease;
+}
+
+.material[open] .material__seta {
+  transform: rotate(90deg);
+}
+
+.material__conteudo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+.material__titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-2);
+  font-size: 15px;
+}
+
+.material__titulo--vai {
+  color: var(--brand-green);
+}
+
+.material__titulo--nao {
+  color: var(--danger);
+}
+
+.material__conteudo ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.material__dica {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.material__dica .icone {
+  flex: none;
+  color: var(--brand-blue);
+}
+
+/* ---------- Mito ou verdade ---------- */
+.mitos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mito {
+  display: grid;
+  gap: var(--space-4);
+  align-content: space-between;
+  min-height: 180px;
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  background: var(--brand-blue-tint);
+}
+
+.mito--virado {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  animation: guia-virar 0.4s ease;
+}
+
+.mito__frase {
+  margin: 0;
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 700;
+}
+
+.mito__botoes {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.mito__botoes .botao {
+  flex: 1;
+}
+
+.mito__resposta {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.mito__resposta p {
+  margin: 0;
+}
+
+.mito__veredito {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 800;
+}
+
+.mito__veredito--certo {
+  color: var(--brand-green);
+}
+
+.mito__veredito--errado {
+  color: var(--brand-blue);
+}
+
+/* Virada curta: o cartão continua visível em todos os quadros. */
+@keyframes guia-virar {
+  from {
+    transform: perspective(600px) rotateY(-14deg) scale(0.97);
+  }
+
+  to {
+    transform: none;
+  }
+}
+
+/* ---------- Missão ---------- */
+.guia-secao--missao {
+  padding: var(--space-8);
+  border-radius: var(--radius-lg);
+  background: var(--brand-yellow-tint);
+}
+
+.missao {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.missao__topo {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.missao__contagem {
+  margin: 0;
+}
+
+.missao__barra {
+  height: 14px;
+  border-radius: var(--radius-full);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.missao__barra span {
+  display: block;
+  height: 100%;
+  background: var(--brand-green);
+  transition: width 0.3s ease;
+}
+
+.missao__lista {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.missao__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+}
+
+.missao__item input {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  accent-color: var(--brand-green);
+  cursor: pointer;
+}
+
+.missao__item label {
+  flex: 1;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.missao__item--feita label {
+  color: var(--ink-muted);
+  text-decoration: line-through;
+}
+
+.missao__parabens {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--brand-green);
+  color: var(--on-brand);
+  font-weight: 700;
+  animation: guia-comemora 0.5s ease;
+}
+
+.missao__nota {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.guia-fontes p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ink-muted);
+}
+
+/* ---------- Responsivo ---------- */
+@media (max-width: 960px) {
+  .guia-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .jogo__lixeiras {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .guia-passos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .materiais {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .guia {
+    padding: var(--space-6) var(--space-4);
+    gap: var(--space-8);
+  }
+
+  .guia-hero {
+    padding: var(--space-6) var(--space-4);
+  }
+
+  .guia-hero__titulo {
+    font-size: 30px;
+    line-height: 36px;
+  }
+
+  .jogo {
+    padding: var(--space-4);
+  }
+
+  .jogo__nome-item {
+    font-size: 26px;
+    line-height: 32px;
+  }
+
+  .jogo__lixeiras {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+
+  .guia-passos {
+    grid-template-columns: 1fr;
+  }
+
+  .material__conteudo {
+    grid-template-columns: 1fr;
+  }
+
+  .guia-secao--missao {
+    padding: var(--space-6) var(--space-4);
+  }
+}

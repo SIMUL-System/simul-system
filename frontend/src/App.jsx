@@ -24,6 +24,13 @@ const ConsultaPage = lazy(
     ),
 )
 
+const GuiaDescartePage = lazy(
+  () =>
+    import(
+      './pages/GuiaDescartePage'
+    ),
+)
+
 const CadastroPage = lazy(
   () =>
     import(
@@ -111,6 +118,9 @@ const CronogramasAdminPage = lazy(
 const TITULOS_PAGINAS = {
   '/':
     'Consulta de coleta | SIMUL',
+
+  '/guia-de-descarte':
+    'Guia de descarte | SIMUL',
 
   '/cadastro':
     'Criar conta | SIMUL',
@@ -210,6 +220,13 @@ function App() {
               path="/"
               element={
                 <ConsultaPage />
+              }
+            />
+
+            <Route
+              path="/guia-de-descarte"
+              element={
+                <GuiaDescartePage />
               }
             />
 
