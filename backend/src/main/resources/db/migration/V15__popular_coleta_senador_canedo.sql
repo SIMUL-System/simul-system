@@ -2,28 +2,6 @@
 -- SIMUL
 -- Carga acadêmica da coleta de Senador Canedo
 -- ============================================================
---
--- Fonte de referência:
--- material "Coleta por Bairro" da Prefeitura de Senador Canedo.
---
--- O material informa período, e não horário exato.
---
--- Convenção acadêmica adotada pelo SIMUL:
---
--- DIURNO:
--- 06:00:00 até 18:00:00
---
--- NOTURNO:
--- 18:00:00 até 23:59:00
---
--- Cada área recebe uma rota própria para permitir que
--- cronogramas sejam administrados individualmente.
---
--- A rota NÃO representa necessariamente a trajetória física
--- de um caminhão.
--- ============================================================
-
-BEGIN;
 
 CREATE TEMP TABLE carga_coleta (
     area VARCHAR(120) NOT NULL,
@@ -32,8 +10,7 @@ CREATE TEMP TABLE carga_coleta (
 );
 
 -- ============================================================
--- DIURNO
--- SEGUNDA, QUARTA E SEXTA
+-- DIURNO - SEGUNDA, QUARTA E SEXTA
 -- ============================================================
 
 INSERT INTO carga_coleta (area, periodo, grupo_dias)
@@ -87,8 +64,7 @@ VALUES
 ('Vila São Sebastião', 'DIURNO', 'SEG_QUA_SEX');
 
 -- ============================================================
--- DIURNO
--- TERÇA, QUINTA E SÁBADO
+-- DIURNO - TERÇA, QUINTA E SÁBADO
 -- ============================================================
 
 INSERT INTO carga_coleta (area, periodo, grupo_dias)
@@ -130,8 +106,7 @@ VALUES
 ('Vila São João', 'DIURNO', 'TER_QUI_SAB');
 
 -- ============================================================
--- NOTURNO
--- SEGUNDA, QUARTA E SEXTA
+-- NOTURNO - SEGUNDA, QUARTA E SEXTA
 -- ============================================================
 
 INSERT INTO carga_coleta (area, periodo, grupo_dias)
@@ -157,8 +132,7 @@ VALUES
 ('St. Morada Nova', 'NOTURNO', 'SEG_QUA_SEX');
 
 -- ============================================================
--- NOTURNO
--- TERÇA, QUINTA E SÁBADO
+-- NOTURNO - TERÇA, QUINTA E SÁBADO
 -- ============================================================
 
 INSERT INTO carga_coleta (area, periodo, grupo_dias)
@@ -171,8 +145,7 @@ VALUES
 ('Setor Comercial', 'NOTURNO', 'TER_QUI_SAB');
 
 -- ============================================================
--- NOTURNO
--- SEGUNDA A SÁBADO
+-- NOTURNO - SEGUNDA A SÁBADO
 -- ============================================================
 
 INSERT INTO carga_coleta (area, periodo, grupo_dias)
@@ -181,24 +154,14 @@ VALUES
 ('Vila Santa Rosa', 'NOTURNO', 'SEG_A_SAB');
 
 -- ============================================================
--- Validação da carga temporária
--- Devem existir exatamente 109 áreas.
+-- Validação da carga temporária (SQL puro, sem DO $$)
 -- ============================================================
 
-DO $$
-BEGIN
-    IF (
-        SELECT COUNT(*)
-        FROM carga_coleta
-    ) <> 109 THEN
-        RAISE EXCEPTION
-            'Carga inválida. Eram esperadas 109 áreas.';
-    END IF;
-END $$;
+SELECT 1 / CASE WHEN COUNT(*) = 109 THEN 1 ELSE 0 END AS validacao_carga
+FROM carga_coleta;
 
 -- ============================================================
 -- ROTAS
--- Uma rota interna para cada área atendida.
 -- ============================================================
 
 INSERT INTO rotas (
@@ -209,9 +172,8 @@ INSERT INTO rotas (
     data_atualizacao
 )
 SELECT
-    'Rota - ' || area,
-    'Rota interna associada à área ' || area ||
-    '. Carga acadêmica baseada no cronograma municipal.',
+    'Rota - ' || area || ' (Senador Canedo)',
+    'Rota interna associada à área ' || area || ' (Senador Canedo). Carga acadêmica baseada no cronograma municipal.',
     TRUE,
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
@@ -233,17 +195,11 @@ SELECT
     rota.id
 FROM carga_coleta carga
 JOIN rotas rota
-    ON rota.nome = 'Rota - ' || carga.area
+    ON rota.nome = 'Rota - ' || carga.area || ' (Senador Canedo)'
 ORDER BY carga.area;
 
 -- ============================================================
 -- CRONOGRAMAS
---
--- DIURNO:
--- 06:00 até 18:00
---
--- NOTURNO:
--- 18:00 até 23:59
 -- ============================================================
 
 INSERT INTO cronogramas (
@@ -256,34 +212,31 @@ INSERT INTO cronogramas (
     data_atualizacao
 )
 SELECT
-    rota.id,
+    aa.rota_id,
     dias.dia_semana,
     CASE
-        WHEN carga.periodo = 'DIURNO'
-            THEN TIME '06:00'
+        WHEN carga.periodo = 'DIURNO' THEN TIME '06:00'
         ELSE TIME '18:00'
     END,
     CASE
-        WHEN carga.periodo = 'DIURNO'
-            THEN TIME '18:00'
+        WHEN carga.periodo = 'DIURNO' THEN TIME '18:00'
         ELSE TIME '23:59'
     END,
     TRUE,
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
 FROM carga_coleta carga
-JOIN rotas rota
-    ON rota.nome = 'Rota - ' || carga.area
+JOIN areas_atendidas aa
+    ON aa.bairro = carga.area
+    AND aa.cidade = 'Senador Canedo'
 JOIN (
     VALUES
         ('SEG_QUA_SEX', 'SEGUNDA'),
         ('SEG_QUA_SEX', 'QUARTA'),
         ('SEG_QUA_SEX', 'SEXTA'),
-
         ('TER_QUI_SAB', 'TERCA'),
         ('TER_QUI_SAB', 'QUINTA'),
         ('TER_QUI_SAB', 'SABADO'),
-
         ('SEG_A_SAB', 'SEGUNDA'),
         ('SEG_A_SAB', 'TERCA'),
         ('SEG_A_SAB', 'QUARTA'),
@@ -294,72 +247,16 @@ JOIN (
     ON dias.grupo_dias = carga.grupo_dias;
 
 -- ============================================================
--- VALIDAÇÃO FINAL
--- ============================================================
-
-DO $$
-DECLARE
-    quantidade_rotas INTEGER;
-    quantidade_areas INTEGER;
-    quantidade_cronogramas INTEGER;
-BEGIN
-    SELECT COUNT(*)
-    INTO quantidade_rotas
-    FROM rotas;
-
-    SELECT COUNT(*)
-    INTO quantidade_areas
-    FROM areas_atendidas;
-
-    SELECT COUNT(*)
-    INTO quantidade_cronogramas
-    FROM cronogramas;
-
-    IF quantidade_rotas <> 109 THEN
-        RAISE EXCEPTION
-            'Quantidade de rotas inválida: %. Esperado: 109.',
-            quantidade_rotas;
-    END IF;
-
-    IF quantidade_areas <> 109 THEN
-        RAISE EXCEPTION
-            'Quantidade de áreas inválida: %. Esperado: 109.',
-            quantidade_areas;
-    END IF;
-
-    IF quantidade_cronogramas <> 333 THEN
-        RAISE EXCEPTION
-            'Quantidade de cronogramas inválida: %. Esperado: 333.',
-            quantidade_cronogramas;
-    END IF;
-END $$;
-
-COMMIT;
-
--- ============================================================
--- CONSULTA DE CONFERÊNCIA
+-- VALIDAÇÃO FINAL (FILTRADA POR SENADOR CANEDO, SEM DO $$)
 -- ============================================================
 
 SELECT
-    a.cidade,
-    a.bairro,
-    r.nome AS rota,
-    c.dia_semana,
-    c.horario_inicio,
-    c.horario_fim
-FROM areas_atendidas a
-JOIN rotas r
-    ON r.id = a.rota_id
-JOIN cronogramas c
-    ON c.rota_id = r.id
-ORDER BY
-    a.bairro,
-    CASE c.dia_semana
-        WHEN 'SEGUNDA' THEN 1
-        WHEN 'TERCA' THEN 2
-        WHEN 'QUARTA' THEN 3
-        WHEN 'QUINTA' THEN 4
-        WHEN 'SEXTA' THEN 5
-        WHEN 'SABADO' THEN 6
-        WHEN 'DOMINGO' THEN 7
-    END;
+    1 / CASE WHEN COUNT(DISTINCT aa.rota_id) = 109 THEN 1 ELSE 0 END AS validacao_rotas,
+    1 / CASE WHEN COUNT(DISTINCT aa.id) = 109 THEN 1 ELSE 0 END AS validacao_areas,
+    1 / CASE WHEN COUNT(c.id) = 333 THEN 1 ELSE 0 END AS validacao_cronogramas
+FROM areas_atendidas aa
+JOIN cronogramas c ON c.rota_id = aa.rota_id
+WHERE aa.cidade = 'Senador Canedo';
+
+DROP TABLE carga_coleta;
+
