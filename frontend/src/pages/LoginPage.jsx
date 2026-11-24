@@ -43,6 +43,13 @@ function LoginPage() {
 
   const [erro, setErro] = useState('')
 
+  // Erro do reenvio fica separado do erro do login, perto do botão
+  // que o causou (antes ele sobrescrevia o aviso "E-mail não confirmado").
+  const [
+    erroReenvio,
+    setErroReenvio,
+  ] = useState('')
+
   const [
     carregando,
     setCarregando,
@@ -66,6 +73,7 @@ function LoginPage() {
   function limparEstadoReenvio() {
     setMostrarReenvio(false)
     setMensagemReenvio('')
+    setErroReenvio('')
   }
 
   function validarFormulario() {
@@ -180,6 +188,7 @@ function LoginPage() {
       email.trim()
 
     setMensagemReenvio('')
+    setErroReenvio('')
 
     if (
       !emailNormalizado ||
@@ -207,9 +216,9 @@ function LoginPage() {
           'Se existir uma conta associada a este e-mail e ela ainda precisar de confirmação, enviaremos uma nova mensagem.',
       )
     } catch (error) {
-      setErro(
+      setErroReenvio(
         error.message ||
-          'Não foi possível solicitar um novo e-mail de confirmação.',
+          'Não foi possível enviar um novo e-mail de confirmação agora. Tente novamente em alguns minutos.',
       )
     } finally {
       setReenviando(false)
@@ -341,6 +350,15 @@ function LoginPage() {
               <Icone nome="email" />
               {email.trim()}
             </p>
+
+            {erroReenvio && (
+              <Alerta
+                tipo="erro"
+                titulo="E-mail não enviado"
+              >
+                {erroReenvio}
+              </Alerta>
+            )}
 
             <button
               type="button"

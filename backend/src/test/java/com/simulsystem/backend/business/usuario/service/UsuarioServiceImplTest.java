@@ -12,6 +12,7 @@ import com.simulsystem.backend.business.usuario.validation.UsuarioValidation;
 import com.simulsystem.backend.core.exception.CredenciaisInvalidasException;
 import com.simulsystem.backend.core.exception.EmailJaCadastradoException;
 import com.simulsystem.backend.core.exception.EmailNaoVerificadoException;
+import com.simulsystem.backend.core.exception.EnvioEmailException;
 import com.simulsystem.backend.core.exception.UsuarioNaoEncontradoException;
 import com.simulsystem.backend.core.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
@@ -533,5 +534,36 @@ class UsuarioServiceImplTest {
                 responseDTO,
                 resultado
         );
+    }
+
+    @Test
+    void deveConcluirCadastroMesmoQuandoEmailDeConfirmacaoFalhar() {
+        UsuarioRequestDTO requestDTO = new UsuarioRequestDTO(
+                "Usuário Teste",
+                "usuario@simul.local",
+                "senha123"
+        );
+        Usuario usuario = new Usuario();
+        Usuario usuarioSalvo = new Usuario();
+        usuarioSalvo.setId(7L);
+        UsuarioResponseDTO responseDTO = new UsuarioResponseDTO(
+                7L, "Usuário Teste", "usuario@simul.local",
+                PerfilUsuario.USUARIO, true, false, null, null
+        );
+
+        when(usuarioMapper.toEntity(requestDTO)).thenReturn(usuario);
+        when(passwordEncoder.encode("senha123")).thenReturn("hash");
+        when(usuarioRepository.save(usuario)).thenReturn(usuarioSalvo);
+        when(usuarioMapper.toResponseDTO(usuarioSalvo)).thenReturn(responseDTO);
+        doThrow(new EnvioEmailException("porta SMTP bloqueada"))
+                .when(verificacaoEmailService)
+                .enviarVerificacao(usuarioSalvo);
+
+        UsuarioResponseDTO resposta = assertDoesNotThrow(
+                () -> usuarioService.cadastrar(requestDTO)
+        );
+
+        assertEquals(7L, resposta.id());
+        verify(usuarioRepository).save(usuario);
     }
 }

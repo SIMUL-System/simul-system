@@ -10,9 +10,12 @@ import com.simulsystem.backend.business.usuario.repository.UsuarioRepository;
 import com.simulsystem.backend.business.usuario.validation.UsuarioValidation;
 import com.simulsystem.backend.core.exception.CredenciaisInvalidasException;
 import com.simulsystem.backend.core.exception.EmailNaoVerificadoException;
+import com.simulsystem.backend.core.exception.EnvioEmailException;
 import com.simulsystem.backend.core.exception.UsuarioNaoEncontradoException;
 import com.simulsystem.backend.core.security.JwtService;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,6 +27,9 @@ import java.util.Locale;
 
 @Service
 public class UsuarioServiceImpl implements UsuarioService {
+
+    private static final Logger LOG =
+            LoggerFactory.getLogger(UsuarioServiceImpl.class);
 
     private final UsuarioRepository usuarioRepository;
     private final UsuarioMapper usuarioMapper;
@@ -65,7 +71,18 @@ public class UsuarioServiceImpl implements UsuarioService {
 
         Usuario usuarioSalvo = usuarioRepository.save(usuario);
 
-        verificacaoEmailService.enviarVerificacao(usuarioSalvo);
+        // A conta já foi criada. Se o e-mail falhar agora, o cadastro não
+        // deve parecer um erro: a pessoa reenvia a confirmação pela tela
+        // de login ("Não recebeu o e-mail?").
+        try {
+            verificacaoEmailService.enviarVerificacao(usuarioSalvo);
+        } catch (EnvioEmailException exception) {
+            LOG.warn(
+                    "Cadastro {} criado, mas o e-mail de confirmação não foi enviado.",
+                    usuarioSalvo.getId(),
+                    exception
+            );
+        }
 
         return usuarioMapper.toResponseDTO(usuarioSalvo);
     }

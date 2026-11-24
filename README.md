@@ -1744,11 +1744,14 @@ Em produção:
 | `DB_PASSWORD` | Sim | — |
 | `JWT_SECRET` | Sim | — |
 | `JWT_EXPIRATION_SECONDS` | Não | `3600` |
-| `SMTP_HOST` | Sim | — |
-| `SMTP_PORT` | Sim | — |
-| `SMTP_USERNAME` | Sim | — |
-| `SMTP_PASSWORD` | Sim | — |
-| `SMTP_FROM` | Sim | — |
+| `SIMUL_MAIL_PROVEDOR` | Não (na Render: **sim**, `brevo`) | `smtp` |
+| `BREVO_API_KEY` | Com `brevo` | vazio |
+| `SIMUL_MAIL_NOME_REMETENTE` | Não | `SIMUL` |
+| `SMTP_FROM` | Sim (remetente nos dois provedores) | — |
+| `SMTP_HOST` | Com `smtp` | vazio |
+| `SMTP_PORT` | Não | `587` |
+| `SMTP_USERNAME` | Com `smtp` | vazio |
+| `SMTP_PASSWORD` | Com `smtp` | vazio |
 | `SIMUL_TIME_ZONE` | Não | `America/Sao_Paulo` |
 | `NOTIFICACAO_SCHEDULER_ENABLED` | Não | `false` |
 | `NOTIFICACAO_SCHEDULER_CRON` | Não | `0 * * * * *` |
@@ -1759,6 +1762,8 @@ Em produção:
 | `EMAIL_VERIFICATION_EXPIRATION_HOURS` | Não | `24` |
 | `PASSWORD_RECOVERY_EXPIRATION_MINUTES` | Não | `60` |
 | `SIMUL_FRONTEND_URL` | Não | `http://localhost:5173` |
+
+> **E-mail na Render.** Desde setembro de 2025 a Render gratuita bloqueia as portas SMTP (25, 465 e 587), então o envio por Gmail/SMTP falha lá. Em produção use `SIMUL_MAIL_PROVEDOR=brevo`, que envia pela API HTTPS do Brevo (plano gratuito: 300 e-mails/dia). Passos: criar conta em brevo.com → *Senders, Domains & Dedicated IPs* → cadastrar e confirmar o remetente (o mesmo e-mail de `SMTP_FROM`) → *SMTP & API* → *API Keys* → gerar a chave e colocá-la em `BREVO_API_KEY`. Localmente, o SMTP continua sendo o padrão.
 
 > Embora as propriedades VAPID tenham fallback vazio no `application.properties`, `WebPushConfig` rejeita valores vazios durante a inicialização. Portanto, configure as três variáveis no ambiente atual.
 

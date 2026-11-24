@@ -38,6 +38,12 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
 
+                        // Página de erro do Spring: sem isto, qualquer erro
+                        // inesperado chegava ao navegador como 401.
+                        .requestMatchers(
+                                "/error"
+                        ).permitAll()
+
                         // Cadastro público: não exige JWT prévio.
                         .requestMatchers(
                                 HttpMethod.POST,

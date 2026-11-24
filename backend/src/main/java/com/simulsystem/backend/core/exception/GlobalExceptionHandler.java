@@ -1,5 +1,7 @@
 package com.simulsystem.backend.core.exception;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -243,6 +245,33 @@ public class GlobalExceptionHandler {
 
         problem.setDetail(
                 exception.getMessage()
+        );
+
+        return problem;
+    }
+
+    private static final Logger LOG =
+            LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @ExceptionHandler(EnvioEmailException.class)
+    public ProblemDetail handleEnvioEmail(
+            EnvioEmailException exception
+    ) {
+        // A causa (timeout, chave inválida, porta bloqueada) fica só no log:
+        // o usuário recebe uma mensagem que ele consegue entender.
+        LOG.error("Falha no envio de e-mail: {}", exception.getMessage(), exception);
+
+        ProblemDetail problem =
+                ProblemDetail.forStatus(
+                        HttpStatus.SERVICE_UNAVAILABLE
+                );
+
+        problem.setTitle(
+                "E-mail não enviado"
+        );
+
+        problem.setDetail(
+                "Não foi possível enviar o e-mail agora. Tente novamente em alguns minutos."
         );
 
         return problem;
