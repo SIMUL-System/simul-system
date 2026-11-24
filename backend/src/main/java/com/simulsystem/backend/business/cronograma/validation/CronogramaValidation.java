@@ -9,6 +9,10 @@ import com.simulsystem.backend.core.exception.HorarioCronogramaInvalidoException
 import org.springframework.stereotype.Component;
 
 import java.time.LocalTime;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class CronogramaValidation {
@@ -79,5 +83,39 @@ public class CronogramaValidation {
                     "O horário de início e o horário de fim não podem ser iguais."
             );
         }
+    }
+
+    /**
+     * Busca todos os cronogramas informados. Se algum não existir,
+     * lança exceção listando os identificadores ausentes, para que
+     * nenhuma alteração em lote seja aplicada pela metade.
+     */
+    public List<Cronograma> buscarCronogramasExistentes(
+            List<Long> cronogramaIds
+    ) {
+        Set<Long> idsUnicos =
+                new LinkedHashSet<>(cronogramaIds);
+
+        List<Cronograma> cronogramas =
+                cronogramaRepository.findAllById(idsUnicos);
+
+        if (cronogramas.size() != idsUnicos.size()) {
+            Set<Long> encontrados =
+                    cronogramas.stream()
+                            .map(Cronograma::getId)
+                            .collect(Collectors.toSet());
+
+            String ausentes =
+                    idsUnicos.stream()
+                            .filter(id -> !encontrados.contains(id))
+                            .map(String::valueOf)
+                            .collect(Collectors.joining(", "));
+
+            throw new CronogramaNaoEncontradoException(
+                    "Os seguintes cronogramas não existem: " + ausentes + "."
+            );
+        }
+
+        return cronogramas;
     }
 }

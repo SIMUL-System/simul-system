@@ -1,5 +1,6 @@
 package com.simulsystem.backend.business.cronograma.service;
 
+import com.simulsystem.backend.business.cronograma.dto.CronogramaHorarioLoteRequestDTO;
 import com.simulsystem.backend.business.cronograma.dto.CronogramaRequestDTO;
 import com.simulsystem.backend.business.cronograma.dto.CronogramaResponseDTO;
 import com.simulsystem.backend.business.cronograma.model.Cronograma;
@@ -19,6 +20,14 @@ public interface CronogramaService {
     CronogramaResponseDTO atualizar(
             Long id,
             CronogramaRequestDTO requestDTO
+    );
+
+    /**
+     * Altera o horário de início e fim de vários cronogramas numa única
+     * transação. Mantém rota, dia da semana e status de cada um.
+     */
+    List<CronogramaResponseDTO> alterarHorariosEmLote(
+            CronogramaHorarioLoteRequestDTO requestDTO
     );
 
     CronogramaResponseDTO alterarStatus(

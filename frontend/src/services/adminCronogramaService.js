@@ -26,6 +26,25 @@ function atualizarCronograma(id, dados) {
   )
 }
 
+function alterarHorariosEmLote(
+  ids,
+  horarioInicio,
+  horarioFim,
+) {
+  return apiRequest(
+    '/api/admin/cronogramas/lote/horario',
+    {
+      method: 'PUT',
+      token: obterToken(),
+      body: {
+        ids,
+        horarioInicio,
+        horarioFim,
+      },
+    },
+  )
+}
+
 function alterarStatusCronograma(
   id,
   ativo,
@@ -44,4 +63,5 @@ export {
   criarCronograma,
   atualizarCronograma,
   alterarStatusCronograma,
+  alterarHorariosEmLote,
 }

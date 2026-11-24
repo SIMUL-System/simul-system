@@ -1,5 +1,6 @@
 package com.simulsystem.backend.business.cronograma.service;
 
+import com.simulsystem.backend.business.cronograma.dto.CronogramaHorarioLoteRequestDTO;
 import com.simulsystem.backend.business.cronograma.dto.CronogramaRequestDTO;
 import com.simulsystem.backend.business.cronograma.dto.CronogramaResponseDTO;
 import com.simulsystem.backend.business.cronograma.mapper.CronogramaMapper;
@@ -10,6 +11,7 @@ import com.simulsystem.backend.business.cronograma.validation.CronogramaValidati
 import com.simulsystem.backend.business.rota.model.Rota;
 import com.simulsystem.backend.business.rota.validation.RotaValidation;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -122,6 +124,43 @@ public class CronogramaServiceImpl implements CronogramaService {
         return cronogramaMapper.toResponseDTO(
                 cronogramaAtualizado
         );
+    }
+
+    @Override
+    @Transactional
+    public List<CronogramaResponseDTO> alterarHorariosEmLote(
+            CronogramaHorarioLoteRequestDTO requestDTO
+    ) {
+
+        LocalTime horarioInicio =
+                requestDTO.horarioInicio()
+                        .truncatedTo(ChronoUnit.MINUTES);
+
+        LocalTime horarioFim =
+                requestDTO.horarioFim()
+                        .truncatedTo(ChronoUnit.MINUTES);
+
+        cronogramaValidation.validarHorarios(
+                horarioInicio,
+                horarioFim
+        );
+
+        List<Cronograma> cronogramas =
+                cronogramaValidation
+                        .buscarCronogramasExistentes(
+                                requestDTO.ids()
+                        );
+
+        cronogramas.forEach(cronograma -> {
+            cronograma.setHorarioInicio(horarioInicio);
+            cronograma.setHorarioFim(horarioFim);
+        });
+
+        return cronogramaRepository
+                .saveAll(cronogramas)
+                .stream()
+                .map(cronogramaMapper::toResponseDTO)
+                .toList();
     }
 
     @Override

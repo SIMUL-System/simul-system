@@ -1,5 +1,6 @@
 package com.simulsystem.backend.business.cronograma.controller;
 
+import com.simulsystem.backend.business.cronograma.dto.CronogramaHorarioLoteRequestDTO;
 import com.simulsystem.backend.business.cronograma.dto.CronogramaRequestDTO;
 import com.simulsystem.backend.business.cronograma.dto.CronogramaResponseDTO;
 import com.simulsystem.backend.business.cronograma.service.CronogramaService;
@@ -50,6 +51,17 @@ public class CronogramaController {
 
         List<CronogramaResponseDTO> cronogramas =
                 cronogramaService.listar();
+
+        return ResponseEntity.ok(cronogramas);
+    }
+
+    @PutMapping("/lote/horario")
+    public ResponseEntity<List<CronogramaResponseDTO>> alterarHorariosEmLote(
+            @Valid @RequestBody CronogramaHorarioLoteRequestDTO requestDTO
+    ) {
+
+        List<CronogramaResponseDTO> cronogramas =
+                cronogramaService.alterarHorariosEmLote(requestDTO);
 
         return ResponseEntity.ok(cronogramas);
     }
