@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -179,6 +181,41 @@ public class CronogramaServiceImpl implements CronogramaService {
                         )
                 )
                 .min(LocalDateTime::compareTo);
+    }
+
+    @Override
+    public Optional<LocalDateTime> buscarColetaNoHorario(
+            Long rotaId,
+            LocalDateTime dataHora
+    ) {
+        if (dataHora == null) {
+            throw new IllegalArgumentException(
+                    "A data e hora da coleta são obrigatórias."
+            );
+        }
+
+        LocalDateTime dataHoraPorMinuto =
+                dataHora.truncatedTo(ChronoUnit.MINUTES);
+
+        LocalTime horario =
+                dataHoraPorMinuto.toLocalTime();
+
+        boolean existeColetaNoHorario =
+                buscarAtivosPorRota(rotaId)
+                        .stream()
+                        .anyMatch(cronograma ->
+                                converterDiaSemana(
+                                        cronograma.getDiaSemana()
+                                ) == dataHoraPorMinuto.getDayOfWeek()
+                                && cronograma
+                                        .getHorarioInicio()
+                                        .truncatedTo(ChronoUnit.MINUTES)
+                                        .equals(horario)
+                        );
+
+        return existeColetaNoHorario
+                ? Optional.of(dataHoraPorMinuto)
+                : Optional.empty();
     }
 
     private LocalDateTime calcularProximaOcorrencia(

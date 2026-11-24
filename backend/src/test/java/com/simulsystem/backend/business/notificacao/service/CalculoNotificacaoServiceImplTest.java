@@ -170,4 +170,62 @@ class CalculoNotificacaoServiceImplTest {
                                 )
         );
     }
+
+    @Test
+    void deveCalcularHorarioDaColetaAlvoSomandoAntecedencia() {
+
+        LocalDateTime resultado =
+                calculoNotificacaoService
+                        .calcularHorarioColetaAlvo(
+                                LocalDateTime.of(2026, 11, 23, 7, 0),
+                                48
+                        );
+
+        assertEquals(
+                LocalDateTime.of(2026, 11, 25, 7, 0),
+                resultado
+        );
+    }
+
+    @Test
+    void deveTruncarSegundosAoCalcularHorarioDaColetaAlvo() {
+
+        LocalDateTime resultado =
+                calculoNotificacaoService
+                        .calcularHorarioColetaAlvo(
+                                LocalDateTime.of(2026, 11, 23, 4, 0, 59),
+                                3
+                        );
+
+        assertEquals(
+                LocalDateTime.of(2026, 11, 23, 7, 0),
+                resultado
+        );
+    }
+
+    @Test
+    void deveLancarErroQuandoAntecedenciaDaColetaAlvoForNegativa() {
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> calculoNotificacaoService
+                        .calcularHorarioColetaAlvo(
+                                LocalDateTime.of(2026, 11, 23, 7, 0),
+                                -1
+                        )
+        );
+    }
+
+    @Test
+    void deveLancarErroQuandoReferenciaDaColetaAlvoForNula() {
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> calculoNotificacaoService
+                        .calcularHorarioColetaAlvo(
+                                null,
+                                3
+                        )
+        );
+    }
 }

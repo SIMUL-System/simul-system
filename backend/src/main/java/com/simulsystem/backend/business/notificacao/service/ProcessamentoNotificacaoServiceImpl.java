@@ -1,6 +1,5 @@
 package com.simulsystem.backend.business.notificacao.service;
 
-import com.simulsystem.backend.business.cronograma.service.CronogramaService;
 import com.simulsystem.backend.business.notificacao.model.CanalNotificacao;
 import com.simulsystem.backend.business.notificacao.model.HistoricoNotificacao;
 import com.simulsystem.backend.business.notificacao.model.PreferenciaNotificacao;
@@ -19,21 +18,16 @@ public class ProcessamentoNotificacaoServiceImpl
             DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm");
 
     private final DecisaoNotificacaoService decisaoNotificacaoService;
-    private final CronogramaService cronogramaService;
     private final HistoricoNotificacaoService historicoNotificacaoService;
     private final EnvioNotificacaoService envioNotificacaoService;
 
     public ProcessamentoNotificacaoServiceImpl(
             DecisaoNotificacaoService decisaoNotificacaoService,
-            CronogramaService cronogramaService,
             HistoricoNotificacaoService historicoNotificacaoService,
             EnvioNotificacaoService envioNotificacaoService
     ) {
         this.decisaoNotificacaoService =
                 decisaoNotificacaoService;
-
-        this.cronogramaService =
-                cronogramaService;
 
         this.historicoNotificacaoService =
                 historicoNotificacaoService;
@@ -52,26 +46,19 @@ public class ProcessamentoNotificacaoServiceImpl
                 referencia
         );
 
-        if (!decisaoNotificacaoService
-                .estaNoHorarioDoLembrete(
-                        preferencia,
-                        referencia
-                )) {
-            return;
-        }
+        Optional<LocalDateTime> coletaDoLembrete =
+                decisaoNotificacaoService
+                        .buscarColetaParaLembrete(
+                                preferencia,
+                                referencia
+                        );
 
-        Optional<LocalDateTime> proximaColeta =
-                cronogramaService.calcularProximaColeta(
-                        preferencia.getRota().getId(),
-                        referencia
-                );
-
-        if (proximaColeta.isEmpty()) {
+        if (coletaDoLembrete.isEmpty()) {
             return;
         }
 
         LocalDateTime dataHoraColeta =
-                proximaColeta.orElseThrow();
+                coletaDoLembrete.orElseThrow();
 
         if (Boolean.TRUE.equals(
                 preferencia.getEmailAtivo()

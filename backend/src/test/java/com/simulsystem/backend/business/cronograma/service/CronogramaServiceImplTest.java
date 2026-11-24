@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
@@ -209,6 +210,82 @@ class CronogramaServiceImplTest {
                 );
 
         assertTrue(resultado.isEmpty());
+    }
+
+    @Test
+    void deveRetornarColetaQuandoExistirCronogramaNoDiaEHorario() {
+
+        configurarCronogramasPadrao();
+
+        // 19/08/2026 é quarta-feira; cronograma de quarta às 19:00
+        LocalDateTime dataHora =
+                LocalDateTime.of(2026, 8, 19, 19, 0);
+
+        Optional<LocalDateTime> resultado =
+                cronogramaService.buscarColetaNoHorario(
+                        ROTA_ID,
+                        dataHora
+                );
+
+        assertEquals(Optional.of(dataHora), resultado);
+    }
+
+    @Test
+    void deveIgnorarSegundosAoBuscarColetaNoHorario() {
+
+        configurarCronogramasPadrao();
+
+        Optional<LocalDateTime> resultado =
+                cronogramaService.buscarColetaNoHorario(
+                        ROTA_ID,
+                        LocalDateTime.of(2026, 8, 19, 19, 0, 42)
+                );
+
+        assertEquals(
+                Optional.of(LocalDateTime.of(2026, 8, 19, 19, 0)),
+                resultado
+        );
+    }
+
+    @Test
+    void naoDeveRetornarColetaEmDiaSemCronograma() {
+
+        configurarCronogramasPadrao();
+
+        // 18/08/2026 é terça-feira: sem cronograma
+        Optional<LocalDateTime> resultado =
+                cronogramaService.buscarColetaNoHorario(
+                        ROTA_ID,
+                        LocalDateTime.of(2026, 8, 18, 19, 0)
+                );
+
+        assertTrue(resultado.isEmpty());
+    }
+
+    @Test
+    void naoDeveRetornarColetaEmHorarioDiferenteDoInicio() {
+
+        configurarCronogramasPadrao();
+
+        Optional<LocalDateTime> resultado =
+                cronogramaService.buscarColetaNoHorario(
+                        ROTA_ID,
+                        LocalDateTime.of(2026, 8, 19, 19, 1)
+                );
+
+        assertTrue(resultado.isEmpty());
+    }
+
+    @Test
+    void deveLancarErroQuandoDataHoraDaBuscaForNula() {
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> cronogramaService.buscarColetaNoHorario(
+                        ROTA_ID,
+                        null
+                )
+        );
     }
 
     private void configurarCronogramasPadrao() {

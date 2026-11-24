@@ -5,7 +5,6 @@ import com.simulsystem.backend.business.notificacao.model.PreferenciaNotificacao
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 @Service
@@ -22,8 +21,17 @@ public class DecisaoNotificacaoServiceImpl implements DecisaoNotificacaoService 
         this.calculoNotificacaoService = calculoNotificacaoService;
     }
 
+    /**
+     * O lembrete vence no minuto de referência quando existe uma coleta
+     * ativa exatamente em (referência + antecedência).
+     *
+     * Partir da referência para a frente evita o erro de calcular a
+     * "próxima coleta a partir de agora": quando a antecedência é maior
+     * ou igual ao intervalo entre duas coletas da rota, a próxima coleta
+     * não é a coleta cujo lembrete está vencendo.
+     */
     @Override
-    public boolean estaNoHorarioDoLembrete(
+    public Optional<LocalDateTime> buscarColetaParaLembrete(
             PreferenciaNotificacao preferencia,
             LocalDateTime referencia
     ) {
@@ -33,34 +41,27 @@ public class DecisaoNotificacaoServiceImpl implements DecisaoNotificacaoService 
             );
         }
 
+        if (preferencia.getRota() == null) {
+            throw new IllegalArgumentException(
+                    "A rota da preferência é obrigatória."
+            );
+        }
+
         if (referencia == null) {
             throw new IllegalArgumentException(
                     "A data e hora de referência são obrigatórias."
             );
         }
 
-        Optional<LocalDateTime> proximaColeta =
-                cronogramaService.calcularProximaColeta(
-                        preferencia.getRota().getId(),
-                        referencia
-                );
-
-        if (proximaColeta.isEmpty()) {
-            return false;
-        }
-
-        LocalDateTime horarioEnvio =
-                calculoNotificacaoService.calcularHorarioEnvio(
-                        proximaColeta.orElseThrow(),
+        LocalDateTime horarioColetaAlvo =
+                calculoNotificacaoService.calcularHorarioColetaAlvo(
+                        referencia,
                         preferencia.getAntecedenciaHoras()
                 );
 
-        LocalDateTime horarioEnvioPorMinuto =
-                horarioEnvio.truncatedTo(ChronoUnit.MINUTES);
-
-        LocalDateTime referenciaPorMinuto =
-                referencia.truncatedTo(ChronoUnit.MINUTES);
-
-        return horarioEnvioPorMinuto.equals(referenciaPorMinuto);
+        return cronogramaService.buscarColetaNoHorario(
+                preferencia.getRota().getId(),
+                horarioColetaAlvo
+        );
     }
 }

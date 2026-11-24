@@ -1,590 +1,253 @@
 package com.simulsystem.backend.business.notificacao.service;
 
-import com.simulsystem.backend.business.cronograma.service.CronogramaService;
-import com.simulsystem.backend.business.notificacao.model.CanalNotificacao;
-import com.simulsystem.backend.business.notificacao.model.HistoricoNotificacao;
 import com.simulsystem.backend.business.notificacao.model.PreferenciaNotificacao;
-import com.simulsystem.backend.business.notificacao.strategy.TipoNotificacao;
-import com.simulsystem.backend.business.rota.model.Rota;
-import com.simulsystem.backend.business.usuario.model.Usuario;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class ProcessamentoNotificacaoServiceImplTest {
+class ProcessamentoNotificacaoLoteServiceImplTest {
 
     @Mock
-    private DecisaoNotificacaoService decisaoNotificacaoService;
+    private PreferenciaNotificacaoService preferenciaNotificacaoService;
 
     @Mock
-    private CronogramaService cronogramaService;
+    private ProcessamentoNotificacaoService processamentoNotificacaoService;
 
-    @Mock
-    private HistoricoNotificacaoService historicoNotificacaoService;
+    private ProcessamentoNotificacaoLoteServiceImpl service;
 
-    @Mock
-    private EnvioNotificacaoService envioNotificacaoService;
-
-    private ProcessamentoNotificacaoServiceImpl service;
-
-    private PreferenciaNotificacao preferencia;
     private LocalDateTime referencia;
-    private LocalDateTime proximaColeta;
 
     @BeforeEach
     void setUp() {
-        service = new ProcessamentoNotificacaoServiceImpl(
-                decisaoNotificacaoService,
-                cronogramaService,
-                historicoNotificacaoService,
-                envioNotificacaoService
-        );
-
-        Usuario usuario = new Usuario();
-        usuario.setId(3L);
-        usuario.setNome("Usuário Teste SIMUL");
-        usuario.setEmail("usuario.teste@simul.local");
-
-        Rota rota = new Rota();
-        rota.setId(1L);
-        rota.setNome("Rota Jardim Nova Goiânia");
-
-        preferencia = new PreferenciaNotificacao();
-        preferencia.setUsuario(usuario);
-        preferencia.setRota(rota);
-        preferencia.setEmailAtivo(true);
-        preferencia.setWebPushAtivo(false);
-        preferencia.setAntecedenciaHoras(3);
+        service =
+                new ProcessamentoNotificacaoLoteServiceImpl(
+                        preferenciaNotificacaoService,
+                        processamentoNotificacaoService
+                );
 
         referencia =
                 LocalDateTime.of(
                         2026,
-                        8,
-                        17,
-                        16,
-                        0
-                );
-
-        proximaColeta =
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        17,
+                        9,
+                        7,
                         19,
-                        0
+                        30
                 );
     }
 
     @Test
-    void naoDeveProcessarQuandoNaoForHorarioDoLembrete() {
-        when(decisaoNotificacaoService
-                .estaNoHorarioDoLembrete(
-                        preferencia,
-                        referencia
-                ))
-                .thenReturn(false);
+    void deveProcessarTodasAsPreferenciasElegiveis() {
+        PreferenciaNotificacao preferencia1 =
+                new PreferenciaNotificacao();
 
-        service.processar(
-                preferencia,
-                referencia
-        );
+        preferencia1.setId(1L);
 
-        verifyNoInteractions(
-                cronogramaService,
-                historicoNotificacaoService,
-                envioNotificacaoService
-        );
-    }
+        PreferenciaNotificacao preferencia2 =
+                new PreferenciaNotificacao();
 
-    @Test
-    void deveEnviarEmailQuandoCanalEstiverAtivo() {
-        HistoricoNotificacao historico =
-                new HistoricoNotificacao();
+        preferencia2.setId(2L);
 
-        historico.setId(10L);
-
-        when(decisaoNotificacaoService
-                .estaNoHorarioDoLembrete(
-                        preferencia,
-                        referencia
-                ))
-                .thenReturn(true);
-
-        when(cronogramaService
-                .calcularProximaColeta(
-                        1L,
-                        referencia
-                ))
+        when(
+                preferenciaNotificacaoService
+                        .buscarElegiveisParaProcessamento()
+        )
                 .thenReturn(
-                        Optional.of(
-                                proximaColeta
-                        )
-                );
-
-        when(historicoNotificacaoService
-                .reservarEnvio(
-                        preferencia.getUsuario(),
-                        preferencia.getRota(),
-                        proximaColeta,
-                        CanalNotificacao.EMAIL
-                ))
-                .thenReturn(
-                        Optional.of(
-                                historico
+                        List.of(
+                                preferencia1,
+                                preferencia2
                         )
                 );
 
         service.processar(
-                preferencia,
                 referencia
         );
 
-        verify(envioNotificacaoService)
-                .enviar(
-                        eq(
-                                TipoNotificacao.EMAIL
-                        ),
-                        eq(
-                                "usuario.teste@simul.local"
-                        ),
-                        anyString(),
-                        anyString()
+        verify(
+                processamentoNotificacaoService
+        )
+                .processar(
+                        preferencia1,
+                        referencia
                 );
 
-        verify(historicoNotificacaoService)
-                .marcarComoEnviado(
-                        10L,
+        verify(
+                processamentoNotificacaoService
+        )
+                .processar(
+                        preferencia2,
                         referencia
                 );
     }
 
     @Test
-    void deveEnviarWebPushQuandoCanalEstiverAtivo() {
-        preferencia.setEmailAtivo(false);
-        preferencia.setWebPushAtivo(true);
+    void deveManterOrdemDasPreferenciasDoLote() {
+        PreferenciaNotificacao preferencia1 =
+                new PreferenciaNotificacao();
 
-        HistoricoNotificacao historico =
-                new HistoricoNotificacao();
+        preferencia1.setId(1L);
 
-        historico.setId(20L);
+        PreferenciaNotificacao preferencia2 =
+                new PreferenciaNotificacao();
 
-        when(decisaoNotificacaoService
-                .estaNoHorarioDoLembrete(
-                        preferencia,
-                        referencia
-                ))
-                .thenReturn(true);
+        preferencia2.setId(2L);
 
-        when(cronogramaService
-                .calcularProximaColeta(
-                        1L,
-                        referencia
-                ))
+        when(
+                preferenciaNotificacaoService
+                        .buscarElegiveisParaProcessamento()
+        )
                 .thenReturn(
-                        Optional.of(
-                                proximaColeta
-                        )
-                );
-
-        when(historicoNotificacaoService
-                .reservarEnvio(
-                        preferencia.getUsuario(),
-                        preferencia.getRota(),
-                        proximaColeta,
-                        CanalNotificacao.WEB_PUSH
-                ))
-                .thenReturn(
-                        Optional.of(
-                                historico
+                        List.of(
+                                preferencia1,
+                                preferencia2
                         )
                 );
 
         service.processar(
-                preferencia,
                 referencia
         );
 
-        verify(envioNotificacaoService)
-                .enviar(
-                        eq(
-                                TipoNotificacao.WEB_PUSH
-                        ),
-                        eq(
-                                "usuario.teste@simul.local"
-                        ),
-                        anyString(),
-                        anyString()
+        InOrder inOrder =
+                inOrder(
+                        processamentoNotificacaoService
                 );
 
-        verify(historicoNotificacaoService)
-                .marcarComoEnviado(
-                        20L,
+        inOrder.verify(
+                processamentoNotificacaoService
+        )
+                .processar(
+                        preferencia1,
                         referencia
                 );
 
-        verify(envioNotificacaoService, never())
-                .enviar(
-                        eq(
-                                TipoNotificacao.EMAIL
-                        ),
-                        anyString(),
-                        anyString(),
-                        anyString()
-                );
-    }
-
-    @Test
-    void deveEnviarEmailEWebPushQuandoAmbosEstiveremAtivos() {
-        preferencia.setEmailAtivo(true);
-        preferencia.setWebPushAtivo(true);
-
-        HistoricoNotificacao historicoEmail =
-                new HistoricoNotificacao();
-
-        historicoEmail.setId(30L);
-
-        HistoricoNotificacao historicoWebPush =
-                new HistoricoNotificacao();
-
-        historicoWebPush.setId(31L);
-
-        when(decisaoNotificacaoService
-                .estaNoHorarioDoLembrete(
-                        preferencia,
-                        referencia
-                ))
-                .thenReturn(true);
-
-        when(cronogramaService
-                .calcularProximaColeta(
-                        1L,
-                        referencia
-                ))
-                .thenReturn(
-                        Optional.of(
-                                proximaColeta
-                        )
-                );
-
-        when(historicoNotificacaoService
-                .reservarEnvio(
-                        preferencia.getUsuario(),
-                        preferencia.getRota(),
-                        proximaColeta,
-                        CanalNotificacao.EMAIL
-                ))
-                .thenReturn(
-                        Optional.of(
-                                historicoEmail
-                        )
-                );
-
-        when(historicoNotificacaoService
-                .reservarEnvio(
-                        preferencia.getUsuario(),
-                        preferencia.getRota(),
-                        proximaColeta,
-                        CanalNotificacao.WEB_PUSH
-                ))
-                .thenReturn(
-                        Optional.of(
-                                historicoWebPush
-                        )
-                );
-
-        service.processar(
-                preferencia,
-                referencia
-        );
-
-        verify(envioNotificacaoService)
-                .enviar(
-                        eq(
-                                TipoNotificacao.EMAIL
-                        ),
-                        eq(
-                                "usuario.teste@simul.local"
-                        ),
-                        anyString(),
-                        anyString()
-                );
-
-        verify(envioNotificacaoService)
-                .enviar(
-                        eq(
-                                TipoNotificacao.WEB_PUSH
-                        ),
-                        eq(
-                                "usuario.teste@simul.local"
-                        ),
-                        anyString(),
-                        anyString()
-                );
-
-        verify(historicoNotificacaoService)
-                .marcarComoEnviado(
-                        30L,
-                        referencia
-                );
-
-        verify(historicoNotificacaoService)
-                .marcarComoEnviado(
-                        31L,
+        inOrder.verify(
+                processamentoNotificacaoService
+        )
+                .processar(
+                        preferencia2,
                         referencia
                 );
     }
 
     @Test
-    void naoDeveEnviarQuandoHistoricoJaEstiverReservado() {
-        when(decisaoNotificacaoService
-                .estaNoHorarioDoLembrete(
-                        preferencia,
-                        referencia
-                ))
-                .thenReturn(true);
+    void naoDeveFalharLoteQuandoUmaPreferenciaGerarErro() {
+        PreferenciaNotificacao preferencia1 =
+                new PreferenciaNotificacao();
 
-        when(cronogramaService
-                .calcularProximaColeta(
-                        1L,
-                        referencia
-                ))
+        preferencia1.setId(1L);
+
+        PreferenciaNotificacao preferencia2 =
+                new PreferenciaNotificacao();
+
+        preferencia2.setId(2L);
+
+        when(
+                preferenciaNotificacaoService
+                        .buscarElegiveisParaProcessamento()
+        )
                 .thenReturn(
-                        Optional.of(
-                                proximaColeta
-                        )
-                );
-
-        when(historicoNotificacaoService
-                .reservarEnvio(
-                        preferencia.getUsuario(),
-                        preferencia.getRota(),
-                        proximaColeta,
-                        CanalNotificacao.EMAIL
-                ))
-                .thenReturn(
-                        Optional.empty()
-                );
-
-        service.processar(
-                preferencia,
-                referencia
-        );
-
-        verifyNoInteractions(
-                envioNotificacaoService
-        );
-
-        verify(historicoNotificacaoService, never())
-                .marcarComoEnviado(
-                        anyLong(),
-                        any(
-                                LocalDateTime.class
-                        )
-                );
-    }
-
-    @Test
-    void deveMarcarComoFalhaQuandoEnvioEmailGerarErro() {
-        HistoricoNotificacao historico =
-                new HistoricoNotificacao();
-
-        historico.setId(10L);
-
-        when(decisaoNotificacaoService
-                .estaNoHorarioDoLembrete(
-                        preferencia,
-                        referencia
-                ))
-                .thenReturn(true);
-
-        when(cronogramaService
-                .calcularProximaColeta(
-                        1L,
-                        referencia
-                ))
-                .thenReturn(
-                        Optional.of(
-                                proximaColeta
-                        )
-                );
-
-        when(historicoNotificacaoService
-                .reservarEnvio(
-                        preferencia.getUsuario(),
-                        preferencia.getRota(),
-                        proximaColeta,
-                        CanalNotificacao.EMAIL
-                ))
-                .thenReturn(
-                        Optional.of(
-                                historico
+                        List.of(
+                                preferencia1,
+                                preferencia2
                         )
                 );
 
         doThrow(
                 new RuntimeException(
-                        "Erro SMTP"
+                        "Falha de teste"
                 )
         )
                 .when(
-                        envioNotificacaoService
+                        processamentoNotificacaoService
                 )
-                .enviar(
-                        eq(
-                                TipoNotificacao.EMAIL
-                        ),
-                        eq(
-                                "usuario.teste@simul.local"
-                        ),
-                        anyString(),
-                        anyString()
-                );
-
-        service.processar(
-                preferencia,
-                referencia
-        );
-
-        verify(historicoNotificacaoService)
-                .marcarComoFalha(
-                        10L,
-                        "Erro SMTP",
+                .processar(
+                        preferencia1,
                         referencia
                 );
 
-        verify(historicoNotificacaoService, never())
-                .marcarComoEnviado(
-                        anyLong(),
-                        any(
-                                LocalDateTime.class
-                        )
+        service.processar(
+                referencia
+        );
+
+        verify(
+                processamentoNotificacaoService
+        )
+                .processar(
+                        preferencia1,
+                        referencia
+                );
+
+        verify(
+                processamentoNotificacaoService
+        )
+                .processar(
+                        preferencia2,
+                        referencia
                 );
     }
 
     @Test
-    void deveMarcarComoFalhaQuandoWebPushGerarErro() {
-        preferencia.setEmailAtivo(false);
-        preferencia.setWebPushAtivo(true);
-
-        HistoricoNotificacao historico =
-                new HistoricoNotificacao();
-
-        historico.setId(40L);
-
-        when(decisaoNotificacaoService
-                .estaNoHorarioDoLembrete(
-                        preferencia,
-                        referencia
-                ))
-                .thenReturn(true);
-
-        when(cronogramaService
-                .calcularProximaColeta(
-                        1L,
-                        referencia
-                ))
-                .thenReturn(
-                        Optional.of(
-                                proximaColeta
-                        )
-                );
-
-        when(historicoNotificacaoService
-                .reservarEnvio(
-                        preferencia.getUsuario(),
-                        preferencia.getRota(),
-                        proximaColeta,
-                        CanalNotificacao.WEB_PUSH
-                ))
-                .thenReturn(
-                        Optional.of(
-                                historico
-                        )
-                );
-
-        doThrow(
-                new RuntimeException(
-                        "Erro Web Push"
-                )
+    void naoDeveProcessarQuandoNaoExistiremPreferenciasElegiveis() {
+        when(
+                preferenciaNotificacaoService
+                        .buscarElegiveisParaProcessamento()
         )
-                .when(
-                        envioNotificacaoService
-                )
-                .enviar(
-                        eq(
-                                TipoNotificacao.WEB_PUSH
-                        ),
-                        eq(
-                                "usuario.teste@simul.local"
-                        ),
-                        anyString(),
-                        anyString()
-                );
-
-        service.processar(
-                preferencia,
-                referencia
-        );
-
-        verify(historicoNotificacaoService)
-                .marcarComoFalha(
-                        40L,
-                        "Erro Web Push",
-                        referencia
-                );
-
-        verify(historicoNotificacaoService, never())
-                .marcarComoEnviado(
-                        anyLong(),
-                        any(
-                                LocalDateTime.class
-                        )
-                );
-    }
-
-    @Test
-    void naoDeveProcessarNenhumCanalQuandoAmbosEstiveremDesativados() {
-        preferencia.setEmailAtivo(false);
-        preferencia.setWebPushAtivo(false);
-
-        when(decisaoNotificacaoService
-                .estaNoHorarioDoLembrete(
-                        preferencia,
-                        referencia
-                ))
-                .thenReturn(true);
-
-        when(cronogramaService
-                .calcularProximaColeta(
-                        1L,
-                        referencia
-                ))
                 .thenReturn(
-                        Optional.of(
-                                proximaColeta
-                        )
+                        List.of()
                 );
 
         service.processar(
-                preferencia,
                 referencia
         );
 
         verifyNoInteractions(
-                historicoNotificacaoService,
-                envioNotificacaoService
+                processamentoNotificacaoService
+        );
+    }
+
+    @Test
+    void deveBuscarPreferenciasElegiveisUmaUnicaVez() {
+        when(
+                preferenciaNotificacaoService
+                        .buscarElegiveisParaProcessamento()
+        )
+                .thenReturn(
+                        List.of()
+                );
+
+        service.processar(
+                referencia
+        );
+
+        verify(
+                preferenciaNotificacaoService,
+                times(1)
+        )
+                .buscarElegiveisParaProcessamento();
+    }
+
+    @Test
+    void deveLancarErroQuandoReferenciaForNula() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                        service.processar(
+                                null
+                        )
+        );
+
+        verifyNoInteractions(
+                preferenciaNotificacaoService,
+                processamentoNotificacaoService
         );
     }
 }

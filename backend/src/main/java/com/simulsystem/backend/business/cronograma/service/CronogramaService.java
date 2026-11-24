@@ -34,4 +34,14 @@ public interface CronogramaService {
             Long rotaId,
             LocalDateTime referencia
     );
+
+    /**
+     * Retorna a data e hora informadas (truncadas ao minuto) somente se
+     * a rota tiver um cronograma ativo começando exatamente nesse dia da
+     * semana e horário.
+     */
+    Optional<LocalDateTime> buscarColetaNoHorario(
+            Long rotaId,
+            LocalDateTime dataHora
+    );
 }
