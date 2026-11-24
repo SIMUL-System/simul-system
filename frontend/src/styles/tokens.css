@@ -1,0 +1,83 @@
+/*
+ * SIMUL — tokens do Design System (identidade visual v1).
+ * Fonte única de cores, espaçamentos, raios e sombras. Não use valores
+ * hex nas páginas: use var(--nome-do-token). Tema em <html data-theme>.
+ */
+
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+  --surface: #f5f7fa;
+  --surface-raised: #ffffff;
+  --surface-sunken: #e9eef3;
+  --border: #d4dde6;
+  --border-strong: #7b8a9a;
+  --ink: #132131;
+  --ink-muted: #4a5a6b;
+  --brand-blue: #0b5cad;
+  --brand-blue-strong: #084a8c;
+  --brand-blue-tint: #e5effa;
+  --on-brand: #ffffff;
+  --brand-green: #1a7a43;
+  --brand-green-tint: #e3f3e9;
+  --brand-yellow: #f2b705;
+  --on-accent: #132131;
+  --brand-yellow-tint: #fff5d1;
+  --warning-ink: #7a5200;
+  --danger: #b3261e;
+  --danger-tint: #fdeceb;
+  --focus-ring: #0b5cad;
+  --recycle-paper: var(--brand-blue);
+  --recycle-plastic: #d32f2f;
+  --recycle-glass: var(--brand-green);
+  --recycle-metal: var(--brand-yellow);
+  --recycle-organic: #7a4b2a;
+  --shadow-card: 0 1px 2px rgba(19,33,49,0.06), 0 2px 8px rgba(19,33,49,0.06);
+  --shadow-overlay: 0 8px 24px rgba(19,33,49,0.16);
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --surface: #0d1520;
+  --surface-raised: #152130;
+  --surface-sunken: #09101a;
+  --border: #273749;
+  --border-strong: #6f8396;
+  --ink: #e7edf3;
+  --ink-muted: #a4b3c2;
+  --brand-blue: #5ea6f2;
+  --brand-blue-strong: #86bdf6;
+  --brand-blue-tint: #14304d;
+  --on-brand: #0b1726;
+  --brand-green: #4cc27e;
+  --brand-green-tint: #123826;
+  --brand-yellow: #f5c542;
+  --on-accent: #0b1726;
+  --brand-yellow-tint: #3a2f0c;
+  --warning-ink: #f5c542;
+  --danger: #f2827a;
+  --danger-tint: #3d1714;
+  --focus-ring: #f5c542;
+  --recycle-plastic: #ef6b6b;
+  --recycle-organic: #c08a5e;
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-overlay: 0 8px 24px rgba(0,0,0,0.5);
+}
+
+:root {
+  --font-sans: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+
+  --largura-conteudo: 1120px;
+  --altura-cabecalho: 64px;
+}

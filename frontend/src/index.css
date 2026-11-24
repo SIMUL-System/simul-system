@@ -1,23 +1,28 @@
+@import './styles/tokens.css';
+
+/* =========================================
+   Base global — identidade visual SIMUL
+   ========================================= */
+
 * {
   box-sizing: border-box;
 }
 
 html {
-  font-family:
-    Inter,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-  color: #1f2937;
-  background: #ffffff;
+  font-family: var(--font-sans);
+  color: var(--ink);
+  background: var(--surface);
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  font-size: 16px;
+  line-height: 1.5;
+  background: var(--surface);
+  color: var(--ink);
 }
 
 button,
@@ -25,4 +30,48 @@ input,
 select,
 textarea {
   font: inherit;
+  color: inherit;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--ink);
+  line-height: 1.25;
+}
+
+a {
+  color: var(--brand-blue);
+}
+
+a:hover {
+  color: var(--brand-blue-strong);
+}
+
+/* Foco de teclado visível e consistente em todo o sistema. */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Horários e números alinhados. */
+time,
+.numeros-tabulares {
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: var(--brand-blue-tint);
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

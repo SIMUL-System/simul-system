@@ -18,6 +18,13 @@ import {
   obterUsuarioAtual,
 } from '../services/usuarioService'
 
+import { useTema } from '../hooks/useTema'
+
+import Icone from './Icone'
+
+import simboloClaro from '../assets/marca/simul-simbolo.svg'
+import simboloEscuro from '../assets/marca/simul-simbolo-escuro.svg'
+
 function NavegacaoPrincipal() {
   const navigate = useNavigate()
 
@@ -28,6 +35,9 @@ function NavegacaoPrincipal() {
 
   const [usuario, setUsuario] =
     useState(null)
+
+  const { tema, alternarTema } =
+    useTema()
 
   const token = obterToken()
 
@@ -94,8 +104,8 @@ function NavegacaoPrincipal() {
     isActive,
   }) {
     return isActive
-      ? 'navegacao-principal__link navegacao-principal__link--ativo'
-      : 'navegacao-principal__link'
+      ? 'cabecalho__link cabecalho__link--ativo'
+      : 'cabecalho__link'
   }
 
   function fecharMenu() {
@@ -132,164 +142,188 @@ function NavegacaoPrincipal() {
   const admin =
     usuario?.perfil === 'ADMIN'
 
+  const temaEscuro =
+    tema === 'dark'
+
+  const primeiroNome =
+    usuario?.nome?.split(' ')[0]
+
   return (
-    <header className="navegacao-principal">
-      <div className="navegacao-principal__conteudo">
+    <header className="cabecalho">
+      <div className="cabecalho__conteudo">
         <NavLink
           to="/"
-          className="navegacao-principal__marca"
+          className="cabecalho__marca"
           onClick={fecharMenu}
-          aria-label="SIMUL - Ir para a página inicial"
+          aria-label="SIMUL, página inicial"
         >
-          <span
-            className="navegacao-principal__simbolo"
-            aria-hidden="true"
-          >
-            ♻
-          </span>
+          <img
+            src={
+              temaEscuro
+                ? simboloEscuro
+                : simboloClaro
+            }
+            alt=""
+            width="32"
+            height="32"
+          />
 
-          <span className="navegacao-principal__identidade">
-            <strong>
-              SIMUL
-            </strong>
-
-            <small>
-              Monitoramento Urbano de
-              Limpeza
-            </small>
+          <span className="cabecalho__nome">
+            SIMUL
           </span>
         </NavLink>
 
-        <button
-          ref={botaoMenuRef}
-          type="button"
-          className="navegacao-principal__menu-botao"
-          aria-label={
-            menuAberto
-              ? 'Fechar menu de navegação'
-              : 'Abrir menu de navegação'
-          }
-          aria-expanded={
-            menuAberto
-          }
-          aria-controls="menu-principal"
-          onClick={
-            alternarMenu
-          }
-        >
-          <span
-            aria-hidden="true"
-          />
+        <div className="cabecalho__acoes">
+          <button
+            type="button"
+            className="botao-icone"
+            onClick={alternarTema}
+            aria-label={
+              temaEscuro
+                ? 'Usar tema claro'
+                : 'Usar tema escuro'
+            }
+            title={
+              temaEscuro
+                ? 'Usar tema claro'
+                : 'Usar tema escuro'
+            }
+          >
+            <Icone
+              nome={
+                temaEscuro
+                  ? 'sol'
+                  : 'lua'
+              }
+            />
+          </button>
 
-          <span
-            aria-hidden="true"
-          />
-
-          <span
-            aria-hidden="true"
-          />
-        </button>
+          <button
+            ref={botaoMenuRef}
+            type="button"
+            className="botao-icone cabecalho__menu-botao"
+            aria-label={
+              menuAberto
+                ? 'Fechar menu de navegação'
+                : 'Abrir menu de navegação'
+            }
+            aria-expanded={menuAberto}
+            aria-controls="menu-principal"
+            onClick={alternarMenu}
+          >
+            <Icone
+              nome={
+                menuAberto
+                  ? 'fechar'
+                  : 'menu'
+              }
+            />
+          </button>
+        </div>
 
         <nav
           id="menu-principal"
           aria-label="Navegação principal"
           className={
             menuAberto
-              ? 'navegacao-principal__links navegacao-principal__links--aberto'
-              : 'navegacao-principal__links'
+              ? 'cabecalho__menu cabecalho__menu--aberto'
+              : 'cabecalho__menu'
           }
         >
-          <NavLink
-            to="/"
-            end
-            className={
-              classeLink
-            }
-            onClick={
-              fecharMenu
-            }
-          >
-            Consulta
-          </NavLink>
-
-          {autenticado && (
-            <>
+          <ul className="cabecalho__links">
+            <li>
               <NavLink
-                to="/minha-conta"
-                className={
-                  classeLink
-                }
-                onClick={
-                  fecharMenu
-                }
+                to="/"
+                end
+                className={classeLink}
+                onClick={fecharMenu}
               >
-                Minha conta
+                Consultar coleta
               </NavLink>
+            </li>
 
-              <NavLink
-                to="/preferencias"
-                className={
-                  classeLink
-                }
-                onClick={
-                  fecharMenu
-                }
-              >
-                Notificações
-              </NavLink>
+            {autenticado && (
+              <li>
+                <NavLink
+                  to="/preferencias"
+                  className={classeLink}
+                  onClick={fecharMenu}
+                >
+                  Meus lembretes
+                </NavLink>
+              </li>
+            )}
 
-              {admin && (
+            {autenticado && (
+              <li>
+                <NavLink
+                  to="/minha-conta"
+                  className={classeLink}
+                  onClick={fecharMenu}
+                >
+                  Minha conta
+                </NavLink>
+              </li>
+            )}
+
+            {admin && (
+              <li>
                 <NavLink
                   to="/admin"
-                  className={
-                    classeLink
-                  }
-                  onClick={
-                    fecharMenu
-                  }
+                  className={classeLink}
+                  onClick={fecharMenu}
                 >
-                  Painel ADM
+                  Painel admin
                 </NavLink>
-              )}
+              </li>
+            )}
+          </ul>
 
-              <button
-                type="button"
-                className="navegacao-principal__sair"
-                onClick={
-                  handleLogout
-                }
-              >
-                Sair
-              </button>
-            </>
-          )}
+          <div className="cabecalho__conta">
+            {autenticado ? (
+              <>
+                <span className="cabecalho__usuario">
+                  <Icone
+                    nome="usuario"
+                    tamanho={18}
+                  />
+                  {primeiroNome}
+                </span>
 
-          {!autenticado && (
-            <>
-              <NavLink
-                to="/login"
-                className={
-                  classeLink
-                }
-                onClick={
-                  fecharMenu
-                }
-              >
-                Entrar
-              </NavLink>
+                <button
+                  type="button"
+                  className="botao botao--fantasma botao--pequeno"
+                  onClick={handleLogout}
+                >
+                  <Icone
+                    nome="sair"
+                    tamanho={18}
+                  />
+                  Sair
+                </button>
+              </>
+            ) : (
+              <>
+                <NavLink
+                  to="/login"
+                  className="botao botao--fantasma botao--pequeno"
+                  onClick={fecharMenu}
+                >
+                  Entrar
+                </NavLink>
 
-              <NavLink
-                to="/cadastro"
-                className="navegacao-principal__cadastro"
-                onClick={
-                  fecharMenu
-                }
-              >
-                Criar conta
-              </NavLink>
-            </>
-          )}
+                <NavLink
+                  to="/cadastro"
+                  className="botao botao--primario botao--pequeno"
+                  onClick={fecharMenu}
+                >
+                  Criar conta
+                </NavLink>
+              </>
+            )}
+          </div>
         </nav>
+
       </div>
     </header>
   )
