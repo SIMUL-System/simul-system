@@ -6,6 +6,7 @@ import '../App.css'
 import '../styles/consulta.css'
 
 import Icone from '../components/Icone'
+import CampoCombobox from '../components/form/CampoCombobox'
 import CartaoProximaColeta from '../components/coleta/CartaoProximaColeta'
 import ComoFunciona from '../components/coleta/ComoFunciona'
 import DiasSemana from '../components/coleta/DiasSemana'
@@ -67,7 +68,16 @@ function ConsultaPage() {
           return
         }
 
-        setAreas(Array.isArray(dados) ? dados : [])
+        const lista = Array.isArray(dados) ? dados : []
+
+        setAreas(lista)
+
+        // Com uma única cidade atendida, ela já vem escolhida (um passo a menos).
+        const cidadesUnicas = new Set(lista.map((area) => area.cidade?.trim()).filter(Boolean))
+
+        if (cidadesUnicas.size === 1) {
+          setCidade((atual) => atual || [...cidadesUnicas][0])
+        }
       })
       .catch((error) => {
         if (!componenteAtivo) {
@@ -392,9 +402,7 @@ function ConsultaPage() {
     setCarregandoLocalizacaoMapa(false)
   }
 
-  async function handleBairroChange(event) {
-    const novoBairro = event.target.value
-
+  async function handleBairroChange(novoBairro) {
     setBairro(novoBairro)
 
     setErro('')
@@ -500,45 +508,30 @@ function ConsultaPage() {
               </p>
             </div>
 
-            <div className="campo-ds">
-              <label className="campo-ds__rotulo" htmlFor="bairro">
-                Bairro
-              </label>
-
-              <select
-                id="bairro"
-                className="campo-ds__controle"
-                value={bairro}
-                onChange={handleBairroChange}
-                disabled={!cidade || bairros.length === 0 || carregando}
-                aria-describedby="ajuda-bairro"
-                aria-busy={carregando}
-              >
-                <option value="">
-                  {!cidade
-                    ? 'Escolha a cidade primeiro'
-                    : bairros.length === 0
-                      ? 'Nenhum bairro disponível'
-                      : carregando
-                        ? 'Consultando…'
-                        : 'Selecione o bairro'}
-                </option>
-
-                {bairros.map((nomeBairro) => (
-                  <option key={nomeBairro} value={nomeBairro}>
-                    {nomeBairro}
-                  </option>
-                ))}
-              </select>
-
-              <p id="ajuda-bairro" className="campo-ds__dica">
-                {!cidade
+            <CampoCombobox
+              id="bairro"
+              rotulo="Bairro"
+              opcoes={bairros}
+              valor={bairro}
+              aoEscolher={handleBairroChange}
+              desabilitado={!cidade || bairros.length === 0}
+              placeholder={
+                !cidade
+                  ? 'Escolha a cidade primeiro'
+                  : bairros.length === 0
+                    ? 'Nenhum bairro disponível'
+                    : 'Digite ou escolha o bairro'
+              }
+              idDica="ajuda-bairro"
+              dica={
+                !cidade
                   ? 'A lista de bairros aparece depois da cidade.'
                   : bairros.length === 0
                     ? 'Nenhum bairro atendido nesta cidade.'
-                    : 'O resultado aparece assim que você escolher.'}
-              </p>
-            </div>
+                    : `${bairros.length} ${bairros.length === 1 ? 'bairro atendido' : 'bairros atendidos'}. O resultado aparece assim que você escolher.`
+              }
+              mensagemVazia="Nenhum bairro encontrado com esse nome."
+            />
           </div>
 
           {(textoLocalizacao || erroLocalizacaoUsuario) && (
@@ -589,8 +582,8 @@ function ConsultaPage() {
                   {resultado.cidade}
                   {rotaExibida && (
                     <>
-                      {' · Rota '}
-                      {rotaExibida}
+                      {' · '}
+                      {/^rota\b/i.test(rotaExibida) ? rotaExibida : `Rota ${rotaExibida}`}
                     </>
                   )}
                 </p>
@@ -667,6 +660,10 @@ function ConsultaPage() {
             </section>
           )}
 
+          {!resultado && !carregando && <ComoFunciona />}
+        </div>
+
+        <aside className="consulta-grade__mapa" aria-label="Mapa da área de coleta">
           {avisoMapa && (
             <div className="alerta alerta--aviso" role="status">
               <Icone nome="aviso" />
@@ -678,10 +675,6 @@ function ConsultaPage() {
             </div>
           )}
 
-          {!resultado && !carregando && <ComoFunciona />}
-        </div>
-
-        <aside className="consulta-grade__mapa" aria-label="Mapa da área de coleta">
           <Suspense
             fallback={
               <div
@@ -698,6 +691,7 @@ function ConsultaPage() {
               latitude={latitudeMapa}
               longitude={longitudeMapa}
               nomeArea={nomeAreaMapa}
+              areaEscolhida={resultado ? `${resultado.bairro}, ${resultado.cidade}` : ''}
               carregandoLocalizacao={carregandoLocalizacaoMapa}
               geometriaArea={geometriaArea}
               limitesArea={limitesArea}

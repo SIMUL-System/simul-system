@@ -63,6 +63,7 @@ function MapaColeta({
   latitude,
   longitude,
   nomeArea,
+  areaEscolhida = '',
   carregandoLocalizacao = false,
 
   geometriaArea,
@@ -115,6 +116,10 @@ function MapaColeta({
           ) : nomeArea ? (
             <>
               Mostrando <strong>{nomeArea}</strong>
+            </>
+          ) : areaEscolhida ? (
+            <>
+              Não foi possível mostrar <strong>{areaEscolhida}</strong> no mapa.
             </>
           ) : mostrarPinUsuario ? (
             'Sua localização aparece no mapa. Escolha o bairro para ver a área.'

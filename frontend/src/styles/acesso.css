@@ -113,8 +113,12 @@
 
 .acesso__link-direita {
   justify-self: end;
-  margin-top: calc(var(--space-2) * -1);
-  font-size: 14px;
+  /* Área de toque confortável sem mudar a posição visual do texto. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  margin: calc(var(--space-3) * -1) 0 calc(var(--space-2) * -1);
+  font-size: 15px;
   font-weight: 600;
 }
 

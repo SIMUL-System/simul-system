@@ -88,6 +88,20 @@
   }
 }
 
+/* Celular: as quatro seções em duas colunas, todas visíveis sem rolar. */
+@media (max-width: 600px) {
+  .admin-menu__lista {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+  }
+
+  .admin-menu__link {
+    min-width: 0;
+    white-space: normal;
+  }
+}
+
 /* ---------- Cabeçalho de cada seção ---------- */
 .admin-pagina {
   display: grid;
@@ -561,7 +575,8 @@
 
 .seletor-dias__grade {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  /* Sete dias numa linha quando cabe; em telas estreitas quebra sem ficar menor que 44px. */
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
   gap: var(--space-1);
 }
 

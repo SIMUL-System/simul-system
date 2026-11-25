@@ -21,6 +21,7 @@ import '../styles/conta.css'
 import Alerta from '../components/Alerta'
 import Icone from '../components/Icone'
 import DiasSemana from '../components/coleta/DiasSemana'
+import CampoCombobox from '../components/form/CampoCombobox'
 import Interruptor from '../components/form/Interruptor'
 
 import {
@@ -170,9 +171,7 @@ function PreferenciasPage() {
     limparMensagens()
   }
 
-  function handleBairroChange(event) {
-    const novoBairro = event.target.value
-
+  function handleBairroChange(novoBairro) {
     setBairro(novoBairro)
     setRotaSelecionada(null)
 
@@ -442,40 +441,28 @@ function PreferenciasPage() {
             </select>
           </div>
 
-          <div className="campo-ds">
-            <label className="campo-ds__rotulo" htmlFor="bairro">
-              Bairro
-            </label>
-
-            <select
-              id="bairro"
-              className="campo-ds__controle"
-              value={bairro}
-              onChange={handleBairroChange}
-              disabled={!cidade || bairros.length === 0 || operacaoEmAndamento}
-              aria-describedby="ajuda-bairro-preferencia"
-            >
-              <option value="">
-                {!cidade
-                  ? 'Escolha a cidade primeiro'
-                  : consultandoRota
-                    ? 'Buscando a rota…'
-                    : 'Selecione o bairro'}
-              </option>
-
-              {bairros.map((nomeBairro) => (
-                <option key={nomeBairro} value={nomeBairro}>
-                  {nomeBairro}
-                </option>
-              ))}
-            </select>
-
-            <p id="ajuda-bairro-preferencia" className="campo-ds__dica">
-              {preferencia && !rotaSelecionada?.cronogramas
+          <CampoCombobox
+            id="bairro"
+            rotulo="Bairro"
+            opcoes={bairros}
+            valor={bairro}
+            aoEscolher={handleBairroChange}
+            desabilitado={!cidade || bairros.length === 0 || operacaoEmAndamento}
+            placeholder={
+              !cidade
+                ? 'Escolha a cidade primeiro'
+                : consultandoRota
+                  ? 'Buscando a rota…'
+                  : 'Digite ou escolha o bairro'
+            }
+            idDica="ajuda-bairro-preferencia"
+            dica={
+              preferencia && !rotaSelecionada?.cronogramas
                 ? 'Escolha de novo só se quiser trocar de bairro.'
-                : 'A rota do bairro é encontrada automaticamente.'}
-            </p>
-          </div>
+                : 'A rota do bairro é encontrada automaticamente.'
+            }
+            mensagemVazia="Nenhum bairro encontrado com esse nome."
+          />
         </div>
 
         {rotaSelecionada && (

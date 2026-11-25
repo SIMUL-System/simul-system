@@ -379,6 +379,15 @@
     flex-wrap: wrap;
   }
 
+  /* O selo desce para baixo do nome, alinhado ao texto, sem espremer o nome. */
+  .perfil__dados {
+    flex-basis: calc(100% - 56px - var(--space-4));
+  }
+
+  .perfil > .selo {
+    margin-left: calc(56px + var(--space-4));
+  }
+
   .lembrete-cartao {
     grid-template-columns: 1fr;
   }
