@@ -14,6 +14,7 @@ import com.simulsystem.backend.core.exception.EmailJaCadastradoException;
 import com.simulsystem.backend.core.exception.EmailNaoVerificadoException;
 import com.simulsystem.backend.core.exception.EnvioEmailException;
 import com.simulsystem.backend.core.exception.UsuarioNaoEncontradoException;
+import com.simulsystem.backend.core.security.CriptografiaDados;
 import com.simulsystem.backend.core.security.JwtService;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -57,6 +58,8 @@ class UsuarioServiceImplTest {
     @Mock
     private VerificacaoEmailService verificacaoEmailService;
 
+    private final CriptografiaDados criptografia = new CriptografiaDados("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
+
     private UsuarioServiceImpl usuarioService;
 
     @BeforeEach
@@ -68,13 +71,14 @@ class UsuarioServiceImplTest {
                         passwordEncoder,
                         authenticationManager,
                         jwtService,
-                        verificacaoEmailService
+                        verificacaoEmailService,
+                        criptografia
                 );
     }
 
     @Test
     void deveCadastrarUsuarioComSenhaCriptografadaEEmailNormalizado() {
-        UsuarioRequestDTO requestDTO = new UsuarioRequestDTO("Usuário Teste", "Usuario@SIMUL.Local", "senha123");
+        UsuarioRequestDTO requestDTO = new UsuarioRequestDTO("Usuário Teste", "Usuario@SIMUL.Local", "senha123", true, "2026-11");
 
         Usuario usuario = new Usuario();
 
@@ -92,6 +96,8 @@ class UsuarioServiceImplTest {
                         PerfilUsuario.USUARIO,
                         true,
                         false,
+                        "2026-11",
+                        null,
                         null,
                         null
                 );
@@ -120,6 +126,10 @@ class UsuarioServiceImplTest {
 
         assertEquals("usuario@simul.local", usuarioCapturado.getEmail());
 
+        assertEquals(criptografia.indiceEmail("usuario@simul.local"), usuarioCapturado.getEmailHash());
+
+        assertEquals("2026-11", usuarioCapturado.getTermosVersao());
+
         assertEquals("$2a$10$senhaCriptografada", usuarioCapturado.getSenha());
 
         assertFalse(usuarioCapturado.getEmailVerificado());
@@ -129,7 +139,7 @@ class UsuarioServiceImplTest {
 
     @Test
     void naoDeveCadastrarQuandoEmailJaEstiverCadastrado() {
-        UsuarioRequestDTO requestDTO = new UsuarioRequestDTO("Usuário Teste", "Usuario@SIMUL.Local", "senha123");
+        UsuarioRequestDTO requestDTO = new UsuarioRequestDTO("Usuário Teste", "Usuario@SIMUL.Local", "senha123", true, "2026-11");
 
         doThrow(new EmailJaCadastradoException("Já existe um usuário cadastrado com este e-mail.")).when(
                 usuarioValidation
@@ -161,7 +171,7 @@ class UsuarioServiceImplTest {
 
         when(authenticationManager.authenticate(any(Authentication.class))).thenReturn(authentication);
 
-        when(usuarioRepository.findByEmailIgnoreCase("usuario@simul.local")).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findByEmailHash(criptografia.indiceEmail("usuario@simul.local"))).thenReturn(Optional.of(usuario));
 
         when(jwtService.gerarToken(authentication)).thenReturn("token-jwt-teste");
 
@@ -188,7 +198,7 @@ class UsuarioServiceImplTest {
 
         when(authenticationManager.authenticate(any(Authentication.class))).thenReturn(authentication);
 
-        when(usuarioRepository.findByEmailIgnoreCase("usuario@simul.local")).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findByEmailHash(criptografia.indiceEmail("usuario@simul.local"))).thenReturn(Optional.of(usuario));
 
         EmailNaoVerificadoException exception = assertThrows(
                         EmailNaoVerificadoException.class,
@@ -233,7 +243,7 @@ class UsuarioServiceImplTest {
         usuario.setId(1L);
         usuario.setEmail(emailNormalizado);
 
-        when(usuarioRepository.findByEmailIgnoreCase(emailNormalizado)).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findByEmailHash(criptografia.indiceEmail(emailNormalizado))).thenReturn(Optional.of(usuario));
 
         Usuario resultado = usuarioService.buscarEntidadePorEmail(emailInformado);
 
@@ -246,7 +256,7 @@ class UsuarioServiceImplTest {
 
         String emailNormalizado = "inexistente@simul.local";
 
-        when(usuarioRepository.findByEmailIgnoreCase(emailNormalizado)).thenReturn(Optional.empty());
+        when(usuarioRepository.findByEmailHash(criptografia.indiceEmail(emailNormalizado))).thenReturn(Optional.empty());
 
         assertThrows(UsuarioNaoEncontradoException.class, () -> usuarioService.buscarEntidadePorEmail(emailInformado));
     }
@@ -271,10 +281,12 @@ class UsuarioServiceImplTest {
                         true,
                         true,
                         null,
+                        null,
+                        null,
                         null
                 );
 
-        when(usuarioRepository.findByEmailIgnoreCase(emailNormalizado)).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findByEmailHash(criptografia.indiceEmail(emailNormalizado))).thenReturn(Optional.of(usuario));
 
         when(usuarioMapper.toResponseDTO(usuario)).thenReturn(responseDTO);
 
@@ -285,13 +297,13 @@ class UsuarioServiceImplTest {
 
     @Test
     void deveConcluirCadastroMesmoQuandoEmailDeConfirmacaoFalhar() {
-        UsuarioRequestDTO requestDTO = new UsuarioRequestDTO("Usuário Teste", "usuario@simul.local", "senha123");
+        UsuarioRequestDTO requestDTO = new UsuarioRequestDTO("Usuário Teste", "usuario@simul.local", "senha123", true, "2026-11");
         Usuario usuario = new Usuario();
         Usuario usuarioSalvo = new Usuario();
         usuarioSalvo.setId(7L);
         UsuarioResponseDTO responseDTO = new UsuarioResponseDTO(
                 7L, "Usuário Teste", "usuario@simul.local",
-                PerfilUsuario.USUARIO, true, false, null, null
+                PerfilUsuario.USUARIO, true, false, null, null, null, null
         );
 
         when(usuarioMapper.toEntity(requestDTO)).thenReturn(usuario);

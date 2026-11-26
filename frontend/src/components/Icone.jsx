@@ -16,6 +16,14 @@ const CAMINHOS = {
   fechar: <path d="M6 6l12 12M18 6 6 18" />,
   mais: <path d="M12 5v14M5 12h14" />,
   voltar: <path d="m15 18-6-6 6-6" />,
+  baixar: <path d="M12 4v11m-5-5 5 5 5-5M5 20h14" />,
+  imagem: (
+    <>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <circle cx="9" cy="10" r="2" />
+      <path d="m21 16-5-5-9 9" />
+    </>
+  ),
   sair: (
     <>
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />

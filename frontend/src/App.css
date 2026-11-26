@@ -361,6 +361,19 @@
   color: var(--on-brand);
 }
 
+.botao--texto-perigo {
+  background: transparent;
+  color: var(--danger);
+  border-color: transparent;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.botao--texto-perigo:hover {
+  background: var(--danger-tint);
+  color: var(--danger);
+}
+
 .botao--pequeno {
   min-height: 36px;
   padding: 6px 14px;

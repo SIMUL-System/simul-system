@@ -8,6 +8,7 @@ import com.simulsystem.backend.business.usuario.repository.TokenVerificacaoEmail
 import com.simulsystem.backend.business.usuario.repository.UsuarioRepository;
 import com.simulsystem.backend.business.usuario.validation.UsuarioValidation;
 import com.simulsystem.backend.core.config.LinkFrontend;
+import com.simulsystem.backend.core.security.CriptografiaDados;
 import com.simulsystem.backend.core.security.TokenSeguro;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -55,12 +56,13 @@ class VerificacaoEmailServiceImplTest {
         service = new VerificacaoEmailServiceImpl(
                 tokenRepository,
                 usuarioRepository,
-                new UsuarioValidation(usuarioRepository),
+                new UsuarioValidation(usuarioRepository, new CriptografiaDados("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")),
                 emailNotificacaoStrategy,
                 tokenSeguro,
                 new LinkFrontend("http://localhost:5173"),
                 clock,
-                24);
+                24,
+                new CriptografiaDados("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="));
     }
 
     @Test

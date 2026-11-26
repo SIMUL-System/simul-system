@@ -1,0 +1,121 @@
+/* =========================================
+   Rodapé, aviso de cookies e aceite pendente
+   ========================================= */
+
+.rodape {
+  margin-top: var(--space-12);
+  border-top: 1px solid var(--border);
+  background: var(--surface-raised);
+}
+
+.rodape__conteudo {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr));
+  gap: var(--space-8);
+  max-width: var(--largura-conteudo);
+  margin: 0 auto;
+  padding: var(--space-10) var(--space-6) var(--space-6);
+}
+
+.rodape__marca strong {
+  font-size: 20px;
+}
+
+.rodape__marca p {
+  max-width: 42ch;
+  margin: var(--space-2) 0 0;
+  color: var(--ink-muted);
+  line-height: 1.55;
+}
+
+.rodape__titulo {
+  margin: 0 0 var(--space-3);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
+}
+
+.rodape__grupo ul {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rodape__grupo a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  overflow-wrap: anywhere;
+}
+
+.rodape__final {
+  max-width: var(--largura-conteudo);
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-6) var(--space-8);
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+/* Espaço para o aviso de cookies não cobrir o fim do rodapé. */
+body:has(.aviso-armazenamento) .rodape__final {
+  padding-bottom: 120px;
+}
+
+.aviso-armazenamento {
+  position: fixed;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  max-width: min(560px, calc(100vw - 32px));
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-overlay);
+}
+
+.aviso-armazenamento p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.aviso-armazenamento .botao {
+  flex: none;
+}
+
+.dialogo-termos {
+  width: min(520px, calc(100vw - 32px));
+}
+
+.dialogo-termos__corpo {
+  display: grid;
+  gap: var(--space-4);
+}
+
+@media (max-width: 720px) {
+  .rodape__conteudo {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .rodape__marca {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .aviso-armazenamento {
+    right: var(--space-2);
+    left: var(--space-2);
+    bottom: var(--space-2);
+    flex-direction: column;
+    align-items: stretch;
+    max-width: none;
+  }
+}

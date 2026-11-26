@@ -1,0 +1,351 @@
+/* =========================================
+   Quem somos, Termos de Uso e Privacidade
+   ========================================= */
+
+/* ---------- Páginas legais ---------- */
+.legal {
+  display: grid;
+  gap: var(--space-8);
+  max-width: 780px;
+  margin: 0 auto;
+  padding: var(--space-10) var(--space-6) var(--space-12);
+  line-height: 1.65;
+}
+
+.legal__cabecalho h1 {
+  margin: var(--space-1) 0 var(--space-2);
+  font-size: 40px;
+  line-height: 46px;
+  letter-spacing: -0.02em;
+}
+
+.legal__data {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.legal__resumo {
+  padding: var(--space-6);
+  border-left: 4px solid var(--brand-green);
+  border-radius: var(--radius-md);
+  background: var(--brand-green-tint);
+}
+
+.legal__resumo h2,
+.legal__indice h2 {
+  margin: 0 0 var(--space-3);
+  font-size: 20px;
+}
+
+.legal__resumo ul,
+.legal__secao ul:not(.legal__dados) {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: var(--space-6);
+}
+
+.legal__indice {
+  padding: var(--space-5, 20px) var(--space-6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+
+.legal__indice ol {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-1) var(--space-6);
+  margin: 0;
+  padding-left: var(--space-6);
+}
+
+.legal__secao {
+  display: grid;
+  gap: var(--space-3);
+  scroll-margin-top: calc(var(--altura-cabecalho) + var(--space-4));
+}
+
+.legal__secao h2 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 32px;
+}
+
+.legal__secao p {
+  margin: 0;
+}
+
+.legal__dados {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.legal__dado {
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+
+.legal__dado h3 {
+  margin: 0 0 var(--space-2);
+  font-size: 17px;
+}
+
+.legal__dado dl {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.legal__dado dt {
+  font-weight: 700;
+  color: var(--ink-muted);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.legal__dado dd {
+  margin: 0;
+}
+
+.legal__contato {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border);
+}
+
+/* ---------- Quem somos ---------- */
+.quem-somos {
+  display: grid;
+  gap: var(--space-12);
+  max-width: var(--largura-conteudo);
+  margin: 0 auto;
+  padding: var(--space-10) var(--space-6) var(--space-12);
+}
+
+.quem-somos__topo {
+  max-width: 760px;
+}
+
+.quem-somos__topo h1 {
+  margin: var(--space-1) 0 var(--space-4);
+  font-size: 44px;
+  line-height: 50px;
+  letter-spacing: -0.02em;
+}
+
+.quem-somos__lead {
+  margin: 0 0 var(--space-3);
+  font-size: 19px;
+  line-height: 30px;
+  color: var(--ink-muted);
+}
+
+.quem-somos__secao {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.quem-somos__secao h2 {
+  margin: var(--space-1) 0 0;
+  font-size: 30px;
+  line-height: 38px;
+}
+
+.quem-somos__instituicao {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: var(--space-8);
+  align-items: start;
+}
+
+.quem-somos__curso {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  font-weight: 600;
+  color: var(--brand-green);
+}
+
+.quem-somos__texto p {
+  margin: 0 0 var(--space-3);
+  font-size: 17px;
+  line-height: 28px;
+}
+
+.quem-somos__vazio {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.galeria {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.galeria__item {
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+}
+
+.galeria__item img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: var(--surface-sunken);
+}
+
+.galeria__item figcaption {
+  padding: var(--space-3) var(--space-4);
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--ink-muted);
+}
+
+.equipe {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pessoa {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+  padding: var(--space-5, 20px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-card);
+}
+
+.pessoa__foto {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--surface-sunken);
+}
+
+.pessoa__foto--iniciais {
+  display: grid;
+  place-items: center;
+  background: var(--brand-blue-tint);
+  color: var(--brand-blue);
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.pessoa__dados {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.pessoa__nome {
+  margin: 0;
+  font-size: 20px;
+  line-height: 26px;
+}
+
+.pessoa__funcao {
+  margin: 0 0 var(--space-2);
+  font-weight: 600;
+  color: var(--brand-green);
+}
+
+.pessoa__descricao {
+  margin: 0 0 var(--space-2);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.pessoa__link {
+  font-weight: 600;
+}
+
+.quem-somos__chamada {
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  background: var(--brand-blue-tint);
+  text-align: center;
+}
+
+.quem-somos__chamada p {
+  margin: 0;
+  font-size: 18px;
+}
+
+@media (max-width: 860px) {
+  .quem-somos__instituicao {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+}
+
+@media (max-width: 600px) {
+  .legal,
+  .quem-somos {
+    padding: var(--space-6) var(--space-4) var(--space-10);
+  }
+
+  .legal__cabecalho h1,
+  .quem-somos__topo h1 {
+    font-size: 32px;
+    line-height: 38px;
+  }
+
+  .legal__indice ol {
+    grid-template-columns: 1fr;
+  }
+
+  .legal__resumo,
+  .legal__indice {
+    padding: var(--space-4);
+  }
+
+  .legal__dados,
+  .equipe {
+    grid-template-columns: 1fr;
+  }
+
+  .pessoa {
+    grid-template-columns: 72px minmax(0, 1fr);
+    padding: var(--space-4);
+  }
+
+  .pessoa__foto {
+    width: 72px;
+    height: 72px;
+  }
+
+  .pessoa__foto--iniciais {
+    font-size: 24px;
+  }
+}

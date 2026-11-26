@@ -12,6 +12,8 @@ public record UsuarioResponseDTO(
         PerfilUsuario perfil,
         Boolean ativo,
         Boolean emailVerificado,
+        String termosVersao,
+        LocalDateTime termosAceitosEm,
         LocalDateTime dataCriacao,
         LocalDateTime dataAtualizacao
 ) {

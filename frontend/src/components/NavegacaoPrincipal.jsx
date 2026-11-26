@@ -165,6 +165,12 @@ function NavegacaoPrincipal() {
               </NavLink>
             </li>
 
+            <li>
+              <NavLink to="/quem-somos" className={classeLink} onClick={fecharMenu}>
+                Quem somos
+              </NavLink>
+            </li>
+
             {autenticado && (
               <li>
                 <NavLink to="/preferencias" className={classeLink} onClick={fecharMenu}>

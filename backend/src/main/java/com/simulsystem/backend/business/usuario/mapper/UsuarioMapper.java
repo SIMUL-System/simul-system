@@ -30,6 +30,8 @@ public class UsuarioMapper {
                 usuario.getPerfil(),
                 usuario.getAtivo(),
                 usuario.getEmailVerificado(),
+                usuario.getTermosVersao(),
+                usuario.getTermosAceitosEm(),
                 usuario.getDataCriacao(),
                 usuario.getDataAtualizacao()
         );

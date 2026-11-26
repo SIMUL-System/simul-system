@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -151,6 +152,35 @@ public class GlobalExceptionHandler {
 
         return criar(HttpStatus.SERVICE_UNAVAILABLE, "E-mail não enviado",
                 "Não foi possível enviar o e-mail agora. Tente novamente em alguns minutos.");
+    }
+
+    @ExceptionHandler(SenhaIncorretaException.class)
+    public ProblemDetail handleSenhaIncorreta(SenhaIncorretaException exception) {
+        return criar(HttpStatus.BAD_REQUEST, "Senha incorreta", exception.getMessage());
+    }
+
+    @ExceptionHandler(ExclusaoNaoPermitidaException.class)
+    public ProblemDetail handleExclusaoNaoPermitida(ExclusaoNaoPermitidaException exception) {
+        return criar(HttpStatus.CONFLICT, "Exclusão não permitida", exception.getMessage());
+    }
+
+    @ExceptionHandler(ConteudoInvalidoException.class)
+    public ProblemDetail handleConteudoInvalido(ConteudoInvalidoException exception) {
+        return criar(HttpStatus.BAD_REQUEST, "Dados inválidos", exception.getMessage());
+    }
+
+    @ExceptionHandler(ConteudoNaoEncontradoException.class)
+    public ProblemDetail handleConteudoNaoEncontrado(ConteudoNaoEncontradoException exception) {
+        return criar(HttpStatus.NOT_FOUND, "Conteúdo não encontrado", exception.getMessage());
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ProblemDetail handleArquivoGrande(MaxUploadSizeExceededException exception) {
+        return criar(
+                HttpStatus.PAYLOAD_TOO_LARGE,
+                "Arquivo muito grande",
+                "A imagem passa do limite de 3 MB. Envie uma foto menor."
+        );
     }
 
     private ProblemDetail criar(HttpStatus status, String titulo, String detalhe) {

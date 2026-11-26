@@ -77,14 +77,17 @@ function obterMensagemErro(data, status) {
   return `Erro HTTP ${status}`
 }
 
-/** Única porta de saída para a API: JSON, token, tempo-limite, aviso de lentidão e sessão expirada. */
+/** Única porta de saída para a API: JSON ou arquivo, token, tempo-limite, aviso de lentidão e sessão expirada. */
 async function apiRequest(path, { method = 'GET', body, token, headers = {} } = {}) {
   const requestHeaders = {
     Accept: 'application/json',
     ...headers,
   }
 
-  if (body !== undefined) {
+  // Arquivos (FormData) vão como estão: o navegador define o Content-Type com o separador.
+  const ehFormulario = typeof FormData !== 'undefined' && body instanceof FormData
+
+  if (body !== undefined && !ehFormulario) {
     requestHeaders['Content-Type'] = 'application/json'
   }
 
@@ -108,7 +111,7 @@ async function apiRequest(path, { method = 'GET', body, token, headers = {} } = 
     response = await fetch(`${API_URL}${path}`, {
       method,
       headers: requestHeaders,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body === undefined ? undefined : ehFormulario ? body : JSON.stringify(body),
       signal: controlador.signal,
     })
   } catch (error) {
@@ -168,4 +171,9 @@ async function apiRequest(path, { method = 'GET', body, token, headers = {} } = 
   return data
 }
 
-export { EVENTO_SESSAO_EXPIRADA, inscreverServidorLento, ApiError, apiRequest }
+/** Endereço completo de um recurso da API, para usar em <img src>. */
+function urlDaApi(path) {
+  return `${API_URL}${path}`
+}
+
+export { EVENTO_SESSAO_EXPIRADA, inscreverServidorLento, ApiError, apiRequest, urlDaApi }

@@ -2,10 +2,13 @@ import { lazy, Suspense, useEffect } from 'react'
 
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 
+import AvisoArmazenamento from './components/AvisoArmazenamento'
 import AvisoServidorLento from './components/AvisoServidorLento'
 import NavegacaoPrincipal from './components/NavegacaoPrincipal'
 import RotaAdmin from './components/RotaAdmin'
+import RodapeSite from './components/RodapeSite'
 import RotaProtegida from './components/RotaProtegida'
+import TermosPendentes from './components/TermosPendentes'
 import { EVENTO_SESSAO_EXPIRADA } from './services/api'
 import { logout } from './services/authService'
 
@@ -39,6 +42,14 @@ const AreasAdminPage = lazy(() => import('./pages/admin/AreasAdminPage'))
 
 const CronogramasAdminPage = lazy(() => import('./pages/admin/CronogramasAdminPage'))
 
+const InstitucionalAdminPage = lazy(() => import('./pages/admin/InstitucionalAdminPage'))
+
+const QuemSomosPage = lazy(() => import('./pages/QuemSomosPage'))
+
+const TermosPage = lazy(() => import('./pages/TermosPage'))
+
+const PrivacidadePage = lazy(() => import('./pages/PrivacidadePage'))
+
 const TITULOS_PAGINAS = {
   '/': 'Consulta de coleta | SIMUL',
 
@@ -65,6 +76,14 @@ const TITULOS_PAGINAS = {
   '/admin/areas': 'Gerenciar áreas atendidas | SIMUL',
 
   '/admin/cronogramas': 'Agenda da semana | SIMUL',
+
+  '/admin/quem-somos': 'Editar Quem somos | SIMUL',
+
+  '/quem-somos': 'Quem somos | SIMUL',
+
+  '/termos': 'Termos de Uso | SIMUL',
+
+  '/privacidade': 'Política de Privacidade | SIMUL',
 }
 
 /** Tela mostrada enquanto o código de uma página é baixado (rotas carregadas sob demanda). */
@@ -130,6 +149,12 @@ function App() {
 
             <Route path="/guia-de-descarte" element={<GuiaDescartePage />} />
 
+            <Route path="/quem-somos" element={<QuemSomosPage />} />
+
+            <Route path="/termos" element={<TermosPage />} />
+
+            <Route path="/privacidade" element={<PrivacidadePage />} />
+
             <Route path="/cadastro" element={<CadastroPage />} />
 
             <Route path="/login" element={<LoginPage />} />
@@ -154,6 +179,8 @@ function App() {
                   <Route path="areas" element={<AreasAdminPage />} />
 
                   <Route path="cronogramas" element={<CronogramasAdminPage />} />
+
+                  <Route path="quem-somos" element={<InstitucionalAdminPage />} />
                 </Route>
               </Route>
             </Route>
@@ -162,6 +189,12 @@ function App() {
           </Routes>
         </Suspense>
       </div>
+
+      <RodapeSite />
+
+      <AvisoArmazenamento />
+
+      <TermosPendentes />
     </>
   )
 }

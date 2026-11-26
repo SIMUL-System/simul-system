@@ -11,6 +11,7 @@ import '../styles/conta.css'
 
 import Alerta from '../components/Alerta'
 import Icone from '../components/Icone'
+import SecaoPrivacidade from '../components/conta/SecaoPrivacidade'
 import { descreverAntecedencia } from '../utils/coleta'
 
 /** Lista legível dos canais ligados ("e-mail e navegador"). */
@@ -189,6 +190,8 @@ function PerfilPage() {
               </Link>
             )}
           </nav>
+
+          <SecaoPrivacidade usuario={usuario} />
         </>
       )}
     </main>

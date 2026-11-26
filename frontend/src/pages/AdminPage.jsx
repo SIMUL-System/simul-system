@@ -10,6 +10,7 @@ const SECOES = [
   { para: '/admin/rotas', rotulo: 'Rotas', icone: 'rota' },
   { para: '/admin/areas', rotulo: 'Áreas atendidas', icone: 'local' },
   { para: '/admin/cronogramas', rotulo: 'Agenda da semana', icone: 'calendario' },
+  { para: '/admin/quem-somos', rotulo: 'Quem somos', icone: 'usuario' },
 ]
 
 /**

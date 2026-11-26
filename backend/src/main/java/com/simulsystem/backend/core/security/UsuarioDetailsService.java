@@ -14,16 +14,18 @@ import org.springframework.stereotype.Service;
 public class UsuarioDetailsService
         implements UserDetailsService {
     private final UsuarioRepository usuarioRepository;
+    private final CriptografiaDados criptografia;
 
-    public UsuarioDetailsService(UsuarioRepository usuarioRepository) {
+    public UsuarioDetailsService(UsuarioRepository usuarioRepository, CriptografiaDados criptografia) {
         this.usuarioRepository = usuarioRepository;
+        this.criptografia = criptografia;
     }
 
     /** Usuário pelo e-mail; conta inativa fica desabilitada. */
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         Usuario usuario = usuarioRepository
-                        .findByEmailIgnoreCase(email)
+                        .findByEmailHash(criptografia.indiceEmail(email))
                         .orElseThrow(() ->
                                 new UsernameNotFoundException("Usuário não encontrado.")
                         );

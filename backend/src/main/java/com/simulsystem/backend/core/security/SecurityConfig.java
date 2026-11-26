@@ -63,6 +63,9 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.GET, "/api/notificacoes/push/public-key").permitAll()
 
+                        // Página pública "Quem somos" e as fotos dela.
+                        .requestMatchers(HttpMethod.GET, "/api/institucional", "/api/institucional/imagens/*").permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception

@@ -24,11 +24,13 @@ class UsuarioDetailsServiceTest {
     @Mock
     private UsuarioRepository usuarioRepository;
 
+    private final CriptografiaDados criptografia = new CriptografiaDados("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
+
     private UsuarioDetailsService usuarioDetailsService;
 
     @BeforeEach
     void setUp() {
-        usuarioDetailsService = new UsuarioDetailsService(usuarioRepository);
+        usuarioDetailsService = new UsuarioDetailsService(usuarioRepository, criptografia);
     }
 
     @Test
@@ -42,7 +44,7 @@ class UsuarioDetailsServiceTest {
         usuario.setPerfil(PerfilUsuario.USUARIO);
         usuario.setAtivo(true);
 
-        when(usuarioRepository.findByEmailIgnoreCase(email)).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findByEmailHash(criptografia.indiceEmail(email))).thenReturn(Optional.of(usuario));
 
         UserDetails resultado = usuarioDetailsService.loadUserByUsername(email);
 
@@ -61,7 +63,7 @@ class UsuarioDetailsServiceTest {
                         )
         );
 
-        verify(usuarioRepository).findByEmailIgnoreCase(email);
+        verify(usuarioRepository).findByEmailHash(criptografia.indiceEmail(email));
     }
 
     @Test
@@ -75,7 +77,7 @@ class UsuarioDetailsServiceTest {
         usuario.setPerfil(PerfilUsuario.ADMIN);
         usuario.setAtivo(true);
 
-        when(usuarioRepository.findByEmailIgnoreCase(email)).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findByEmailHash(criptografia.indiceEmail(email))).thenReturn(Optional.of(usuario));
 
         UserDetails resultado = usuarioDetailsService.loadUserByUsername(email);
 
@@ -102,7 +104,7 @@ class UsuarioDetailsServiceTest {
         usuario.setPerfil(PerfilUsuario.USUARIO);
         usuario.setAtivo(false);
 
-        when(usuarioRepository.findByEmailIgnoreCase(email)).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findByEmailHash(criptografia.indiceEmail(email))).thenReturn(Optional.of(usuario));
 
         UserDetails resultado = usuarioDetailsService.loadUserByUsername(email);
 
@@ -113,7 +115,7 @@ class UsuarioDetailsServiceTest {
     void deveLancarExcecaoQuandoUsuarioNaoExistir() {
         String email = "inexistente@simul.local";
 
-        when(usuarioRepository.findByEmailIgnoreCase(email)).thenReturn(Optional.empty());
+        when(usuarioRepository.findByEmailHash(criptografia.indiceEmail(email))).thenReturn(Optional.empty());
 
         assertThrows(UsernameNotFoundException.class, () -> usuarioDetailsService.loadUserByUsername(email));
     }

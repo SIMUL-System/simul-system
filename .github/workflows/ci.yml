@@ -55,9 +55,10 @@ jobs:
           cache: maven
 
       # Segredos descartáveis, gerados a cada execução (nunca versionados).
-      - name: Gerar JWT_SECRET e chaves VAPID temporárias
+      - name: Gerar JWT_SECRET, SIMUL_DADOS_CHAVE e chaves VAPID temporárias
         run: |
           echo "JWT_SECRET=$(openssl rand -base64 48 | tr -d '\n')" >> "$GITHUB_ENV"
+          echo "SIMUL_DADOS_CHAVE=$(openssl rand -base64 32 | tr -d '\n')" >> "$GITHUB_ENV"
           node -e '
             const { generateKeyPairSync } = require("crypto");
             const { publicKey, privateKey } = generateKeyPairSync("ec", { namedCurve: "prime256v1" });

@@ -9,9 +9,9 @@ import java.util.Optional;
 /** Acesso aos usuários. */
 public interface UsuarioRepository
         extends JpaRepository<Usuario, Long> {
-    /** Usuário pelo e-mail. */
-    Optional<Usuario> findByEmailIgnoreCase(String email);
+    /** Usuário pelo índice do e-mail (CriptografiaDados.indiceEmail). */
+    Optional<Usuario> findByEmailHash(String emailHash);
 
-    /** E-mail já cadastrado? */
-    boolean existsByEmailIgnoreCase(String email);
+    /** E-mail já cadastrado? (pelo índice) */
+    boolean existsByEmailHash(String emailHash);
 }

@@ -10,6 +10,7 @@ import Icone from '../components/Icone'
 import LayoutAcesso from '../components/auth/LayoutAcesso'
 import CampoSenha from '../components/form/CampoSenha'
 import CampoTexto from '../components/form/CampoTexto'
+import { VERSAO_TERMOS } from '../conteudo/legal'
 import { emailValido } from '../utils/texto'
 
 /** Criar conta; depois do cadastro a pessoa precisa confirmar o e-mail. */
@@ -18,6 +19,8 @@ function CadastroPage() {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [confirmacaoSenha, setConfirmacaoSenha] = useState('')
+  const [aceiteTermos, setAceiteTermos] = useState(false)
+  const [erroAceite, setErroAceite] = useState('')
   const [erroNome, setErroNome] = useState('')
   const [erroEmail, setErroEmail] = useState('')
   const [erroSenha, setErroSenha] = useState('')
@@ -37,6 +40,7 @@ function CadastroPage() {
     setErroEmail('')
     setErroSenha('')
     setErroConfirmacaoSenha('')
+    setErroAceite('')
     setErro('')
     setSucesso('')
     setMensagemReenvio('')
@@ -81,6 +85,12 @@ function CadastroPage() {
       formularioValido = false
     }
 
+    if (!aceiteTermos) {
+      setErroAceite('Para criar a conta, aceite os Termos de Uso e a Política de Privacidade.')
+
+      formularioValido = false
+    }
+
     return formularioValido
   }
 
@@ -100,6 +110,8 @@ function CadastroPage() {
         nome: nome.trim(),
         email: emailNormalizado,
         senha,
+        aceiteTermos: true,
+        versaoTermos: VERSAO_TERMOS,
       })
 
       setEmailCadastro(emailNormalizado)
@@ -114,6 +126,7 @@ function CadastroPage() {
       setEmail('')
       setSenha('')
       setConfirmacaoSenha('')
+      setAceiteTermos(false)
     } catch (error) {
       setErro(error.message || 'Não foi possível realizar o cadastro.')
     } finally {
@@ -257,6 +270,43 @@ function CadastroPage() {
             erro={erroConfirmacaoSenha}
             disabled={carregando}
           />
+
+          <div className="aceite">
+            <label className="aceite__opcao">
+              <input
+                type="checkbox"
+                checked={aceiteTermos}
+                onChange={(event) => {
+                  setAceiteTermos(event.target.checked)
+
+                  if (erroAceite) {
+                    setErroAceite('')
+                  }
+                }}
+                aria-invalid={Boolean(erroAceite)}
+                aria-describedby={erroAceite ? 'erro-aceite' : undefined}
+                disabled={carregando}
+              />
+              <span>
+                Li e aceito os{' '}
+                <Link to="/termos" target="_blank" rel="noopener">
+                  Termos de Uso
+                </Link>{' '}
+                e a{' '}
+                <Link to="/privacidade" target="_blank" rel="noopener">
+                  Política de Privacidade
+                </Link>
+                .
+              </span>
+            </label>
+
+            {erroAceite && (
+              <p id="erro-aceite" className="campo-ds__erro" role="alert">
+                <Icone nome="erro" tamanho={16} />
+                {erroAceite}
+              </p>
+            )}
+          </div>
 
           <button type="submit" className="botao botao--primario" disabled={carregando}>
             {carregando ? 'Criando conta…' : 'Criar conta'}

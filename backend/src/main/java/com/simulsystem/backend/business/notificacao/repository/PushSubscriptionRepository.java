@@ -13,6 +13,9 @@ public interface PushSubscriptionRepository extends JpaRepository<PushSubscripti
     /** Navegadores inscritos do usuário. */
     List<PushSubscription> findByUsuarioId(Long usuarioId);
 
+    /** Apaga as inscrições do usuário (exclusão da conta). */
+    void deleteByUsuarioId(Long usuarioId);
+
     /** Inscrição pelo endpoint do navegador. */
     Optional<PushSubscription> findByEndpoint(String endpoint);
 }

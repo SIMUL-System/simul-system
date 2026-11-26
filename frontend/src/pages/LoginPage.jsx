@@ -19,7 +19,9 @@ function LoginPage() {
   const navigate = useNavigate()
 
   // Chegou aqui porque o token venceu (ver App.jsx).
-  const sessaoExpirada = Boolean(useLocation().state?.sessaoExpirada)
+  const estadoNavegacao = useLocation().state
+  const sessaoExpirada = Boolean(estadoNavegacao?.sessaoExpirada)
+  const contaExcluida = Boolean(estadoNavegacao?.contaExcluida)
 
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
@@ -164,6 +166,12 @@ function LoginPage() {
         </p>
       }
     >
+      {contaExcluida && !erro && (
+        <Alerta tipo="sucesso" titulo="Conta excluída">
+          Sua conta e todos os dados ligados a ela foram apagados do SIMUL.
+        </Alerta>
+      )}
+
       {sessaoExpirada && !erro && (
         <Alerta tipo="info" titulo="Sessão encerrada">
           Por segurança, sua sessão expira depois de 1 hora. Entre de novo para continuar.

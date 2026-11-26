@@ -541,3 +541,26 @@ select.campo-ds__controle {
   font-size: 15px;
   color: var(--ink-muted);
 }
+
+/* ---------- Aceite dos termos ---------- */
+.aceite {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.aceite__opcao {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  font-size: 15px;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+.aceite__opcao input {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--brand-blue);
+}

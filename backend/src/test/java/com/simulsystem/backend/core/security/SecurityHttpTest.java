@@ -96,6 +96,8 @@ class SecurityHttpTest {
                 PerfilUsuario.USUARIO,
                 true,
                 false,
+                "2026-11",
+                agora,
                 agora,
                 agora
         );
@@ -109,7 +111,9 @@ class SecurityHttpTest {
                                 {
                                   "nome": "Novo Usuario",
                                   "email": "novo@simul.local",
-                                  "senha": "SenhaSegura123!"
+                                  "senha": "SenhaSegura123!",
+                                  "aceiteTermos": true,
+                                  "versaoTermos": "2026-11"
                                 }
                                 """))
                 .andExpect(status().isCreated())
@@ -117,6 +121,22 @@ class SecurityHttpTest {
                 .andExpect(jsonPath("$.perfil").value("USUARIO"));
 
         verify(usuarioService).cadastrar(any(UsuarioRequestDTO.class));
+    }
+
+    @Test
+    void deveRecusarCadastroSemAceiteDosTermos() throws Exception {
+        mockMvc.perform(post("/api/usuarios")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "nome": "Novo Usuario",
+                                  "email": "novo@simul.local",
+                                  "senha": "SenhaSegura123!",
+                                  "aceiteTermos": false,
+                                  "versaoTermos": "2026-11"
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

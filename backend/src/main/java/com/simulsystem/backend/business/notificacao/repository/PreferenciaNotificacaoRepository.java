@@ -16,6 +16,9 @@ public interface PreferenciaNotificacaoRepository
     @EntityGraph(attributePaths = {"usuario", "areaAtendida", "areaAtendida.rota"})
     Optional<PreferenciaNotificacao> findByUsuarioId(Long usuarioId);
 
+    /** Apaga a preferência do usuário (exclusão da conta). */
+    void deleteByUsuarioId(Long usuarioId);
+
     /** O usuário já tem preferência? */
     boolean existsByUsuarioId(Long usuarioId);
 

@@ -12,6 +12,7 @@ import com.simulsystem.backend.core.exception.CredenciaisInvalidasException;
 import com.simulsystem.backend.core.exception.EmailNaoVerificadoException;
 import com.simulsystem.backend.core.exception.EnvioEmailException;
 import com.simulsystem.backend.core.exception.UsuarioNaoEncontradoException;
+import com.simulsystem.backend.core.security.CriptografiaDados;
 import com.simulsystem.backend.core.security.JwtService;
 import com.simulsystem.backend.core.util.Textos;
 
@@ -23,6 +24,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 /** Implementação de UsuarioService. */
 @Service
@@ -37,6 +40,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final VerificacaoEmailService verificacaoEmailService;
+    private final CriptografiaDados criptografia;
 
     public UsuarioServiceImpl(
             UsuarioRepository usuarioRepository,
@@ -45,7 +49,8 @@ public class UsuarioServiceImpl implements UsuarioService {
             PasswordEncoder passwordEncoder,
             AuthenticationManager authenticationManager,
             JwtService jwtService,
-            VerificacaoEmailService verificacaoEmailService
+            VerificacaoEmailService verificacaoEmailService,
+            CriptografiaDados criptografia
     ) {
         this.usuarioRepository = usuarioRepository;
         this.usuarioMapper = usuarioMapper;
@@ -54,6 +59,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.verificacaoEmailService = verificacaoEmailService;
+        this.criptografia = criptografia;
     }
 
     @Override
@@ -65,6 +71,9 @@ public class UsuarioServiceImpl implements UsuarioService {
         Usuario usuario = usuarioMapper.toEntity(requestDTO);
 
         usuario.setEmail(emailNormalizado);
+        usuario.setEmailHash(criptografia.indiceEmail(emailNormalizado));
+        usuario.setTermosAceitosEm(LocalDateTime.now());
+        usuario.setTermosVersao(requestDTO.versaoTermos());
         usuario.setSenha(passwordEncoder.encode(requestDTO.senha()));
         usuario.setEmailVerificado(false);
 
@@ -96,7 +105,7 @@ public class UsuarioServiceImpl implements UsuarioService {
             );
 
             Usuario usuario = usuarioRepository
-                    .findByEmailIgnoreCase(emailNormalizado)
+                    .findByEmailHash(criptografia.indiceEmail(emailNormalizado))
                     .orElseThrow(() ->
                             new CredenciaisInvalidasException("E-mail ou senha inválidos.")
                     );
@@ -125,7 +134,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         String emailNormalizado = Textos.normalizarEmail(email);
 
         return usuarioRepository
-                .findByEmailIgnoreCase(emailNormalizado)
+                .findByEmailHash(criptografia.indiceEmail(emailNormalizado))
                 .orElseThrow(() ->
                         new UsuarioNaoEncontradoException("Usuário autenticado não foi encontrado.")
                 );

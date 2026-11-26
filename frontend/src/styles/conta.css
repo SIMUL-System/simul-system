@@ -406,3 +406,27 @@
     padding: var(--space-4);
   }
 }
+
+/* ---------- Privacidade (Minha conta) ---------- */
+.privacidade-conta {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.privacidade-conta__texto {
+  margin: var(--space-2) 0 0;
+  color: var(--ink-muted);
+  line-height: 1.55;
+}
+
+.privacidade-conta__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.privacidade-conta__acoes .campo-ds__dica {
+  margin: 0;
+}

@@ -15,6 +15,7 @@ function DialogoConfirmacao({
   textoCancelar = 'Cancelar',
   perigo = false,
   processando = false,
+  confirmarDesabilitado = false,
   onConfirmar,
   onCancelar,
 }) {
@@ -85,7 +86,7 @@ function DialogoConfirmacao({
               type="button"
               className={`botao ${perigo ? 'botao--perigo' : 'botao--primario'}`}
               onClick={onConfirmar}
-              disabled={processando}
+              disabled={processando || confirmarDesabilitado}
             >
               {processando ? 'Aguarde…' : textoConfirmar}
             </button>

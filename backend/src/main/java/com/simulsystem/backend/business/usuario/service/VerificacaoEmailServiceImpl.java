@@ -8,8 +8,8 @@ import com.simulsystem.backend.business.usuario.repository.TokenVerificacaoEmail
 import com.simulsystem.backend.business.usuario.repository.UsuarioRepository;
 import com.simulsystem.backend.business.usuario.validation.UsuarioValidation;
 import com.simulsystem.backend.core.config.LinkFrontend;
+import com.simulsystem.backend.core.security.CriptografiaDados;
 import com.simulsystem.backend.core.security.TokenSeguro;
-import com.simulsystem.backend.core.util.Textos;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -31,6 +31,7 @@ public class VerificacaoEmailServiceImpl implements VerificacaoEmailService {
     private final LinkFrontend linkFrontend;
     private final Clock clock;
     private final long expiracaoHoras;
+    private final CriptografiaDados criptografia;
 
     public VerificacaoEmailServiceImpl(
             TokenVerificacaoEmailRepository tokenRepository,
@@ -40,7 +41,9 @@ public class VerificacaoEmailServiceImpl implements VerificacaoEmailService {
             TokenSeguro tokenSeguro,
             LinkFrontend linkFrontend,
             Clock clock,
-            @Value("${simul.email-verification.expiration-hours:24}") long expiracaoHoras) {
+            @Value("${simul.email-verification.expiration-hours:24}") long expiracaoHoras,
+            CriptografiaDados criptografia) {
+        this.criptografia = criptografia;
         this.tokenRepository = tokenRepository;
         this.usuarioRepository = usuarioRepository;
         this.usuarioValidation = usuarioValidation;
@@ -127,7 +130,7 @@ public class VerificacaoEmailServiceImpl implements VerificacaoEmailService {
             return;
         }
 
-        usuarioRepository.findByEmailIgnoreCase(Textos.normalizarEmail(email))
+        usuarioRepository.findByEmailHash(criptografia.indiceEmail(email))
                 .filter(usuario -> !usuarioValidation.emailJaVerificado(usuario))
                 .ifPresent(this::enviarVerificacao);
     }

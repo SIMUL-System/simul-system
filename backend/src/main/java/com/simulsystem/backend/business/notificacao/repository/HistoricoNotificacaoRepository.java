@@ -4,6 +4,7 @@ import com.simulsystem.backend.business.notificacao.model.CanalNotificacao;
 import com.simulsystem.backend.business.notificacao.model.HistoricoNotificacao;
 import com.simulsystem.backend.business.notificacao.model.StatusNotificacao;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,6 +22,13 @@ public interface HistoricoNotificacaoRepository
             LocalDateTime dataHoraColeta,
             CanalNotificacao canal
     );
+
+    /** Últimos lembretes do usuário, com a rota (para a cópia dos dados). */
+    @EntityGraph(attributePaths = "rota")
+    List<HistoricoNotificacao> findTop200ByUsuarioIdOrderByDataHoraColetaDesc(Long usuarioId);
+
+    /** Apaga o histórico do usuário (exclusão da conta). */
+    void deleteByUsuarioId(Long usuarioId);
 
     /** Falhas com tentativa agendada até a referência e abaixo do limite. */
     @Query("""

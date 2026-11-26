@@ -313,6 +313,8 @@ No Web Push, o assunto vira o título da notificação e o texto vira o corpo.
 | Proteção | Como |
 |---|---|
 | Senhas | BCrypt (custo 10). Nunca devolvidas pela API. |
+| E-mail no banco | Criptografado com **AES-256-GCM** (IV aleatório a cada gravação). Login e unicidade usam o índice `email_hash` (**HMAC-SHA256**), sem decifrar a tabela. As duas chaves são derivadas de `SIMUL_DADOS_CHAVE`; sem ela, quem copiar o banco não lê os e-mails. A conversão é transparente (`EmailCriptografadoConverter`). |
+| Fotos enviadas | Tipo conferido pelos primeiros bytes do arquivo (só JPEG, PNG e WebP; SVG recusado), até 3 MB. O front reduz para 1600 px e descarta metadados da câmera. |
 | Autenticação | JWT HS256 sem sessão no servidor. `JWT_SECRET` em Base64 com no mínimo 256 bits; a aplicação não sobe sem ele. |
 | Perfis | `USUARIO` e `ADMIN`, no claim `roles`. Endpoints de admin exigem `hasRole('ADMIN')`. O cadastro público sempre cria `USUARIO`. |
 | Links por e-mail | Token aleatório de 256 bits, guardado só como hash SHA-256, com validade e uso único. |
@@ -320,7 +322,20 @@ No Web Push, o assunto vira o título da notificação e o texto vira o corpo.
 | Erros | 401/403 em ProblemDetail. Exceções de negócio com status próprio; causas técnicas (como falha de SMTP) ficam só no log. |
 | CORS | Só as origens de `SIMUL_CORS_ALLOWED_ORIGINS`, apenas em `/api/**`. |
 | Segredos | Sempre em variáveis de ambiente; nenhum segredo no repositório. |
+| LGPD | Aceite dos termos registrado (data e versão), cópia dos dados em JSON, exclusão da conta com senha, aviso de armazenamento essencial (sem cookies de rastreamento). Ver [9.1](#91-lgpd-e-privacidade). |
 | Banco | Restrições no próprio PostgreSQL (ver [11.3](#113-regras-garantidas-pelo-banco-v17)). |
+
+### 9.1 LGPD e privacidade
+
+| Direito ou obrigação | Onde está |
+|---|---|
+| Transparência | `/privacidade` (Política de Privacidade e cookies) e `/termos` (Termos de Uso), em linguagem simples, com link no rodapé |
+| Registro do consentimento | Cadastro exige aceite; `usuarios.termos_aceitos_em` e `termos_versao` (V22). Ao mudar `VERSAO_TERMOS` em `frontend/src/conteudo/legal.js`, quem já tem conta recebe o pedido de novo aceite ao entrar |
+| Acesso e portabilidade | Minha conta → "Baixar meus dados" (`GET /api/usuarios/me/dados`, JSON) |
+| Eliminação | Minha conta → "Excluir minha conta" (`DELETE /api/usuarios/me`, pede a senha): apaga histórico, preferência, navegadores, links e a conta. A conta ADMIN não pode ser excluída por aqui |
+| Revogação do consentimento | Desligar as notificações em Meus lembretes |
+| Cookies | Só armazenamento essencial (sessão, tema, progresso do guia); aviso único na primeira visita |
+| Segurança | E-mail criptografado, senha com BCrypt, HTTPS, sessão de 1 hora |
 
 ---
 
@@ -348,12 +363,17 @@ Base local: `http://localhost:8080`. Erros seguem o formato ProblemDetail:
 | POST | `/api/usuarios/redefinir-senha` | Troca a senha pelo token |
 | POST | `/api/auth/login` | Devolve o JWT |
 | GET | `/api/notificacoes/push/public-key` | Chave pública VAPID |
+| GET | `/api/institucional` | Textos, fotos da faculdade e equipe do "Quem somos" |
+| GET | `/api/institucional/imagens/{id}` | Arquivo da imagem (cache de 30 dias) |
 
 ### 10.2 Usuário logado
 
 | Método | Caminho | O que faz |
 |---|---|---|
 | GET | `/api/usuarios/me` | Dados do usuário logado |
+| GET | `/api/usuarios/me/dados` | Cópia dos dados pessoais (LGPD) |
+| DELETE | `/api/usuarios/me` | Excluir a conta (corpo: `{ "senha": "..." }`) |
+| PUT | `/api/usuarios/me/termos` | Aceitar a versão atual dos termos (corpo: `{ "versao": "2026-11" }`) |
 | GET / POST / PUT | `/api/notificacoes/preferencias` | Ler, criar e alterar a preferência de lembrete |
 | GET / POST | `/api/notificacoes/push/subscriptions` | Listar e inscrever navegadores |
 | DELETE | `/api/notificacoes/push/subscriptions?endpoint=` | Cancelar a inscrição do navegador |
@@ -375,6 +395,14 @@ Base local: `http://localhost:8080`. Erros seguem o formato ProblemDetail:
 | PUT | `/api/admin/cronogramas/lote/horario` | Mudar início e fim de vários horários (tudo ou nada) |
 | PUT | `/api/admin/cronogramas/rota/{rotaId}` | Definir os dias e horários da semana da rota (tudo ou nada) |
 | GET | `/api/admin/usuarios/verificar-acesso` | 204 para ADMIN (usado nos testes de segurança) |
+| PUT | `/api/admin/institucional` | Textos do "Quem somos" |
+| POST | `/api/admin/institucional/fotos` | Nova foto da faculdade (multipart: `arquivo`, `legenda`) |
+| PUT / DELETE | `/api/admin/institucional/fotos/{id}` | Trocar a legenda / remover |
+| PUT | `/api/admin/institucional/fotos/ordem` | Nova ordem da galeria (`{ "ids": [...] }`) |
+| POST | `/api/admin/institucional/integrantes` | Novo integrante |
+| PUT / DELETE | `/api/admin/institucional/integrantes/{id}` | Editar / remover |
+| PUT / DELETE | `/api/admin/institucional/integrantes/{id}/foto` | Trocar (multipart `arquivo`) / tirar a foto |
+| PUT | `/api/admin/institucional/integrantes/ordem` | Nova ordem da equipe |
 
 Exemplo do lote:
 
@@ -416,6 +444,9 @@ PUT /api/admin/cronogramas/lote/horario
 | V18 | consolidação das rotas de Senador Canedo (109 → 5) |
 | V19 | conta admin fixa do sistema |
 | V20 | preferência ligada ao **bairro** (`area_atendida_id`); a rota passa a vir do bairro |
+| V21 | **migration em Java** (`core/migracao/V21__CriptografarEmails`): cifra os e-mails existentes e cria `email_hash` único |
+| V22 | registro do aceite dos termos (`termos_aceitos_em`, `termos_versao`) |
+| V23 | "Quem somos": `conteudo_institucional`, `imagens` (BYTEA), `fotos_instituicao`, `integrantes` |
 
 ### 11.3 Regras garantidas pelo banco (V17)
 
@@ -461,11 +492,12 @@ Depois, saia e entre de novo para receber um JWT com o perfil novo.
 | Caminho | Acesso | Página |
 |---|---|---|
 | `/` | público | Consulta da coleta |
+| `/quem-somos`, `/termos`, `/privacidade` | público | Quem somos, Termos de Uso e Política de Privacidade |
 | `/guia-de-descarte` | público | Guia interativo |
 | `/cadastro`, `/login` | público | Criar conta e entrar |
 | `/verificar-email`, `/recuperar-senha`, `/redefinir-senha` | público | Links enviados por e-mail |
 | `/minha-conta`, `/preferencias` | logado (`RotaProtegida`) | Conta e lembretes |
-| `/admin`, `/admin/rotas`, `/admin/areas`, `/admin/cronogramas` | ADMIN (`RotaAdmin`) | Painel |
+| `/admin`, `/admin/rotas`, `/admin/areas`, `/admin/cronogramas`, `/admin/quem-somos` | ADMIN (`RotaAdmin`) | Painel |
 
 Todas as páginas são carregadas sob demanda (`React.lazy`), e o mapa só é baixado quando aparece.
 
@@ -519,6 +551,8 @@ $rng.GetBytes($bytes)
 openssl rand -base64 32
 ```
 
+**SIMUL_DADOS_CHAVE** (32 bytes em Base64, protege os e-mails no banco): gere com os mesmos comandos do `JWT_SECRET`, mas use **outro valor**. Guarde uma cópia em lugar seguro: se a chave for perdida, os e-mails gravados não podem mais ser lidos (e ninguém consegue entrar). Use a mesma chave no computador onde o banco foi criado; outra chave não decifra os e-mails já gravados.
+
 **Chaves VAPID** (Web Push):
 
 ```bash
@@ -538,6 +572,7 @@ $env:DB_URL="jdbc:postgresql://localhost:5432/simul"
 $env:DB_USERNAME="postgres"
 $env:DB_PASSWORD="<senha do postgres>"
 $env:JWT_SECRET="<JWT_SECRET>"
+$env:SIMUL_DADOS_CHAVE="<SIMUL_DADOS_CHAVE>"
 $env:SMTP_HOST="smtp.gmail.com"
 $env:SMTP_PORT="587"
 $env:SMTP_USERNAME="<usuario>"
@@ -608,7 +643,7 @@ npm run build
 
 | Job | O que faz |
 |---|---|
-| Back-end | PostgreSQL 16 temporário, `JWT_SECRET` e chaves VAPID descartáveis, `./mvnw clean test` |
+| Back-end | PostgreSQL 16 temporário, `JWT_SECRET`, `SIMUL_DADOS_CHAVE` e chaves VAPID descartáveis, `./mvnw clean test` |
 | Front-end | `npm ci`, `npm run lint`, `npm run build` |
 
 Nenhum segredo real é usado no CI.
@@ -629,6 +664,8 @@ Nenhum segredo real é usado no CI.
 O Dockerfile compila com JDK 21, executa com JRE 21 **sem root** e limita o heap (`-XX:MaxRAMPercentage=70`), porque a instância gratuita tem 512 MB.
 
 Cadastre as variáveis da seção [16](#16-variáveis-de-ambiente), com `NOTIFICACAO_SCHEDULER_ENABLED=true` e `SIMUL_FRONTEND_URL` apontando para o site.
+
+**Antes do deploy da V21**, cadastre `SIMUL_DADOS_CHAVE` no Render: sem ela o serviço não sobe, e a V21 usa essa chave para cifrar os e-mails já gravados. Depois disso, a chave não pode mais mudar.
 
 ### 15.2 Front-end (Static Site)
 
@@ -672,6 +709,7 @@ O PostgreSQL gratuito da Render tem **prazo de expiração**: confira a data no 
 |---|---|---|---|
 | `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | sim | — | Conexão com o PostgreSQL |
 | `JWT_SECRET` | sim | — | Chave HS256 em Base64 (≥ 256 bits) |
+| `SIMUL_DADOS_CHAVE` | sim | — | Chave (32 bytes em Base64) da criptografia dos e-mails. Nunca troque depois de criar o banco |
 | `JWT_EXPIRATION_SECONDS` | não | `3600` | Validade do token |
 | `SMTP_FROM` | sim | — | Remetente dos e-mails (nos dois provedores) |
 | `SIMUL_MAIL_PROVEDOR` | não (Render: **sim**) | `smtp` | `smtp` ou `brevo` |

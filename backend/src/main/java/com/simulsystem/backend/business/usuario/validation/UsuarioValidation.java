@@ -3,6 +3,7 @@ package com.simulsystem.backend.business.usuario.validation;
 import com.simulsystem.backend.business.usuario.model.Usuario;
 import com.simulsystem.backend.business.usuario.repository.UsuarioRepository;
 import com.simulsystem.backend.core.exception.EmailJaCadastradoException;
+import com.simulsystem.backend.core.security.CriptografiaDados;
 
 import org.springframework.stereotype.Component;
 
@@ -11,14 +12,16 @@ import org.springframework.stereotype.Component;
 public class UsuarioValidation {
 
     private final UsuarioRepository usuarioRepository;
+    private final CriptografiaDados criptografia;
 
-    public UsuarioValidation(UsuarioRepository usuarioRepository) {
+    public UsuarioValidation(UsuarioRepository usuarioRepository, CriptografiaDados criptografia) {
         this.usuarioRepository = usuarioRepository;
+        this.criptografia = criptografia;
     }
 
     /** Impede dois cadastros com o mesmo e-mail. */
     public void validarEmailNaoCadastrado(String email) {
-        if (usuarioRepository.existsByEmailIgnoreCase(email)) {
+        if (usuarioRepository.existsByEmailHash(criptografia.indiceEmail(email))) {
             throw new EmailJaCadastradoException("Já existe um usuário cadastrado com este e-mail.");
         }
     }

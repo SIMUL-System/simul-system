@@ -9,8 +9,8 @@ import com.simulsystem.backend.business.usuario.repository.TokenRecuperacaoSenha
 import com.simulsystem.backend.business.usuario.repository.UsuarioRepository;
 import com.simulsystem.backend.business.usuario.validation.UsuarioValidation;
 import com.simulsystem.backend.core.config.LinkFrontend;
+import com.simulsystem.backend.core.security.CriptografiaDados;
 import com.simulsystem.backend.core.security.TokenSeguro;
-import com.simulsystem.backend.core.util.Textos;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -34,6 +34,7 @@ public class RecuperacaoSenhaServiceImpl implements RecuperacaoSenhaService {
     private final LinkFrontend linkFrontend;
     private final Clock clock;
     private final long expiracaoMinutos;
+    private final CriptografiaDados criptografia;
 
     public RecuperacaoSenhaServiceImpl(
             TokenRecuperacaoSenhaRepository tokenRepository,
@@ -44,7 +45,9 @@ public class RecuperacaoSenhaServiceImpl implements RecuperacaoSenhaService {
             TokenSeguro tokenSeguro,
             LinkFrontend linkFrontend,
             Clock clock,
-            @Value("${simul.password-recovery.expiration-minutes:60}") long expiracaoMinutos) {
+            @Value("${simul.password-recovery.expiration-minutes:60}") long expiracaoMinutos,
+            CriptografiaDados criptografia) {
+        this.criptografia = criptografia;
         this.tokenRepository = tokenRepository;
         this.usuarioRepository = usuarioRepository;
         this.usuarioValidation = usuarioValidation;
@@ -63,7 +66,7 @@ public class RecuperacaoSenhaServiceImpl implements RecuperacaoSenhaService {
             return;
         }
 
-        Optional<Usuario> usuarioOptional = usuarioRepository.findByEmailIgnoreCase(Textos.normalizarEmail(email));
+        Optional<Usuario> usuarioOptional = usuarioRepository.findByEmailHash(criptografia.indiceEmail(email));
 
         // E-mail inexistente ou conta inativa: não faz nada, e a resposta ao cliente continua neutra.
         if (usuarioOptional.isEmpty() || !Boolean.TRUE.equals(usuarioOptional.get().getAtivo())) {
