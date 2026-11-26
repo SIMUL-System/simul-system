@@ -7,7 +7,9 @@ import '../styles/institucional.css'
 import Alerta from '../components/Alerta'
 import Icone from '../components/Icone'
 
+import { obterToken } from '../services/authService'
 import { buscarInstitucional, urlImagem } from '../services/institucionalService'
+import { obterUsuarioAtual } from '../services/usuarioService'
 
 /** Quebra o texto em parágrafos nas linhas em branco. */
 function Paragrafos({ texto, className }) {
@@ -35,6 +37,25 @@ function QuemSomosPage() {
   const [conteudo, setConteudo] = useState(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
+  const [admin, setAdmin] = useState(false)
+
+  // A edição desta página fica fora do menu do painel: só o administrador
+  // logado vê o atalho "Editar esta página".
+  useEffect(() => {
+    let ativo = true
+
+    if (obterToken()) {
+      obterUsuarioAtual()
+        .then((usuario) => {
+          if (ativo) setAdmin(usuario?.perfil === 'ADMIN')
+        })
+        .catch(() => {})
+    }
+
+    return () => {
+      ativo = false
+    }
+  }, [])
 
   useEffect(() => {
     let ativo = true
@@ -59,6 +80,12 @@ function QuemSomosPage() {
     <main className="quem-somos" aria-labelledby="titulo-quem-somos" aria-busy={carregando}>
       <header className="quem-somos__topo">
         <p className="sobretitulo">Quem somos</p>
+        {admin && (
+          <Link to="/admin/quem-somos" className="botao botao--secundario quem-somos__editar">
+            <Icone nome="painel" tamanho={18} />
+            Editar esta página
+          </Link>
+        )}
         <h1 id="titulo-quem-somos">Coleta seletiva na hora certa</h1>
         {conteudo && <Paragrafos texto={conteudo.sobreProjeto} className="quem-somos__lead" />}
       </header>

@@ -17,10 +17,13 @@ const SECOES = [
   { para: '/admin/rotas', rotulo: 'Rotas', icone: 'rota' },
   { para: '/admin/areas', rotulo: 'Áreas atendidas', icone: 'local' },
   { para: '/admin/cronogramas', rotulo: 'Agenda da semana', icone: 'calendario' },
-  { para: '/admin/quem-somos', rotulo: 'Quem somos', icone: 'usuario' },
 ]
 
-/** Seções que não dependem da cidade. */
+/**
+ * Seções que não dependem da cidade. "Quem somos" não fica no menu do painel:
+ * o administrador chega à edição pelo botão "Editar esta página" na própria
+ * página pública /quem-somos.
+ */
 const SEM_CIDADE = ['/admin/quem-somos']
 
 /**

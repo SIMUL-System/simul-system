@@ -8,7 +8,7 @@
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr);
   gap: var(--space-8);
-  max-width: 1440px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: var(--space-8) var(--space-6) var(--space-12);
 }
@@ -543,6 +543,9 @@
 }
 
 .admin-tabela__rolagem {
+  /* relative: textos só para leitor de tela (position: absolute) ficam presos
+     aqui dentro e não criam rolagem lateral na página. */
+  position: relative;
   overflow-x: auto;
 }
 

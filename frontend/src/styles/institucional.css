@@ -140,6 +140,10 @@
   max-width: 760px;
 }
 
+.quem-somos__editar {
+  margin: var(--space-3) 0 var(--space-4);
+}
+
 .quem-somos__topo h1 {
   margin: var(--space-1) 0 var(--space-4);
   font-size: 44px;
