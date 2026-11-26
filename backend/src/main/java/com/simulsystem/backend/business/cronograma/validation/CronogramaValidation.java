@@ -127,19 +127,6 @@ public class CronogramaValidation {
         return cronogramas;
     }
 
-    /** Cada dia só pode aparecer uma vez na semana enviada. */
-    public void validarDiasSemRepeticao(List<DiaSemana> dias) {
-        Set<DiaSemana> vistos = new LinkedHashSet<>();
-
-        for (DiaSemana dia : dias) {
-            if (!vistos.add(dia)) {
-                throw new HorarioCronogramaInvalidoException(
-                        "O dia " + dia.name() + " foi informado mais de uma vez."
-                );
-            }
-        }
-    }
-
     /** Cada par dia + turno só pode aparecer uma vez na semana enviada. */
     public void validarColetasSemRepeticao(List<DiaSemana> dias, List<Turno> turnos) {
         Set<String> vistos = new LinkedHashSet<>();

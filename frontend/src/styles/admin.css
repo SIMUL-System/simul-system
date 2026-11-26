@@ -1236,45 +1236,10 @@
   border-top: 1px solid var(--border);
 }
 
-.bloco-rota__cidade {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--space-3);
-}
-
 /* ---------- Semana de coleta ---------- */
 .semana-coleta {
   display: grid;
   gap: var(--space-4);
-}
-
-.semana-coleta__grupo {
-  display: grid;
-  gap: var(--space-3);
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.semana-coleta__dias {
-  display: grid;
-  gap: var(--space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.semana-coleta__dia {
-  display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
-  gap: var(--space-2);
-  max-width: 420px;
-}
-
-.semana-coleta__nome-dia {
-  font-weight: 700;
 }
 
 .semana-coleta__previa.semana-coleta__previa--vazia {

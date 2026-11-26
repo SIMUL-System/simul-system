@@ -174,7 +174,7 @@ simul-system/
 ├── README.md
 ├── docs/
 │   ├── levantamento-dados-municipais.md   levantamento das fontes das prefeituras e pendências
-│   └── importacao/                        scripts e dados que geraram a V25
+│   └── importacao/                        scripts e dados que geraram a V5
 ├── backend/
 │   ├── Dockerfile                build em duas etapas, executa sem root
 │   ├── pom.xml
@@ -185,7 +185,7 @@ simul-system/
 │       │   └── core/{config,exception,migracao,security,status,util}/
 │       ├── main/resources/
 │       │   ├── application.properties
-│       │   └── db/migration/      V1 … V25 (Flyway; V21 é Java, em core/migracao)
+│       │   └── db/migration/      V1 … V5 (SQL); a V6 é Java, em core/migracao
 │       └── test/                  testes JUnit 5 + Mockito
 └── frontend/
     ├── .prettierrc.json           estilo de formatação do front-end
@@ -256,7 +256,7 @@ Página pública e lúdica, com conteúdo todo em `frontend/src/utils/guiaConteu
 O painel é organizado **por cidade**. O menu tem Visão geral, Rotas, Áreas atendidas e Agenda da semana; a edição do "Quem somos" fica fora do menu e é aberta pelo botão **Editar esta página**, que só o administrador logado vê em `/quem-somos`. No topo de Visão geral, Rotas, Áreas atendidas e Agenda da semana fica o **seletor de cidade**, com o resumo dela (bairros, rotas ativas e coletas na semana). A cidade escolhida fica salva no navegador (`localStorage`, chave `simul.admin.cidade`) e vale para todas as seções; ao trocar, a seção recarrega só com os dados da nova cidade.
 
 - **Visão geral:** indicadores da cidade, **Faixa dos turnos** (início e fim médios do turno diurno e do noturno na cidade, com a fonte; editável em `PUT /api/admin/cidades/{id}/turnos`), "Precisa de atenção" (áreas sem contorno, rotas ativas sem dia de coleta, rotas ativas sem bairros, bairros em rotas inativas), "O que a prefeitura não informa" (coletas só com turno e rotas sem tipo de coleta na fonte), a fonte dos dados da cidade e a tabela **Cidades atendidas**, que compara as cidades e permite trocar de cidade.
-- **Rotas:** só as rotas da cidade. Cada rota é um padrão de coleta (**dias + turno**, horário opcional) e pertence a **uma única cidade**, definida na criação e que não muda depois. Só bairros da mesma cidade entram na rota; o back-end recusa com 409 qualquer tentativa de misturar cidades. A semana é editada **por turno** (bloco Diurno e bloco Noturno; um mesmo dia pode ter os dois) e salva de uma vez por `PUT /api/admin/cronogramas/rota/{rotaId}`. O horário só é preenchido quando a prefeitura informa ("A prefeitura informa o horário deste turno"). O tipo de coleta (seletiva ou não informado) e a fonte aparecem na rota. Desativar uma rota pede confirmação; **nada é apagado**. A preferência do morador guarda o **bairro** (V20): ao mover um bairro, os lembretes passam a seguir a nova rota sem ação do morador.
+- **Rotas:** só as rotas da cidade. Cada rota é um padrão de coleta (**dias + turno**, horário opcional) e pertence a **uma única cidade**, definida na criação e que não muda depois. Só bairros da mesma cidade entram na rota; o back-end recusa com 409 qualquer tentativa de misturar cidades. A semana é editada **por turno** (bloco Diurno e bloco Noturno; um mesmo dia pode ter os dois) e salva de uma vez por `PUT /api/admin/cronogramas/rota/{rotaId}`. O horário só é preenchido quando a prefeitura informa ("A prefeitura informa o horário deste turno"). O tipo de coleta (seletiva, convencional ou não informado) e a fonte aparecem na rota. Desativar uma rota pede confirmação; **nada é apagado**. A preferência do morador guarda o **bairro**: ao mover um bairro, os lembretes passam a seguir a nova rota sem ação do morador.
 - **Áreas atendidas:** só os bairros da cidade. A cidade do bairro é a da rota (campo fixo no formulário); bairro é único por cidade. O contorno é desenhado no mapa (Polygon/MultiPolygon GeoJSON) ou buscado no OpenStreetMap ("Buscar contornos no mapa").
 - **Agenda da semana:** coletas da cidade por dia, com o turno (e o horário, se houver). "Mudar horário de várias rotas" escolhe o **turno** e as rotas e aplica o novo horário — ou volta a mostrar só o turno — em todas de uma vez (`PUT /api/admin/cronogramas/lote/horario`, tudo ou nada). Só pode haver **uma coleta ativa por rota, dia e turno**.
 
@@ -337,7 +337,7 @@ No Web Push, o assunto vira o título da notificação e o texto vira o corpo.
 | Direito ou obrigação | Onde está |
 |---|---|
 | Transparência | `/privacidade` (Política de Privacidade e cookies) e `/termos` (Termos de Uso), em linguagem simples, com link no rodapé |
-| Registro do consentimento | Cadastro exige aceite; `usuarios.termos_aceitos_em` e `termos_versao` (V22). Ao mudar `VERSAO_TERMOS` em `frontend/src/conteudo/legal.js`, quem já tem conta recebe o pedido de novo aceite ao entrar |
+| Registro do consentimento | Cadastro exige aceite; `usuarios.termos_aceitos_em` e `termos_versao`. Ao mudar `VERSAO_TERMOS` em `frontend/src/conteudo/legal.js`, quem já tem conta recebe o pedido de novo aceite ao entrar |
 | Acesso e portabilidade | Minha conta → "Baixar meus dados" (`GET /api/usuarios/me/dados`, JSON) |
 | Eliminação | Minha conta → "Excluir minha conta" (`DELETE /api/usuarios/me`, pede a senha): apaga histórico, preferência, navegadores, links e a conta. A conta ADMIN não pode ser excluída por aqui |
 | Revogação do consentimento | Desligar as notificações em Meus lembretes |
@@ -432,53 +432,35 @@ PUT /api/admin/cronogramas/lote/horario
 
 ### 11.2 Migrations
 
+As migrations foram **consolidadas** em 26/11/2026: o histórico de 26 versões (com tabelas criadas e alteradas várias vezes, cargas antigas de Senador Canedo e um admin de teste) virou um esquema limpo, igual ao final. Bancos criados antes disso precisam ser recriados uma vez (ver [17](#17-problemas-comuns)).
+
 | Versão | Conteúdo |
 |---|---|
-| V1 | `usuarios` |
-| V2 | `rotas` e `areas_atendidas` |
-| V3 | `cronogramas` |
-| V4 | `preferencias_notificacao` |
-| V5 | rota na preferência |
-| V6 | Web Push na preferência |
-| V7 | `historico_notificacoes` |
-| V8 | campos de nova tentativa |
-| V9 | contorno GeoJSON das áreas |
-| V10 | `push_subscriptions` |
-| V11 | `email_verificado` |
-| V12 | `tokens_verificacao_email` |
-| V13 | `tokens_recuperacao_senha` |
-| V14 | horários sem segundos |
-| V15 | carga de Senador Canedo (109 bairros) |
-| V16 | conta admin de teste (legado) |
-| V17 | integridade e índices |
-| V18 | consolidação das rotas de Senador Canedo (109 → 5) |
-| V19 | conta admin fixa do sistema |
-| V20 | preferência ligada ao **bairro** (`area_atendida_id`); a rota passa a vir do bairro |
-| V21 | **migration em Java** (`core/migracao/V21__CriptografarEmails`): cifra os e-mails existentes e cria `email_hash` único |
-| V22 | registro do aceite dos termos (`termos_aceitos_em`, `termos_versao`) |
-| V23 | "Quem somos": `conteudo_institucional`, `imagens` (BYTEA), `fotos_instituicao`, `integrantes` |
-| V24 | tabela `cidades`; `rotas.cidade_id`, `tipo_coleta`, `fonte`; `areas_atendidas.cidade_id` com FK composta para a rota da mesma cidade; `cronogramas.turno` e horário opcional; os horários-padrão da carga de Senador Canedo viram turno sem horário |
-| V26 | faixa média dos turnos por cidade (`cidades.diurno_*`, `noturno_*`, `fonte_turnos`) e tipo de coleta `CONVENCIONAL` para Aparecida de Goiânia, Trindade e Senador Canedo |
-| V25 | importação das quatro cidades a partir das fontes municipais (gerada pelo levantamento; ver [docs/levantamento-dados-municipais.md](docs/levantamento-dados-municipais.md)) |
+| V1 | `usuarios` (e-mail cifrado + `email_hash`, aceite dos termos), `tokens_verificacao_email`, `tokens_recuperacao_senha` |
+| V2 | `cidades` (com a faixa média dos turnos), `rotas`, `areas_atendidas`, `cronogramas` |
+| V3 | `preferencias_notificacao` (ligada ao bairro), `historico_notificacoes`, `push_subscriptions` |
+| V4 | "Quem somos": `imagens` (BYTEA), `conteudo_institucional`, `fotos_instituicao`, `integrantes` |
+| V5 | dados das quatro cidades: cidades, rotas, coletas e 947 bairros (gerada por `docs/importacao/gerar_dados_cidades.py`) |
+| V6 | **migration em Java** (`core/migracao/V6__ContaAdministrativa`): cria a conta administrativa com o e-mail cifrado pela `SIMUL_DADOS_CHAVE` |
 
 ### 11.3 Regras garantidas pelo banco
 
 | Regra | Como |
 |---|---|
-| E-mail único | índice único em `email_hash` (V21) |
-| Um bairro por cidade | índice único em `(cidade_id, UPPER(bairro))` (V24) |
-| Rota numa única cidade | `rotas.cidade_id NOT NULL` (V24) |
-| Bairro só em rota da própria cidade | FK composta `areas_atendidas (rota_id, cidade_id) → rotas (id, cidade_id)` (V24) |
-| Uma coleta **ativa** por rota, dia e turno | índice único parcial `(rota_id, dia_semana, turno) WHERE ativo` (V24) |
-| Horário completo ou nenhum | `CHECK ((horario_inicio IS NULL) = (horario_fim IS NULL))` (V24) |
-| Turno e tipo de coleta válidos | `CHECK` (V24) |
+| E-mail único | índice único em `email_hash` |
+| Um bairro por cidade | índice único em `(cidade_id, UPPER(bairro))` |
+| Rota numa única cidade | `rotas.cidade_id NOT NULL` |
+| Bairro só em rota da própria cidade | FK composta `areas_atendidas (rota_id, cidade_id) → rotas (id, cidade_id)` |
+| Uma coleta **ativa** por rota, dia e turno | índice único parcial `(rota_id, dia_semana, turno) WHERE ativo` |
+| Horário completo ou nenhum | `CHECK ((horario_inicio IS NULL) = (horario_fim IS NULL))` |
+| Turno e tipo de coleta válidos | `CHECK` |
 | Antecedência de 0 a 72 horas | `CHECK` |
 | Canal e situação da notificação válidos | `CHECK` |
 | Início do cronograma diferente do fim | `CHECK` (fim menor que o início é permitido: coleta que passa da meia-noite) |
 
 ### 11.4 Dados que já vêm no banco
 
-As cidades, bairros, rotas e coletas vêm das fontes municipais de `Cidade.Bairros.Horarios.zip` (V15/V18 para a carga inicial de Senador Canedo e V25 para as quatro cidades). O levantamento completo, com padrões, inconsistências e pendências, está em [docs/levantamento-dados-municipais.md](docs/levantamento-dados-municipais.md).
+As cidades, bairros, rotas e coletas vêm das fontes municipais de `Cidade.Bairros.Horarios.zip` (V5). O levantamento completo, com padrões, inconsistências e pendências, está em [docs/levantamento-dados-municipais.md](docs/levantamento-dados-municipais.md).
 
 | Cidade | Bairros | Rotas | Coletas na semana | Tipo de coleta | Turno diurno (média) | Turno noturno (média) | Operadora |
 |---|---:|---:|---:|---|---|---|---|
@@ -488,12 +470,12 @@ As cidades, bairros, rotas e coletas vêm das fontes municipais de `Cidade.Bairr
 | Senador Canedo | 109 | 5 | 18 | Convencional | 06:00 – 16:00 | 18:00 – 03:00 | Prefeitura de Senador Canedo |
 | **Total** | **947** | **53** | **161** | | | | |
 
-- **Dias e turnos** vêm das fontes municipais (V25). **Nenhuma fonte informa o horário exato** de cada rota: as coletas guardam só o turno.
-- A **faixa média dos turnos** (V26) foi definida pela equipe a partir das informações das operadoras e é mostrada como horário aproximado. O horário exato varia por rua; o painel permite corrigir a faixa e registrar o horário exato de uma rota quando a prefeitura divulgar.
+- **Dias e turnos** vêm das fontes municipais. **Nenhuma fonte informa o horário exato** de cada rota: as coletas guardam só o turno.
+- A **faixa média dos turnos** foi definida pela equipe a partir das informações das operadoras e é mostrada como horário aproximado. O horário exato varia por rua; o painel permite corrigir a faixa e registrar o horário exato de uma rota quando a prefeitura divulgar.
 - Cada **rota** é o grupo de bairros com **exatamente os mesmos dias e turnos** na cidade; ela não representa o trajeto do caminhão. Bairro que aparece em mais de um grupo da fonte recebe a soma dos dias (nada é descartado).
 - Em Senador Canedo, os 109 bairros já cadastrados conferem com a imagem oficial (mesmas 5 rotas); as grafias com erro da imagem ("Fransciso", "Industrias", "Sitio") foram mantidas corretas como já estavam. Os horários 06:00–18:00 e 18:00–23:59 da carga antiga não vinham da prefeitura e viraram turno sem horário.
 
-**Conta administrativa (V19):** `simul.sistema@gmail.com`, com senha combinada com a equipe (só o hash BCrypt fica no banco). Troque a senha pelo "Esqueci minha senha" depois da apresentação.
+**Conta administrativa (V6):** `simul.sistema@gmail.com`, com senha combinada com a equipe (só o hash BCrypt fica no banco). Troque a senha pelo "Esqueci minha senha" depois da apresentação.
 
 Para promover outra conta a admin (localmente):
 
@@ -685,7 +667,16 @@ O Dockerfile compila com JDK 21, executa com JRE 21 **sem root** e limita o heap
 
 Cadastre as variáveis da seção [16](#16-variáveis-de-ambiente), com `NOTIFICACAO_SCHEDULER_ENABLED=true` e `SIMUL_FRONTEND_URL` apontando para o site.
 
-**Antes do deploy da V21**, cadastre `SIMUL_DADOS_CHAVE` no Render: sem ela o serviço não sobe, e a V21 usa essa chave para cifrar os e-mails já gravados. Depois disso, a chave não pode mais mudar.
+**Recriar o banco da Render** (uma vez, depois da consolidação das migrations): no painel do PostgreSQL da Render, abra **Connect → PSQL Command**, conecte e rode:
+
+```sql
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;
+```
+
+Isso apaga todas as tabelas e o histórico do Flyway. No próximo deploy, o Flyway recria o esquema (V1–V5) e a conta administrativa (V6).
+
+Cadastre `SIMUL_DADOS_CHAVE` no Render **antes do primeiro deploy**: sem ela o serviço não sobe, e a V6 usa essa chave para gravar o e-mail cifrado da conta administrativa. Depois disso, a chave não pode mais mudar (os e-mails gravados só abrem com ela).
 
 ### 15.2 Front-end (Static Site)
 
@@ -762,6 +753,7 @@ O PostgreSQL gratuito da Render tem **prazo de expiração**: confira a data no 
 | `JWT_SECRET deve estar em Base64 válido` / `pelo menos 256 bits` | Gere de novo com os comandos de [13.3](#133-segredos-de-desenvolvimento). |
 | Back-end não sobe por VAPID | As três variáveis `WEB_PUSH_VAPID_*` são obrigatórias. |
 | `Migration checksum mismatch for migration version N` | Uma migration já aplicada foi editada. Volte o arquivo ao conteúdo original (`git log` / `git checkout <commit> -- <arquivo>`) e crie uma migration nova para a mudança. Use `flyway repair` só se a alteração foi apenas de comentário/formatação e a equipe concordar. |
+| `Validate failed: Migrations have failed validation` / `Detected applied migration not resolved locally` | O banco foi criado com as migrations antigas (V1–V26), antes da consolidação. Recrie o banco uma vez: localmente `DROP DATABASE simul; CREATE DATABASE simul;`; na Render, apague as tabelas (ver [15.1](#151-back-end-web-service)) ou crie um banco novo. O Flyway recria tudo na próxima subida. |
 | `password authentication failed` / `Connection refused` | Confira `DB_*` e se o PostgreSQL está rodando. |
 | E-mail não chega e o console mostra 503 "E-mail não enviado" | Na Render, use o Brevo ([15.3](#153-e-mail-na-render-brevo)). Localmente, confira as variáveis `SMTP_*` e a senha de aplicativo. Olhe também a caixa de spam. |
 | "Not Found" ao abrir `/login` direto ou ao recarregar | Falta o rewrite do Static Site ([15.2](#152-front-end-static-site)). |
@@ -781,7 +773,7 @@ O PostgreSQL gratuito da Render tem **prazo de expiração**: confira a data no 
 - **JavaScript/React:** 2 espaços, sem ponto e vírgula, aspas simples, até 100 colunas (`frontend/.prettierrc.json`). Formatar com `npx prettier --write src`.
 - **Todos os editores:** `.editorconfig` na raiz.
 - **Commits:** Conventional Commits (`feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`), por exemplo `fix(notificacao): reenvia Web Push pelo mesmo canal`.
-- **Banco:** só por migration nova (`V20__descricao.sql`, `V21__…`).
+- **Banco:** só por migration nova (`V7__descricao.sql`, `V8__…`), a partir da base consolidada V1–V6.
 
 ---
 
