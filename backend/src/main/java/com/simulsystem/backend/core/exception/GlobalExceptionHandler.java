@@ -187,7 +187,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ProblemDetail handleArquivoGrande(MaxUploadSizeExceededException exception) {
         return criar(
-                HttpStatus.PAYLOAD_TOO_LARGE,
+                HttpStatus.CONTENT_TOO_LARGE,
                 "Arquivo muito grande",
                 "A imagem passa do limite de 3 MB. Envie uma foto menor."
         );

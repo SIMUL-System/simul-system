@@ -127,7 +127,7 @@ public class InstitucionalServiceImpl implements InstitucionalService {
     @Override
     @Transactional
     public void reordenarFotos(List<Long> ids) {
-        reordenar(fotoRepository.findAll(), ids, FotoInstituicao::getId, FotoInstituicao::setOrdem);
+        reordenar(fotoRepository.findAll(), ids, foto -> foto.getId(), (foto, ordem) -> foto.setOrdem(ordem));
     }
 
     @Override
@@ -197,7 +197,11 @@ public class InstitucionalServiceImpl implements InstitucionalService {
     @Override
     @Transactional
     public void reordenarIntegrantes(List<Long> ids) {
-        reordenar(integranteRepository.findAll(), ids, Integrante::getId, Integrante::setOrdem);
+        reordenar(
+                integranteRepository.findAll(),
+                ids,
+                integrante -> integrante.getId(),
+                (integrante, ordem) -> integrante.setOrdem(ordem));
     }
 
     /* ---------- auxiliares ---------- */

@@ -209,7 +209,7 @@ class ImportacaoColetaPorCidadeTest {
         int values = sql.indexOf("VALUES", inicio) + "VALUES".length();
 
         List<List<String>> linhas = new ArrayList<>();
-        List<String> atual = null;
+        List<String> atual = new ArrayList<>();
         StringBuilder texto = null;
 
         for (int i = values; i < sql.length(); i++) {

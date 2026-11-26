@@ -56,11 +56,11 @@ public class AreaAtendidaValidation {
 
             JsonNode tipo = geoJson.get("type");
 
-            if (tipo == null || !tipo.isTextual()) {
+            if (tipo == null || !tipo.isString()) {
                 throw new GeometriaGeoJsonInvalidaException("A geometria GeoJSON deve possuir o campo 'type'.");
             }
 
-            String tipoGeometria = tipo.asText();
+            String tipoGeometria = tipo.asString();
 
             if (!tipoGeometria.equals("Polygon") && !tipoGeometria.equals("MultiPolygon")) {
                 throw new GeometriaGeoJsonInvalidaException("A geometria deve ser do tipo Polygon ou MultiPolygon.");

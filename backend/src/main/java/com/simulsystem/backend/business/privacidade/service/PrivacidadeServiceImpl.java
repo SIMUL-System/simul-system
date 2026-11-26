@@ -2,7 +2,6 @@ package com.simulsystem.backend.business.privacidade.service;
 
 import com.simulsystem.backend.business.notificacao.model.HistoricoNotificacao;
 import com.simulsystem.backend.business.notificacao.model.PreferenciaNotificacao;
-import com.simulsystem.backend.business.notificacao.model.PushSubscription;
 import com.simulsystem.backend.business.notificacao.repository.HistoricoNotificacaoRepository;
 import com.simulsystem.backend.business.notificacao.repository.PreferenciaNotificacaoRepository;
 import com.simulsystem.backend.business.notificacao.repository.PushSubscriptionRepository;
@@ -90,7 +89,7 @@ public class PrivacidadeServiceImpl implements PrivacidadeService {
         List<LocalDateTime> navegadores = pushSubscriptionRepository
                 .findByUsuarioId(usuario.getId())
                 .stream()
-                .map(PushSubscription::getDataCriacao)
+                .map(inscricao -> inscricao.getDataCriacao())
                 .toList();
 
         List<DadosLembreteDTO> lembretes = historicoRepository

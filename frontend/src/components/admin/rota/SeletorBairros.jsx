@@ -25,6 +25,9 @@ function SeletorBairros({ id, opcoes, naRota, selecionados, onAlterar, disabled 
   const [ativo, setAtivo] = useState(0)
   const [abrirParaCima, setAbrirParaCima] = useState(false)
   const [alturaLista, setAlturaLista] = useState(ALTURA_MAXIMA_LISTA)
+  // Pedido para devolver o foco ao campo depois de adicionar ou remover um bairro.
+  // O foco é feito num efeito: as funções chamadas pela lista não leem refs.
+  const [pedidoFoco, setPedidoFoco] = useState(0)
 
   const caixaRef = useRef(null)
   const inputRef = useRef(null)
@@ -94,6 +97,12 @@ function SeletorBairros({ id, opcoes, naRota, selecionados, onAlterar, disabled 
     }
   }, [aberto, ativo])
 
+  useEffect(() => {
+    if (pedidoFoco > 0) {
+      inputRef.current?.focus()
+    }
+  }, [pedidoFoco])
+
   function abrir() {
     if (disabled) return
     posicionarLista()
@@ -109,12 +118,12 @@ function SeletorBairros({ id, opcoes, naRota, selecionados, onAlterar, disabled 
     ])
     setBusca('')
     setAtivo(0)
-    inputRef.current?.focus()
+    setPedidoFoco((atual) => atual + 1)
   }
 
   function remover(bairro) {
     onAlterar(selecionados.filter((item) => item.bairro !== bairro))
-    inputRef.current?.focus()
+    setPedidoFoco((atual) => atual + 1)
   }
 
   /** Transforma nomes soltos em itens: existentes viram "mover", o resto vira "novo". */

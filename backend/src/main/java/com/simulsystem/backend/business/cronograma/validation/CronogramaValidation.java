@@ -113,7 +113,7 @@ public class CronogramaValidation {
 
         if (cronogramas.size() != idsUnicos.size()) {
             Set<Long> encontrados = cronogramas.stream()
-                            .map(Cronograma::getId)
+                            .map(cronograma -> cronograma.getId())
                             .collect(Collectors.toSet());
 
             String ausentes = idsUnicos.stream()
