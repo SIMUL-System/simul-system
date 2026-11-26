@@ -1,0 +1,41 @@
+Segunda-feira
+☀ Coleta diurna
+Centro, Abraão Manoel, Santo Onofre, Santa Inês, Perpétuo Socorro, Padre Renato, Vila Guilherme, Vila William, Imperial I, Solange Park, Canaã, Laguna Parque II, Santa Fé, Rosa Morena, Pai Eterno, Residencial Pai Eterno, Serra Branca I e II, Maravilhe, Sámarah, Terra Santa, Vila Bela I e II, Marista, Ponta Kayana, Privê Elias, Morada do Bosque, Avenida Raimundo de Aquino, Setor Oeste, Vila Augusto, Barcelos, Rio Vermelho, Araguaia, Jardim da Luz e Renata Parque.
+
+☾ Coleta noturna
+Setor Sul (parte baixa), Vila Redenção, Estrela do Oriente, Vila Santo Afonso, Novo Paraíso, Imperial II, Residencial Marise, Ponta Kayana, Maria Monteiro, Mariápolis, Solar São Francisco, São Bernardo, Setor Palmares, Nossa Senhora de Fátima, Jardim das Oliveiras, Maysa I, Cascateira, São Salvador, Vila João Braz, Santuário, Ana Rosa, Cristina II e Novo Horizonte.
+
+Terça-feira
+☀ Coleta diurna
+Centro, Abraão Manoel, Santo Onofre, Santa Inês, Perpétuo Socorro, Padre Renato, Vila Guilherme, Vila William, Santa Maria, Guarujá Parque, Laguna Parque I, Vida Nova, Residencial Morais, Residencial Cleo Pinheiro, Chácaras Santa Luzia, Serra Dourada, Residencial Melk, Monte Sinai, Vila Emanuel, Vila Maria, Cristina, Loteamento Escala, Setor Soares, Embaúba, Califórnia, Avenida Raimundo de Aquino, Pai Eterno, Setor Oeste, Vila Augusto, Imperial O (Castorino), Maysa II, Dona Iris I e Ipaneminha.
+
+☾ Coleta noturna
+Setor Sul (parte de cima), Jardim Primavera, Vila Roberto Monteiro, Recanto do Lago, Arco-Íris, Vila Amador, Tamareira, Sol Dourado, Juarez Freire, Pesque-Pague Ouro Verde, Pesque-Pague Paraíso, Maria Eduarda, Monte Cristo, Cristina II Expansão, Fundinho do Ana Rosa, São Sebastião, Vila do Sonho, Conjunto Sol Dourado, Paineiras, Bandeirantes, Harmonia, Maysa III, Escala, 14 Bis, Cascateira, Dona Iris II, Jardim Floresta, Ipanema, Residencial Vieira, Garavelo I e II, Condomínio Imperial, Decolores, Bela Vista, Nova Morada, Nova Morada Park, Cidade Jardim e trecho da GO-469.
+
+Quarta-feira
+☀ Coleta diurna
+Centro, Abraão Manoel, Santo Onofre, Santa Inês, Perpétuo Socorro, Padre Renato, Vila Guilherme, Vila William, Imperial I, Canaã, Laguna Parque II, Santa Fé, Rosa Morena, Cedro, Bayer, Arca Parque, Chácaras Terra Santa, Pai Eterno, Residencial Pai Eterno, Serra Branca I e II, Maravilhe, Sámarah, Terra Santa, Vila Bela I e II, Chácaras Cristo Redentor, Marista, Ponta Kayana, Privê Elias, Morada do Bosque, Avenida Raimundo de Aquino, Setor Oeste, Vila Augusto, Barcelos, Rio Vermelho, Araguaia, Jardim da Luz e Renata Parque.
+
+☾ Coleta noturna
+Setor Sul (parte baixa), Vila Redenção, Estrela do Oriente, Vila Santo Afonso, Novo Paraíso, Imperial II, Residencial Marise, Ponta Kayana, Maria Monteiro, Luzia Monteiro, São Bernardo II, Setor Palmares, Nossa Senhora de Fátima, Jardim das Oliveiras, Maysa I, Jardim do Cerrado, São Salvador, Vila João Braz, Santuário, Ana Rosa, Cristina II e Novo Horizonte.
+
+Quinta-feira
+☀ Coleta diurna
+Centro, Abraão Manoel, Santo Onofre, Santa Inês, Perpétuo Socorro, Padre Renato, Vila Guilherme, Vila William, Guarujá Parque, Laguna Parque I, Vida Nova, Residencial Morais, Residencial Cleo Pinheiro, Chácaras Santa Luzia, Serra Dourada, Residencial Melk, Monte Sinai, Vila Emanuel, Vila Maria, Cristina, Setor Soares, Embaúba, Califórnia, Avenida Raimundo de Aquino, Pai Eterno, Setor Oeste, Vila Augusto, Imperial O (Castorino), Maysa II, Dona Iris I, Ipaneminha e Escala.
+
+☾ Coleta noturna
+Setor Sul (parte de cima), Jardim Primavera, Vila Roberto Monteiro, Recanto do Lago, Arco-Íris, Vila Amador, Tamareira, Sol Dourado, Pesque-Pague Ouro Verde, Pesque-Pague Paraíso, Maria Eduarda, Monte Cristo, Cristina II Expansão, Fundinho do Ana Rosa, São Sebastião, Vila do Sonho, Conjunto Sol Dourado, Paineiras, Bandeirantes, Harmonia, Maysa III, Escala, Cascateira, Dona Iris II, Jardim Floresta, Ipanema, Residencial Vieira, Garavelo I e II, Condomínio Imperial, Decolores, Bela Vista, Nova Morada, Nova Morada Park, Cidade Jardim e trecho da GO-469.
+
+Sexta-feira
+☀ Coleta diurna
+Centro, Abraão Manoel, Santo Onofre, Santa Inês, Perpétuo Socorro, Padre Renato, Vila Guilherme, Vila William, Imperial I, Solange Park, Canaã, Laguna Parque II, Santa Fé, Rosa Morena, Pai Eterno, Residencial Pai Eterno, Serra Branca I e II, Maravilhe, Sámarah, Terra Santa, Vila Bela I e II, Marista, Ponta Kayana, Privê Elias, Morada do Bosque, Avenida Raimundo de Aquino, Setor Oeste, Vila Augusto, Barcelos, Rio Vermelho, Araguaia, Jardim da Luz e Renata Parque.
+
+☾ Coleta noturna
+Setor Sul (parte baixa), Vila Redenção, Estrela do Oriente, Vila Santo Afonso, Novo Paraíso, Imperial II, Residencial Marise, Ponta Kayana, Maria Monteiro, Mariápolis, Solar São Francisco, São Bernardo II, Setor Palmares, Nossa Senhora de Fátima, Jardim das Oliveiras, 14 Bis, Maysa I, Cascateira, São Salvador, Vila João Braz, Santuário, Ana Rosa, Cristina II e Novo Horizonte.
+
+Sábado-feira
+☀ Coleta diurna
+Centro, Abraão Manoel, Santo Onofre, Santa Inês, Perpétuo Socorro, Padre Renato, Vila Guilherme, Vila William, Guarujá Parque, Laguna Parque I, Vida Nova, Residencial Morais, Residencial Cleo Pinheiro, Chácaras Santa Luzia, Serra Dourada, Residencial Melk, Monte Sinai, Vila Emanuel, Vila Maria, Cristina, Loteamento Escala, Setor Soares, Embaúba, Califórnia, Avenida Raimundo de Aquino, Pai Eterno, Setor Oeste, Vila Augusto, Imperial O (Castorino), Maysa II, Dona Iris I, Ipaneminha e Escala.
+
+☾ Coleta noturna
+Setor Sul (parte de cima), Jardim Primavera, Vila Roberto Monteiro, Recanto do Lago, Arco-Íris, Vila Amador, Tamareira, Sol Dourado, Juarez Freire, Pesque-Pague Ouro Verde, Pesque-Pague Paraíso, Maria Eduarda, Monte Cristo, Cristina II Expansão, Fundinho do Ana Rosa, São Sebastião, Vila do Sonho, Conjunto Sol Dourado, Paineiras, Bandeirantes, Maysa III, Escala, Dona Iris II, Jardim Floresta, Ipanema, Residencial Vieira, Garavelo I e II, Condomínio Imperial, Decolores, Bela Vista, Nova Morada, Nova Morada Park, Cidade Jardim e trecho da GO-469.

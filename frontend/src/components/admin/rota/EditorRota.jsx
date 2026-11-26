@@ -15,73 +15,60 @@ import {
 import { definirSemanaDaRota } from '../../../services/adminCronogramaService'
 
 import { nomeRotaCurto } from '../../../utils/areas'
-import { horaParaApi, listarDias, semanaDaRota } from '../../../utils/cronogramas'
+import {
+  dadosTurno,
+  erroDaSemana,
+  mesmaSemana,
+  nomeDia,
+  semanaDaRota,
+  semanaParaApi,
+  semanaVazia,
+  TURNOS,
+} from '../../../utils/cronogramas'
 import { normalizarTexto, ordenarTexto, semAcento } from '../../../utils/texto'
 
 const LIMITE_NOME = 120
 const LIMITE_DESCRICAO = 255
-const OUTRA_CIDADE = '__outra__'
 
-/** Duas semanas iguais? (mesmos dias com o mesmo início e fim) */
-function mesmaSemana(a, b) {
-  const diasA = Object.keys(a).sort()
-  const diasB = Object.keys(b).sort()
+const TIPOS_COLETA = [
+  { valor: 'SELETIVA', rotulo: 'Coleta seletiva' },
+  { valor: 'NAO_INFORMADO', rotulo: 'Tipo não informado pela fonte' },
+]
 
-  return (
-    diasA.join() === diasB.join() &&
-    diasA.every((dia) => a[dia].inicio === b[dia].inicio && a[dia].fim === b[dia].fim)
+/** Pares "dia + turno" que saem da semana: "segunda-feira (noturno)". */
+function coletasRemovidas(antes, depois) {
+  return TURNOS.flatMap((turno) =>
+    antes[turno.valor].dias
+      .filter((dia) => !depois[turno.valor].dias.includes(dia))
+      .map((dia) => `${nomeDia(dia)} (${dadosTurno(turno.valor).rotulo.toLowerCase()})`),
   )
-}
-
-/** Cidade mais frequente nos bairros da rota (ou a única cidade cadastrada). */
-function cidadeDaRota(areasDaRota, cidades) {
-  const contagem = new Map()
-
-  areasDaRota.forEach((area) => contagem.set(area.cidade, (contagem.get(area.cidade) ?? 0) + 1))
-
-  const maisComum = [...contagem.entries()].sort((a, b) => b[1] - a[1])[0]?.[0]
-
-  return maisComum ?? (cidades.length === 1 ? cidades[0] : '')
-}
-
-/** Valida a semana antes de enviar; devolve a mensagem de erro ou ''. */
-function erroDaSemana(semana) {
-  const dias = Object.entries(semana)
-
-  if (dias.length === 0) {
-    return 'Marque pelo menos um dia de coleta.'
-  }
-
-  if (dias.some(([, horario]) => !horario.inicio || !horario.fim)) {
-    return 'Preencha o início e o fim do horário.'
-  }
-
-  if (dias.some(([, horario]) => horario.inicio === horario.fim)) {
-    return 'O início e o fim do horário não podem ser iguais.'
-  }
-
-  return ''
 }
 
 /**
  * Tela de uma rota em três blocos independentes, cada um com o próprio botão
- * de salvar: 1) nome e descrição; 2) dias e horário; 3) bairros atendidos.
- * Rota nova: os blocos 1 e 2 são salvos juntos e, depois, os bairros.
+ * de salvar: 1) dias e turnos; 2) bairros atendidos; 3) nome, tipo e descrição.
+ * Rota nova: nome e semana são salvos juntos e, depois, os bairros.
+ * A rota é sempre da cidade escolhida no painel; só bairros dessa cidade
+ * podem entrar nela.
  */
-function EditorRota({ rota, rotas, areas, cronogramas, onVoltar, onRecarregar, onCriada }) {
+function EditorRota({ rota, cidade, rotas, areas, cronogramas, onVoltar, onRecarregar, onCriada }) {
   const nova = !rota
+  const nomeCidade = rota?.cidade ?? cidade?.nome ?? ''
 
   const areasDaRota = nova
     ? []
     : areas
         .filter((area) => area.rotaId === rota.id)
         .sort((a, b) => ordenarTexto(a.bairro, b.bairro))
-  const cidades = [...new Set(areas.map((area) => area.cidade))].sort(ordenarTexto)
-  const semanaSalva = nova ? {} : semanaDaRota(cronogramas, rota.id)
+  const salva = nova
+    ? { semana: semanaVazia(), horariosDiferentes: [] }
+    : semanaDaRota(cronogramas, rota.id)
+  const semanaSalva = salva.semana
 
   // Bloco 1
   const [nome, setNome] = useState(rota?.nome ?? '')
   const [descricao, setDescricao] = useState(rota?.descricao ?? '')
+  const [tipoColeta, setTipoColeta] = useState(rota?.tipoColeta ?? 'SELETIVA')
   const [erroNome, setErroNome] = useState('')
 
   // Bloco 2
@@ -89,8 +76,6 @@ function EditorRota({ rota, rotas, areas, cronogramas, onVoltar, onRecarregar, o
   const [erroSemana, setErroSemana] = useState('')
 
   // Bloco 3
-  const [cidadeEscolhida, setCidadeEscolhida] = useState(cidadeDaRota(areasDaRota, cidades))
-  const [outraCidade, setOutraCidade] = useState('')
   const [selecionados, setSelecionados] = useState([])
   const [filtroBairros, setFiltroBairros] = useState('')
 
@@ -100,17 +85,18 @@ function EditorRota({ rota, rotas, areas, cronogramas, onVoltar, onRecarregar, o
 
   const dadosAlterados =
     normalizarTexto(nome) !== (rota?.nome ?? '') ||
-    (descricao.trim() || null) !== (rota?.descricao || null)
+    (descricao.trim() || null) !== (rota?.descricao || null) ||
+    tipoColeta !== (rota?.tipoColeta ?? 'SELETIVA')
   const semanaAlterada = !mesmaSemana(semana, semanaSalva)
   const temAlteracao = dadosAlterados || semanaAlterada || selecionados.length > 0
 
-  const cidade = cidadeEscolhida === OUTRA_CIDADE ? normalizarTexto(outraCidade) : cidadeEscolhida
+  // Só bairros da mesma cidade da rota podem ser movidos para ela.
   const opcoesBairros = areas
-    .filter((area) => semAcento(area.cidade) === semAcento(cidade) && area.rotaId !== rota?.id)
+    .filter((area) => semAcento(area.cidade) === semAcento(nomeCidade) && area.rotaId !== rota?.id)
     .map((area) => ({ bairro: area.bairro, rotaNome: nomeRotaCurto(area.nomeRota, area.cidade) }))
     .sort((a, b) => ordenarTexto(a.bairro, b.bairro))
 
-  const diasRemovidos = Object.keys(semanaSalva).filter((dia) => !semana[dia])
+  const removidas = nova ? [] : coletasRemovidas(semanaSalva, semana)
 
   function avisar(bloco, tipo, texto) {
     setRetorno((atual) => ({ ...atual, [bloco]: { tipo, texto } }))
@@ -130,14 +116,6 @@ function EditorRota({ rota, rotas, areas, cronogramas, onVoltar, onRecarregar, o
     return repetida ? 'Já existe uma rota com esse nome.' : ''
   }
 
-  function semanaParaApi() {
-    return Object.entries(semana).map(([diaSemana, horario]) => ({
-      diaSemana,
-      horarioInicio: horaParaApi(horario.inicio),
-      horarioFim: horaParaApi(horario.fim),
-    }))
-  }
-
   async function salvarDados() {
     const erro = validarNome()
     setErroNome(erro)
@@ -148,9 +126,11 @@ function EditorRota({ rota, rotas, areas, cronogramas, onVoltar, onRecarregar, o
       await atualizarRota(rota.id, {
         nome: normalizarTexto(nome),
         descricao: descricao.trim() || null,
+        cidadeId: rota.cidadeId,
+        tipoColeta,
       })
       await onRecarregar()
-      avisar('dados', 'sucesso', 'Nome e descrição salvos.')
+      avisar('dados', 'sucesso', 'Nome, tipo de coleta e descrição salvos.')
     } catch (error) {
       avisar('dados', 'erro', error.message || 'Não foi possível salvar.')
     } finally {
@@ -165,15 +145,15 @@ function EditorRota({ rota, rotas, areas, cronogramas, onVoltar, onRecarregar, o
 
     setSalvando('semana')
     try {
-      await definirSemanaDaRota(rota.id, semanaParaApi())
+      await definirSemanaDaRota(rota.id, semanaParaApi(semana))
       await onRecarregar()
       avisar(
         'semana',
         'sucesso',
-        'Dias e horário salvos. A consulta e os lembretes já usam a nova semana.',
+        'Dias e turnos salvos. A consulta e os lembretes já usam a nova semana.',
       )
     } catch (error) {
-      avisar('semana', 'erro', error.message || 'Não foi possível salvar os dias e o horário.')
+      avisar('semana', 'erro', error.message || 'Não foi possível salvar os dias e os turnos.')
     } finally {
       setSalvando(null)
     }
@@ -190,17 +170,25 @@ function EditorRota({ rota, rotas, areas, cronogramas, onVoltar, onRecarregar, o
     let criada = null
 
     try {
-      criada = await criarRota({ nome: normalizarTexto(nome), descricao: descricao.trim() || null })
-      await definirSemanaDaRota(criada.id, semanaParaApi())
+      criada = await criarRota({
+        nome: normalizarTexto(nome),
+        descricao: descricao.trim() || null,
+        cidadeId: cidade.id,
+        tipoColeta,
+      })
+      await definirSemanaDaRota(criada.id, semanaParaApi(semana))
       await onRecarregar()
-      onCriada(criada.id, 'Rota cadastrada com os dias e o horário. Agora adicione os bairros.')
+      onCriada(
+        criada.id,
+        `Rota cadastrada em ${cidade.nome} com os dias e os turnos. Agora adicione os bairros.`,
+      )
     } catch (error) {
       if (criada) {
         // A rota existe, mas a semana falhou: abre a rota para tentar de novo.
         await onRecarregar()
         onCriada(
           criada.id,
-          `A rota foi cadastrada, mas os dias e o horário não foram salvos: ${error.message}`,
+          `A rota foi cadastrada, mas os dias e os turnos não foram salvos: ${error.message}`,
           'erro',
         )
       } else {
@@ -212,16 +200,11 @@ function EditorRota({ rota, rotas, areas, cronogramas, onVoltar, onRecarregar, o
   }
 
   async function salvarBairros() {
-    if (!cidade) {
-      avisar('bairros', 'erro', 'Escolha a cidade dos bairros.')
-      return
-    }
-
     setSalvando('bairros')
     try {
       const resultado = await adicionarBairrosNaRota(
         rota.id,
-        cidade,
+        nomeCidade,
         selecionados.map((item) => item.bairro),
       )
       await onRecarregar()
@@ -294,9 +277,33 @@ function EditorRota({ rota, rotas, areas, cronogramas, onVoltar, onRecarregar, o
           </p>
         ) : (
           <p id="rota-nome-dica" className="campo-ds__dica">
-            Use cidade, período e dias, como “Senador Canedo - Diurna (seg, qua e sex)”.
+            Use cidade, turno e dias, como “{nomeCidade || 'Cidade'} - Diurna (seg, qua e sex)”.
           </p>
         )}
+      </div>
+
+      <div className="campo-ds">
+        <label className="campo-ds__rotulo" htmlFor="rota-tipo">
+          Tipo de coleta
+        </label>
+        <select
+          id="rota-tipo"
+          className="campo-ds__controle"
+          value={tipoColeta}
+          onChange={(event) => setTipoColeta(event.target.value)}
+          aria-describedby="rota-tipo-dica"
+          disabled={Boolean(salvando)}
+        >
+          {TIPOS_COLETA.map((tipo) => (
+            <option key={tipo.valor} value={tipo.valor}>
+              {tipo.rotulo}
+            </option>
+          ))}
+        </select>
+        <p id="rota-tipo-dica" className="campo-ds__dica">
+          Escolha “não informado” quando a prefeitura não disser se é a coleta seletiva. A consulta
+          avisa o morador.
+        </p>
       </div>
 
       <div className="campo-ds">
@@ -339,10 +346,18 @@ function EditorRota({ rota, rotas, areas, cronogramas, onVoltar, onRecarregar, o
         </p>
       )}
 
-      {!nova && diasRemovidos.length > 0 && (
+      {!nova && salva.horariosDiferentes.length > 0 && !semanaAlterada && (
         <Alerta tipo="aviso">
-          {listarDias(diasRemovidos)} {diasRemovidos.length === 1 ? 'deixa' : 'deixam'} de ter
-          coleta nesta rota. Quem tem lembrete aqui não recebe mais aviso nesse dia.
+          Esta rota tem dias com horários diferentes no mesmo turno. O editor mostra o horário do
+          primeiro dia; ao salvar, todos os dias do turno ficam com ele.
+        </Alerta>
+      )}
+
+      {removidas.length > 0 && (
+        <Alerta tipo="aviso">
+          Deixa{removidas.length === 1 ? '' : 'm'} de ter coleta nesta rota: {removidas.join(', ')}.
+          Quem tem lembrete aqui não recebe mais aviso nesse
+          {removidas.length === 1 ? ' dia' : 's dias'}.
         </Alerta>
       )}
     </>
@@ -356,17 +371,27 @@ function EditorRota({ rota, rotas, areas, cronogramas, onVoltar, onRecarregar, o
           Todas as rotas
         </button>
 
-        <h1 className="admin-pagina__titulo">{nova ? 'Nova rota' : rota.nome}</h1>
+        <h1 className="admin-pagina__titulo">{nova ? `Nova rota em ${nomeCidade}` : rota.nome}</h1>
 
         {!nova && (
           <p className="admin-pagina__texto">
+            {rota.tipoColeta === 'NAO_INFORMADO' && (
+              <span className="selo selo--pendente">Tipo de coleta não informado</span>
+            )}{' '}
             {rota.ativo ? (
               <span className="selo selo--ativo">Ativa</span>
             ) : (
               <span className="selo selo--inativo">Inativa: não aparece na consulta</span>
             )}{' '}
-            {areasDaRota.length === 1 ? '1 bairro' : `${areasDaRota.length} bairros`} seguem os
-            horários desta rota.
+            {areasDaRota.length === 1 ? '1 bairro' : `${areasDaRota.length} bairros`} de{' '}
+            {nomeCidade} seguem os dias desta rota.
+          </p>
+        )}
+
+        {!nova && rota.fonte && (
+          <p className="campo-ds__dica editor-rota__fonte">
+            <Icone nome="info" tamanho={16} />
+            Fonte: {rota.fonte}
           </p>
         )}
       </div>
@@ -374,13 +399,13 @@ function EditorRota({ rota, rotas, areas, cronogramas, onVoltar, onRecarregar, o
       {nova ? (
         <section className="admin-quadro bloco-rota" aria-labelledby="bloco-nova">
           <h2 id="bloco-nova" className="bloco-rota__titulo">
-            <span className="bloco-rota__numero">1</span> Nome, dias e horário
+            <span className="bloco-rota__numero">1</span> Nome, dias e turnos
           </h2>
 
           <p className="bloco-rota__dica">
-            <Icone nome="info" tamanho={18} />
-            Crie uma rota só quando os bairros tiverem dias ou horário diferentes das rotas que já
-            existem. Se a coleta é igual, adicione o bairro na rota existente.
+            <Icone nome="info" tamanho={18} />A rota será de <strong>{nomeCidade}</strong>. Crie uma
+            rota só quando os bairros tiverem dias ou turnos diferentes das rotas que já existem
+            nesta cidade.
           </p>
 
           {camposDados}
@@ -407,8 +432,8 @@ function EditorRota({ rota, rotas, areas, cronogramas, onVoltar, onRecarregar, o
 
             <p className="bloco-rota__dica">
               <Icone nome="info" tamanho={18} />
-              Todos os bairros desta rota seguem estes dias e este horário. Mudou a coleta de um
-              bairro só? Adicione-o em outra rota em vez de mudar aqui.
+              Todos os bairros desta rota seguem estes dias e turnos. Mudou a coleta de um bairro
+              só? Adicione-o em outra rota da cidade em vez de mudar aqui.
             </p>
 
             {camposSemana}
@@ -420,7 +445,7 @@ function EditorRota({ rota, rotas, areas, cronogramas, onVoltar, onRecarregar, o
               onClick={salvarSemana}
               disabled={Boolean(salvando) || !semanaAlterada}
             >
-              {salvando === 'semana' ? 'Salvando…' : 'Salvar dias e horário'}
+              {salvando === 'semana' ? 'Salvando…' : 'Salvar dias e turnos'}
             </button>
           </section>
 
@@ -482,60 +507,10 @@ function EditorRota({ rota, rotas, areas, cronogramas, onVoltar, onRecarregar, o
             )}
 
             <div className="bloco-rota__adicionar">
-              {cidades.length !== 1 || cidadeEscolhida === OUTRA_CIDADE ? (
-                <div className="bloco-rota__cidade">
-                  <div className="campo-ds">
-                    <label className="campo-ds__rotulo" htmlFor="rota-cidade">
-                      Cidade
-                    </label>
-                    <select
-                      id="rota-cidade"
-                      className="campo-ds__controle"
-                      value={cidadeEscolhida}
-                      onChange={(event) => {
-                        setCidadeEscolhida(event.target.value)
-                        setSelecionados([])
-                      }}
-                      disabled={Boolean(salvando)}
-                    >
-                      <option value="">Escolha a cidade</option>
-                      {cidades.map((item) => (
-                        <option key={item} value={item}>
-                          {item}
-                        </option>
-                      ))}
-                      <option value={OUTRA_CIDADE}>Outra cidade…</option>
-                    </select>
-                  </div>
-
-                  {cidadeEscolhida === OUTRA_CIDADE && (
-                    <div className="campo-ds">
-                      <label className="campo-ds__rotulo" htmlFor="rota-outra-cidade">
-                        Nome da cidade
-                      </label>
-                      <input
-                        id="rota-outra-cidade"
-                        className="campo-ds__controle"
-                        value={outraCidade}
-                        maxLength={120}
-                        onChange={(event) => setOutraCidade(event.target.value)}
-                        disabled={Boolean(salvando)}
-                      />
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <p className="campo-ds__dica">
-                  Cidade: <strong>{cidade}</strong>{' '}
-                  <button
-                    type="button"
-                    className="botao-link"
-                    onClick={() => setCidadeEscolhida(OUTRA_CIDADE)}
-                  >
-                    outra cidade
-                  </button>
-                </p>
-              )}
+              <p className="campo-ds__dica">
+                Bairros de <strong>{nomeCidade}</strong>. Bairros de outra cidade não entram nesta
+                rota.
+              </p>
 
               <SeletorBairros
                 id="rota-bairros"
@@ -543,7 +518,7 @@ function EditorRota({ rota, rotas, areas, cronogramas, onVoltar, onRecarregar, o
                 naRota={areasDaRota.map((area) => area.bairro)}
                 selecionados={selecionados}
                 onAlterar={setSelecionados}
-                disabled={Boolean(salvando) || !cidade}
+                disabled={Boolean(salvando)}
               />
 
               {movidos.length > 0 && (
@@ -580,7 +555,7 @@ function EditorRota({ rota, rotas, areas, cronogramas, onVoltar, onRecarregar, o
 
           <section className="admin-quadro bloco-rota" aria-labelledby="bloco-dados">
             <h2 id="bloco-dados" className="bloco-rota__titulo">
-              <span className="bloco-rota__numero">3</span> Nome e descrição
+              <span className="bloco-rota__numero">3</span> Nome, tipo e descrição
             </h2>
 
             {camposDados}
@@ -592,7 +567,7 @@ function EditorRota({ rota, rotas, areas, cronogramas, onVoltar, onRecarregar, o
               onClick={salvarDados}
               disabled={Boolean(salvando) || !dadosAlterados}
             >
-              {salvando === 'dados' ? 'Salvando…' : 'Salvar nome e descrição'}
+              {salvando === 'dados' ? 'Salvando…' : 'Salvar nome, tipo e descrição'}
             </button>
           </section>
         </>
@@ -613,8 +588,8 @@ function EditorRota({ rota, rotas, areas, cronogramas, onVoltar, onRecarregar, o
         <p>
           Há alterações que ainda não foram salvas (
           {[
-            dadosAlterados && 'nome ou descrição',
-            semanaAlterada && 'dias e horário',
+            dadosAlterados && 'nome, tipo ou descrição',
+            semanaAlterada && 'dias e turnos',
             selecionados.length > 0 && 'bairros escolhidos',
           ]
             .filter(Boolean)

@@ -43,14 +43,14 @@ class AreaAtendidaValidationTest {
 
         when(
                 areaAtendidaRepository
-                        .findByCidadeIgnoreCaseAndBairroIgnoreCaseAndRota_AtivoTrue(cidade, bairro)
+                        .findByCidade_NomeIgnoreCaseAndBairroIgnoreCaseAndRota_AtivoTrue(cidade, bairro)
         ).thenReturn(Optional.of(areaAtendida));
 
         AreaAtendida resultado = areaAtendidaValidation.buscarAreaAtendidaComRotaAtiva(cidade, bairro);
 
         assertSame(areaAtendida, resultado);
 
-        verify(areaAtendidaRepository).findByCidadeIgnoreCaseAndBairroIgnoreCaseAndRota_AtivoTrue(cidade, bairro);
+        verify(areaAtendidaRepository).findByCidade_NomeIgnoreCaseAndBairroIgnoreCaseAndRota_AtivoTrue(cidade, bairro);
     }
 
     @Test
@@ -60,7 +60,7 @@ class AreaAtendidaValidationTest {
 
         when(
                 areaAtendidaRepository
-                        .findByCidadeIgnoreCaseAndBairroIgnoreCaseAndRota_AtivoTrue(cidade, bairro)
+                        .findByCidade_NomeIgnoreCaseAndBairroIgnoreCaseAndRota_AtivoTrue(cidade, bairro)
         ).thenReturn(Optional.empty());
 
         assertThrows(
@@ -70,6 +70,6 @@ class AreaAtendidaValidationTest {
                                 .buscarAreaAtendidaComRotaAtiva(cidade, bairro)
         );
 
-        verify(areaAtendidaRepository).findByCidadeIgnoreCaseAndBairroIgnoreCaseAndRota_AtivoTrue(cidade, bairro);
+        verify(areaAtendidaRepository).findByCidade_NomeIgnoreCaseAndBairroIgnoreCaseAndRota_AtivoTrue(cidade, bairro);
     }
 }

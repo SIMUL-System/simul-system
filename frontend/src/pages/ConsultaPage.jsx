@@ -13,7 +13,14 @@ import DiasSemana from '../components/coleta/DiasSemana'
 
 import { obterToken } from '../services/authService'
 
-import { calcularProximaColeta, formatarHora, ordenarCronogramas, rotuloDia } from '../utils/coleta'
+import {
+  calcularProximaColeta,
+  descreverHorario,
+  formatarHora,
+  ordenarCronogramas,
+  rotuloDia,
+  temHorario,
+} from '../utils/coleta'
 
 import { buscarCoordenadasArea } from '../services/geocodingService'
 
@@ -428,6 +435,11 @@ function ConsultaPage() {
 
   const usuarioLogado = Boolean(obterToken())
 
+  // Só Goiânia informa que é a coleta seletiva; nas outras fontes o tipo não vem.
+  const seletiva = resultado?.tipoColeta !== 'NAO_INFORMADO'
+
+  const algumSemHorario = cronogramasOrdenados.some((cronograma) => !temHorario(cronograma))
+
   // "Senador Canedo - Diurna (seg, qua e sex)" → "Diurna (seg, qua e sex)",
   // já que a cidade aparece ao lado.
   const prefixoCidade = resultado?.cidade ? `${resultado.cidade} - ` : null
@@ -575,7 +587,7 @@ function ConsultaPage() {
                   tabIndex="-1"
                   className="consulta-resultado__titulo"
                 >
-                  Coleta seletiva em {resultado.bairro}
+                  {seletiva ? 'Coleta seletiva' : 'Coleta'} em {resultado.bairro}
                 </h2>
 
                 <p className="consulta-resultado__local">
@@ -608,21 +620,46 @@ function ConsultaPage() {
 
                         return (
                           <li
-                            key={`${cronograma.diaSemana}-${inicio}-${indice}`}
+                            key={`${cronograma.diaSemana}-${cronograma.turno}-${inicio}-${indice}`}
                             className="horarios__item"
                           >
                             <span className="horarios__dia">{rotuloDia(cronograma.diaSemana)}</span>
 
-                            <span className="horarios__hora">
-                              <time dateTime={inicio}>{inicio}</time>
-                              {' – '}
-                              <time dateTime={fim}>{fim}</time>
-                            </span>
+                            {temHorario(cronograma) ? (
+                              <span className="horarios__hora">
+                                <time dateTime={inicio}>{inicio}</time>
+                                {' – '}
+                                <time dateTime={fim}>{fim}</time>
+                              </span>
+                            ) : (
+                              <span className="horarios__hora horarios__hora--turno">
+                                {descreverHorario(cronograma, true)}
+                              </span>
+                            )}
                           </li>
                         )
                       })}
                     </ul>
+
+                    {algumSemHorario && (
+                      <p className="horarios__nota">
+                        A prefeitura informa só o turno da coleta, sem o horário exato.
+                      </p>
+                    )}
                   </section>
+
+                  {!seletiva && (
+                    <div className="alerta alerta--info" role="note">
+                      <Icone nome="info" />
+
+                      <div>
+                        <strong>Tipo de coleta não informado</strong>A fonte da prefeitura de{' '}
+                        {resultado.cidade} traz os dias e o turno, mas não diz se esta é a coleta
+                        seletiva. Confirme com a prefeitura antes de separar os recicláveis só para
+                        este dia.
+                      </div>
+                    </div>
+                  )}
 
                   <section className="chamada-lembrete" aria-labelledby="titulo-chamada-lembrete">
                     <span className="chamada-lembrete__icone" aria-hidden="true">

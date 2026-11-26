@@ -48,15 +48,15 @@ public class RotaController {
                 .body(rota);
     }
 
-    /** GET: todas as rotas. */
+    /** GET ?cidadeId=: rotas (todas ou só as da cidade). */
     @GetMapping
-    public ResponseEntity<List<RotaResponseDTO>> listarRotas() {
-        List<RotaResponseDTO> rotas = rotaService.listarRotas();
+    public ResponseEntity<List<RotaResponseDTO>> listarRotas(@RequestParam(required = false) Long cidadeId) {
+        List<RotaResponseDTO> rotas = rotaService.listarRotas(cidadeId);
 
         return ResponseEntity.ok(rotas);
     }
 
-    /** PUT /{id}: edita nome e descrição. */
+    /** PUT /{id}: edita nome, descrição e tipo de coleta (a cidade não muda). */
     @PutMapping("/{id}")
     public ResponseEntity<RotaResponseDTO> atualizarRota(
             @PathVariable Long id,
@@ -87,15 +87,16 @@ public class RotaController {
                 .body(area);
     }
 
-    /** GET /areas: todas as áreas, inclusive de rotas inativas. */
+    /** GET /areas?cidadeId=: bairros (todos ou só os da cidade), inclusive de rotas inativas. */
     @GetMapping("/areas")
-    public ResponseEntity<List<AreaAtendidaResponseDTO>> listarAreasAtendidas() {
-        List<AreaAtendidaResponseDTO> areas = rotaService.listarAreasAtendidas();
+    public ResponseEntity<List<AreaAtendidaResponseDTO>> listarAreasAtendidas(
+            @RequestParam(required = false) Long cidadeId) {
+        List<AreaAtendidaResponseDTO> areas = rotaService.listarAreasAtendidas(cidadeId);
 
         return ResponseEntity.ok(areas);
     }
 
-    /** PUT /areas/{id}: edita cidade, bairro e rota. */
+    /** PUT /areas/{id}: edita bairro e rota (só rotas da mesma cidade). */
     @PutMapping("/areas/{id}")
     public ResponseEntity<AreaAtendidaResponseDTO> atualizarAreaAtendida(
             @PathVariable Long id,

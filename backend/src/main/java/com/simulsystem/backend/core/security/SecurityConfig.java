@@ -66,6 +66,12 @@ public class SecurityConfig {
                         // Página pública "Quem somos" e as fotos dela.
                         .requestMatchers(HttpMethod.GET, "/api/institucional", "/api/institucional/imagens/*").permitAll()
 
+                        // Painel admin: o perfil é conferido aqui, antes de ler e validar
+                        // o corpo do pedido. Assim um usuário comum recebe 403 mesmo
+                        // mandando um corpo inválido (o @PreAuthorize dos controllers
+                        // continua como segunda barreira).
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception

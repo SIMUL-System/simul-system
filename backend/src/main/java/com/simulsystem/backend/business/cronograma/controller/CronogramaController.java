@@ -44,10 +44,10 @@ public class CronogramaController {
                 .body(cronograma);
     }
 
-    /** GET: todos os horários, ativos e inativos. */
+    /** GET ?cidadeId=: coletas ativas e inativas (todas ou só as das rotas da cidade). */
     @GetMapping
-    public ResponseEntity<List<CronogramaResponseDTO>> listar() {
-        List<CronogramaResponseDTO> cronogramas = cronogramaService.listar();
+    public ResponseEntity<List<CronogramaResponseDTO>> listar(@RequestParam(required = false) Long cidadeId) {
+        List<CronogramaResponseDTO> cronogramas = cronogramaService.listar(cidadeId);
 
         return ResponseEntity.ok(cronogramas);
     }

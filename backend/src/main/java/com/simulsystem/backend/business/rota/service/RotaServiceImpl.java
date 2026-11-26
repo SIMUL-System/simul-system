@@ -1,5 +1,7 @@
 package com.simulsystem.backend.business.rota.service;
 
+import com.simulsystem.backend.business.cidade.model.Cidade;
+import com.simulsystem.backend.business.cidade.validation.CidadeValidation;
 import com.simulsystem.backend.business.cronograma.model.Cronograma;
 import com.simulsystem.backend.business.cronograma.service.CronogramaService;
 import com.simulsystem.backend.business.rota.dto.AreaAtendidaRequestDTO;
@@ -20,6 +22,7 @@ import com.simulsystem.backend.business.rota.repository.AreaAtendidaRepository;
 import com.simulsystem.backend.business.rota.repository.RotaRepository;
 import com.simulsystem.backend.business.rota.validation.AreaAtendidaValidation;
 import com.simulsystem.backend.business.rota.validation.RotaValidation;
+import com.simulsystem.backend.core.exception.CidadeDivergenteException;
 import com.simulsystem.backend.core.util.Textos;
 
 import org.springframework.stereotype.Service;
@@ -44,6 +47,7 @@ public class RotaServiceImpl implements RotaService {
 
     private final RotaValidation rotaValidation;
     private final AreaAtendidaValidation areaAtendidaValidation;
+    private final CidadeValidation cidadeValidation;
 
     public RotaServiceImpl(
             RotaRepository rotaRepository,
@@ -52,7 +56,8 @@ public class RotaServiceImpl implements RotaService {
             RotaMapper rotaMapper,
             AreaAtendidaMapper areaAtendidaMapper,
             RotaValidation rotaValidation,
-            AreaAtendidaValidation areaAtendidaValidation
+            AreaAtendidaValidation areaAtendidaValidation,
+            CidadeValidation cidadeValidation
     ) {
         this.rotaRepository = rotaRepository;
         this.areaAtendidaRepository = areaAtendidaRepository;
@@ -61,11 +66,14 @@ public class RotaServiceImpl implements RotaService {
         this.areaAtendidaMapper = areaAtendidaMapper;
         this.rotaValidation = rotaValidation;
         this.areaAtendidaValidation = areaAtendidaValidation;
+        this.cidadeValidation = cidadeValidation;
     }
 
     @Override
     public RotaResponseDTO cadastrarRota(RotaRequestDTO requestDTO) {
-        Rota rota = rotaMapper.toEntity(requestDTO);
+        Cidade cidade = cidadeValidation.buscarCidadeExistente(requestDTO.cidadeId());
+
+        Rota rota = rotaMapper.toEntity(requestDTO, cidade);
 
         Rota rotaSalva = rotaRepository.save(rota);
 
@@ -74,9 +82,12 @@ public class RotaServiceImpl implements RotaService {
 
     @Override
     public AreaAtendidaResponseDTO cadastrarAreaAtendida(AreaAtendidaRequestDTO requestDTO) {
-        areaAtendidaValidation.validarAreaNaoCadastrada(requestDTO.cidade(), requestDTO.bairro());
-
         Rota rota = rotaValidation.buscarRotaExistente(requestDTO.rotaId());
+
+        // O bairro fica na cidade da rota.
+        cidadeValidation.validarNomeDaCidade(rota.getCidade(), requestDTO.cidade());
+
+        areaAtendidaValidation.validarAreaNaoCadastrada(rota.getCidade().getId(), requestDTO.bairro());
 
         AreaAtendida areaAtendida = areaAtendidaMapper.toEntity(requestDTO, rota);
 
@@ -86,9 +97,12 @@ public class RotaServiceImpl implements RotaService {
     }
 
     @Override
-    public List<AreaAtendidaResponseDTO> listarAreasAtendidas() {
-        return areaAtendidaRepository
-                .findAll()
+    public List<AreaAtendidaResponseDTO> listarAreasAtendidas(Long cidadeId) {
+        List<AreaAtendida> areas = cidadeId == null
+                ? areaAtendidaRepository.findAll()
+                : areaAtendidaRepository.findByCidade_Id(cidadeValidation.buscarCidadeExistente(cidadeId).getId());
+
+        return areas
                 .stream()
                 .map(areaAtendidaMapper::toResponseDTO)
                 .toList();
@@ -98,9 +112,18 @@ public class RotaServiceImpl implements RotaService {
     public AreaAtendidaResponseDTO atualizarAreaAtendida(Long id, AreaAtendidaRequestDTO requestDTO) {
         AreaAtendida areaAtendida = areaAtendidaValidation.buscarPorId(id);
 
-        areaAtendidaValidation.validarAreaNaoCadastradaParaOutroRegistro(id, requestDTO.cidade(), requestDTO.bairro());
-
         Rota rota = rotaValidation.buscarRotaExistente(requestDTO.rotaId());
+
+        // Bairro só muda para rota da própria cidade.
+        cidadeValidation.validarNomeDaCidade(rota.getCidade(), requestDTO.cidade());
+        cidadeValidation.validarMesmaCidade(
+                areaAtendida.getCidade(),
+                rota.getCidade(),
+                "O bairro " + areaAtendida.getBairro() + " é de " + areaAtendida.getNomeCidade()
+                        + " e só pode ficar numa rota dessa cidade.");
+
+        areaAtendidaValidation.validarAreaNaoCadastradaParaOutroRegistro(
+                id, rota.getCidade().getId(), requestDTO.bairro());
 
         areaAtendidaMapper.atualizarEntity(areaAtendida, requestDTO, rota);
 
@@ -126,7 +149,7 @@ public class RotaServiceImpl implements RotaService {
     @Override
     public List<AreaDisponivelResponseDTO> listarAreasDisponiveis() {
         return areaAtendidaRepository
-                .findAllByRota_AtivoTrueOrderByCidadeAscBairroAsc()
+                .listarDeRotasAtivas()
                 .stream()
                 .map(areaAtendidaMapper::toAreaDisponivelResponseDTO)
                 .toList();
@@ -142,9 +165,12 @@ public class RotaServiceImpl implements RotaService {
     }
 
     @Override
-    public List<RotaResponseDTO> listarRotas() {
-        return rotaRepository
-                .findAll()
+    public List<RotaResponseDTO> listarRotas(Long cidadeId) {
+        List<Rota> rotas = cidadeId == null
+                ? rotaRepository.findAll()
+                : rotaRepository.findByCidade_Id(cidadeValidation.buscarCidadeExistente(cidadeId).getId());
+
+        return rotas
                 .stream()
                 .map(rotaMapper::toResponseDTO)
                 .toList();
@@ -153,6 +179,13 @@ public class RotaServiceImpl implements RotaService {
     @Override
     public RotaResponseDTO atualizarRota(Long id, RotaRequestDTO requestDTO) {
         Rota rota = rotaValidation.buscarRotaExistente(id);
+
+        // A cidade é definida na criação: os bairros da rota são dessa cidade.
+        if (!rota.getCidade().getId().equals(requestDTO.cidadeId())) {
+            throw new CidadeDivergenteException(
+                    "A rota é de " + rota.getCidade().getNome()
+                            + " e a cidade não pode ser trocada. Crie uma rota na outra cidade.");
+        }
 
         rotaMapper.atualizarEntity(rota, requestDTO);
 
@@ -177,7 +210,10 @@ public class RotaServiceImpl implements RotaService {
     public BairrosRotaResponseDTO adicionarBairrosNaRota(Long rotaId, BairrosRotaRequestDTO requestDTO) {
         Rota rota = rotaValidation.buscarRotaExistente(rotaId);
 
-        String cidade = Textos.normalizarEspacos(requestDTO.cidade());
+        Cidade cidade = rota.getCidade();
+
+        // Só bairros da cidade da rota.
+        cidadeValidation.validarNomeDaCidade(cidade, Textos.normalizarEspacos(requestDTO.cidade()));
 
         List<String> cadastrados = new ArrayList<>();
         List<String> movidos = new ArrayList<>();
@@ -185,7 +221,7 @@ public class RotaServiceImpl implements RotaService {
 
         for (String bairro : removerRepetidos(requestDTO.bairros())) {
             AreaAtendida area = areaAtendidaRepository
-                    .findByCidadeIgnoreCaseAndBairroIgnoreCase(cidade, bairro)
+                    .findByCidade_IdAndBairroIgnoreCase(cidade.getId(), bairro)
                     .orElse(null);
 
             if (area == null) {

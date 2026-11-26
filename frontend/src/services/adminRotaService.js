@@ -1,9 +1,11 @@
 import { apiRequest } from './api'
 import { obterToken } from './authService'
 
-/** GET /api/admin/rotas */
-function listarRotas() {
-  return apiRequest('/api/admin/rotas', {
+/** GET /api/admin/rotas?cidadeId= (sem cidade: todas) */
+function listarRotas(cidadeId) {
+  const filtro = cidadeId ? `?cidadeId=${encodeURIComponent(cidadeId)}` : ''
+
+  return apiRequest(`/api/admin/rotas${filtro}`, {
     token: obterToken(),
   })
 }

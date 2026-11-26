@@ -27,9 +27,11 @@ import Interruptor from '../components/form/Interruptor'
 import {
   calcularProximaColeta,
   descreverAntecedencia,
+  descreverHorario,
   formatarData,
   formatarHora,
   ordenarCronogramas,
+  TURNOS,
 } from '../utils/coleta'
 import { ordenarTexto } from '../utils/texto'
 
@@ -645,10 +647,15 @@ function PreferenciasPage() {
             <span>
               Próxima coleta:{' '}
               <strong>
-                {formatarData(proximaColeta.inicio)}, às{' '}
-                {formatarHora(proximaColeta.cronograma.horarioInicio)}
+                {formatarData(proximaColeta.inicio)}
+                {proximaColeta.semHorario
+                  ? `, ${descreverHorario(proximaColeta.cronograma).toLowerCase()}`
+                  : `, às ${formatarHora(proximaColeta.cronograma.horarioInicio)}`}
               </strong>
               .{' '}
+              {proximaColeta.semHorario &&
+                proximaColeta.turno !== 'NAO_INFORMADO' &&
+                `Sem horário informado, o aviso conta a partir do começo do turno ${TURNOS[proximaColeta.turno].rotulo.toLowerCase()} (${TURNOS[proximaColeta.turno].referencia}). `}
               {lembreteJaPassou ? (
                 'Para esta coleta o horário do lembrete já passou; as próximas seguem a antecedência escolhida.'
               ) : (

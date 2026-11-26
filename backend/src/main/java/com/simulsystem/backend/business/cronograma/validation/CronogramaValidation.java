@@ -2,6 +2,7 @@ package com.simulsystem.backend.business.cronograma.validation;
 
 import com.simulsystem.backend.business.cronograma.model.Cronograma;
 import com.simulsystem.backend.business.cronograma.model.DiaSemana;
+import com.simulsystem.backend.business.cronograma.model.Turno;
 import com.simulsystem.backend.business.cronograma.repository.CronogramaRepository;
 import com.simulsystem.backend.core.exception.CronogramaJaCadastradoException;
 import com.simulsystem.backend.core.exception.CronogramaNaoEncontradoException;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalTime;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -33,24 +35,60 @@ public class CronogramaValidation {
                 );
     }
 
-    /** Impede dois horários ativos na mesma rota e dia. */
-    public void validarCronogramaNaoDuplicado(Long rotaId, DiaSemana diaSemana) {
-        boolean existe = cronogramaRepository.existsByRotaIdAndDiaSemanaAndAtivoTrue(rotaId, diaSemana);
+    /** Impede duas coletas ativas na mesma rota, dia e turno. */
+    public void validarCronogramaNaoDuplicado(Long rotaId, DiaSemana diaSemana, Turno turno) {
+        boolean existe = cronogramaRepository.existsByRotaIdAndDiaSemanaAndTurnoAndAtivoTrue(rotaId, diaSemana, turno);
 
         if (existe) {
-            throw new CronogramaJaCadastradoException("Já existe um cronograma ativo para esta rota e dia da semana.");
+            throw new CronogramaJaCadastradoException(
+                    "Já existe uma coleta ativa para esta rota, dia da semana e turno.");
         }
     }
 
     /** Mesma regra na edição, ignorando o próprio registro. */
-    public void validarCronogramaNaoDuplicadoNaAtualizacao(Long cronogramaId, Long rotaId, DiaSemana diaSemana) {
+    public void validarCronogramaNaoDuplicadoNaAtualizacao(
+            Long cronogramaId, Long rotaId, DiaSemana diaSemana, Turno turno) {
         boolean existe = cronogramaRepository
-                        .existsByRotaIdAndDiaSemanaAndAtivoTrueAndIdNot(rotaId, diaSemana, cronogramaId);
+                        .existsByRotaIdAndDiaSemanaAndTurnoAndAtivoTrueAndIdNot(rotaId, diaSemana, turno, cronogramaId);
 
         if (existe) {
             throw new CronogramaJaCadastradoException(
-                    "Já existe outro cronograma ativo para esta rota e dia da semana."
+                    "Já existe outra coleta ativa para esta rota, dia da semana e turno."
             );
+        }
+    }
+
+    /**
+     * Confere o par de horários e devolve o turno da coleta.
+     *
+     * <ul>
+     *   <li>Início e fim vêm juntos ou ficam os dois vazios (só o turno).</li>
+     *   <li>Sem horário, o turno é obrigatório: nada de horário inventado.</li>
+     *   <li>Com horário e sem turno, o turno sai do horário de início.</li>
+     * </ul>
+     */
+    public Turno resolverTurno(Turno turno, LocalTime horarioInicio, LocalTime horarioFim) {
+        validarParDeHorarios(horarioInicio, horarioFim);
+
+        if (horarioInicio == null) {
+            if (turno == null) {
+                throw new HorarioCronogramaInvalidoException(
+                        "Informe o turno da coleta ou o horário de início e fim.");
+            }
+
+            return turno;
+        }
+
+        validarHorarios(horarioInicio, horarioFim);
+
+        return Objects.requireNonNullElseGet(turno, () -> Turno.doHorario(horarioInicio));
+    }
+
+    /** Início e fim: os dois preenchidos ou os dois vazios. */
+    public void validarParDeHorarios(LocalTime horarioInicio, LocalTime horarioFim) {
+        if ((horarioInicio == null) != (horarioFim == null)) {
+            throw new HorarioCronogramaInvalidoException(
+                    "Informe o horário de início e o de fim, ou deixe os dois em branco.");
         }
     }
 
@@ -97,6 +135,20 @@ public class CronogramaValidation {
             if (!vistos.add(dia)) {
                 throw new HorarioCronogramaInvalidoException(
                         "O dia " + dia.name() + " foi informado mais de uma vez."
+                );
+            }
+        }
+    }
+
+    /** Cada par dia + turno só pode aparecer uma vez na semana enviada. */
+    public void validarColetasSemRepeticao(List<DiaSemana> dias, List<Turno> turnos) {
+        Set<String> vistos = new LinkedHashSet<>();
+
+        for (int i = 0; i < dias.size(); i++) {
+            if (!vistos.add(dias.get(i) + "/" + turnos.get(i))) {
+                throw new HorarioCronogramaInvalidoException(
+                        "O dia " + dias.get(i).name() + " no turno " + turnos.get(i).getDescricao()
+                                + " foi informado mais de uma vez."
                 );
             }
         }

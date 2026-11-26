@@ -1,5 +1,7 @@
 package com.simulsystem.backend.business.rota.model;
 
+import com.simulsystem.backend.business.cidade.model.Cidade;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -25,8 +27,10 @@ public class AreaAtendida {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 120)
-    private String cidade;
+    /** Cidade do bairro; é sempre a mesma da rota (garantido também pelo banco). */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "cidade_id", nullable = false)
+    private Cidade cidade;
 
     @Column(nullable = false, length = 120)
     private String bairro;
@@ -37,4 +41,9 @@ public class AreaAtendida {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "rota_id", nullable = false)
     private Rota rota;
+
+    /** Nome da cidade (atalho para telas e mensagens). */
+    public String getNomeCidade() {
+        return cidade == null ? null : cidade.getNome();
+    }
 }

@@ -143,7 +143,7 @@ public class PrivacidadeServiceImpl implements PrivacidadeService {
 
     private DadosPreferenciaDTO converterPreferencia(PreferenciaNotificacao preferencia) {
         return new DadosPreferenciaDTO(
-                preferencia.getAreaAtendida().getCidade(),
+                preferencia.getAreaAtendida().getNomeCidade(),
                 preferencia.getAreaAtendida().getBairro(),
                 preferencia.getRota().getNome(),
                 preferencia.getEmailAtivo(),

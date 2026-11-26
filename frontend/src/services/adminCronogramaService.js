@@ -1,9 +1,11 @@
 import { apiRequest } from './api'
 import { obterToken } from './authService'
 
-/** GET /api/admin/cronogramas */
-function listarCronogramas() {
-  return apiRequest('/api/admin/cronogramas', {
+/** GET /api/admin/cronogramas?cidadeId= (sem cidade: todas) */
+function listarCronogramas(cidadeId) {
+  const filtro = cidadeId ? `?cidadeId=${encodeURIComponent(cidadeId)}` : ''
+
+  return apiRequest(`/api/admin/cronogramas${filtro}`, {
     token: obterToken(),
   })
 }

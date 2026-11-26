@@ -167,6 +167,21 @@
   white-space: nowrap;
 }
 
+/* Só o turno: texto, não número; pode quebrar linha em telas estreitas. */
+.horarios__hora--turno {
+  font-size: 15px;
+  font-weight: 600;
+  white-space: normal;
+  text-align: right;
+}
+
+.horarios__nota {
+  margin: var(--space-3) 0 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ink-muted);
+}
+
 /* ---------- Chamada para o lembrete ---------- */
 .chamada-lembrete {
   display: grid;

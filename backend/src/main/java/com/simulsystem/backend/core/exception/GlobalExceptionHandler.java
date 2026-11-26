@@ -98,6 +98,16 @@ public class GlobalExceptionHandler {
         return criar(HttpStatus.NOT_FOUND, "Rota não encontrada", exception.getMessage());
     }
 
+    @ExceptionHandler(CidadeNaoEncontradaException.class)
+    public ProblemDetail handleCidadeNaoEncontrada(CidadeNaoEncontradaException exception) {
+        return criar(HttpStatus.NOT_FOUND, "Cidade não encontrada", exception.getMessage());
+    }
+
+    @ExceptionHandler(CidadeDivergenteException.class)
+    public ProblemDetail handleCidadeDivergente(CidadeDivergenteException exception) {
+        return criar(HttpStatus.CONFLICT, "Cidade diferente", exception.getMessage());
+    }
+
     @ExceptionHandler(CronogramaNaoEncontradoException.class)
     public ProblemDetail handleCronogramaNaoEncontrado(CronogramaNaoEncontradoException exception) {
         return criar(HttpStatus.NOT_FOUND, "Cronograma não encontrado", exception.getMessage());

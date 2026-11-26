@@ -1,196 +1,165 @@
-import { useState } from 'react'
-
+import Icone from '../../Icone'
 import CamposHorario from '../cronograma/CamposHorario'
 import {
   ATALHOS_DIAS,
   DIAS_SEMANA,
-  faixasDaSemana,
   listarDias,
+  resumirSemana,
+  TURNOS,
   viraODia,
 } from '../../../utils/cronogramas'
 
-const HORARIO_PADRAO = { inicio: '06:00', fim: '18:00' }
-
 /**
- * Editor dos dias e do horário de coleta de uma rota.
- * Por padrão todos os dias usam o mesmo horário; se a rota precisar,
- * "Horário diferente por dia" libera um horário para cada dia.
+ * Editor da semana de coleta de uma rota, um bloco por turno (diurno e
+ * noturno). Em cada turno: os dias e, só se a prefeitura informar, o
+ * horário. Um mesmo dia pode ter coleta nos dois turnos.
+ * O bloco "Turno não informado" só aparece quando a rota já tem dias assim.
  * Componente controlado: recebe a semana e devolve a semana alterada.
  */
 function SemanaColeta({ idBase, semana, onAlterar, disabled }) {
-  const diasMarcados = DIAS_SEMANA.filter((dia) => semana[dia.valor])
-  const faixas = faixasDaSemana(semana)
-
-  const [porDia, setPorDia] = useState(faixas.length > 1)
-  const [horarioComum, setHorarioComum] = useState(
-    diasMarcados.length > 0 ? semana[diasMarcados[0].valor] : HORARIO_PADRAO,
+  const turnosVisiveis = TURNOS.filter(
+    (turno) => turno.valor !== 'NAO_INFORMADO' || semana.NAO_INFORMADO.dias.length > 0,
   )
 
-  function alternarDia(valor) {
-    const nova = { ...semana }
-
-    if (nova[valor]) {
-      delete nova[valor]
-    } else {
-      nova[valor] = { ...horarioComum }
-    }
-
-    onAlterar(nova)
+  function alterarTurno(valor, mudancas) {
+    onAlterar({ ...semana, [valor]: { ...semana[valor], ...mudancas } })
   }
 
-  function aplicarAtalho(dias) {
-    onAlterar(Object.fromEntries(dias.map((dia) => [dia, semana[dia] ?? { ...horarioComum }])))
+  function alternarDia(turno, dia) {
+    const dias = semana[turno].dias
+
+    alterarTurno(turno, {
+      dias: dias.includes(dia) ? dias.filter((item) => item !== dia) : [...dias, dia],
+    })
   }
 
-  function alterarHorarioComum(horario) {
-    setHorarioComum(horario)
-    onAlterar(Object.fromEntries(Object.keys(semana).map((dia) => [dia, { ...horario }])))
-  }
-
-  function alterarHorarioDoDia(dia, horario) {
-    onAlterar({ ...semana, [dia]: horario })
-  }
-
-  function alternarPorDia(ligar) {
-    setPorDia(ligar)
-
-    // Ao voltar para "mesmo horário", todos os dias recebem o horário comum.
-    if (!ligar) {
-      alterarHorarioComum(horarioComum)
-    }
-  }
-
-  const resumoDias = listarDias(Object.keys(semana), 'curto')
-  const algumViraODia = Object.values(semana).some((dia) => viraODia(dia.inicio, dia.fim))
+  const totalDias = TURNOS.reduce((soma, turno) => soma + semana[turno.valor].dias.length, 0)
+  const comDias = TURNOS.map((turno) => semana[turno.valor]).filter((bloco) => bloco.dias.length)
+  const algumSemHorario = comDias.some((bloco) => !bloco.informado)
+  const algumViraODia = comDias.some(
+    (bloco) => bloco.informado && viraODia(bloco.inicio, bloco.fim),
+  )
 
   return (
     <div className="semana-coleta">
-      <fieldset className="semana-coleta__grupo">
-        <legend className="campo-ds__rotulo">Dias de coleta</legend>
+      {turnosVisiveis.map((turno) => {
+        const bloco = semana[turno.valor]
+        const idTurno = `${idBase}-${turno.valor.toLowerCase()}`
 
-        <div className="seletor-dias__grade">
-          {DIAS_SEMANA.map((dia) => (
-            <button
-              key={dia.valor}
-              type="button"
-              className="seletor-dias__dia"
-              aria-pressed={Boolean(semana[dia.valor])}
-              aria-label={dia.longo}
-              onClick={() => alternarDia(dia.valor)}
-              disabled={disabled}
+        return (
+          <fieldset
+            key={turno.valor}
+            className={`turno-coleta turno-coleta--${turno.valor.toLowerCase()}`}
+          >
+            <legend className="turno-coleta__titulo">
+              <Icone nome={turno.icone} tamanho={18} />
+              {turno.valor === 'NAO_INFORMADO' ? 'Turno não informado' : `Coleta ${turno.adjetivo}`}
+              <span className="turno-coleta__resumo">
+                {bloco.dias.length === 0 ? 'nenhum dia' : listarDias(bloco.dias, 'curto')}
+              </span>
+            </legend>
+
+            {turno.valor === 'NAO_INFORMADO' && (
+              <p className="campo-ds__dica">
+                A fonte da prefeitura não diz o turno destes dias. Se souber, marque os dias no
+                turno certo e desmarque aqui.
+              </p>
+            )}
+
+            <div
+              className="seletor-dias__grade"
+              role="group"
+              aria-label={`Dias da coleta ${turno.adjetivo}`}
             >
-              {dia.curto}
-            </button>
-          ))}
-        </div>
-
-        <div className="atalhos" role="group" aria-label="Marcar dias de uma vez">
-          {ATALHOS_DIAS.map((atalho) => (
-            <button
-              key={atalho.rotulo}
-              type="button"
-              className="atalho"
-              aria-pressed={
-                atalho.dias.length === diasMarcados.length &&
-                atalho.dias.every((dia) => semana[dia])
-              }
-              onClick={() => aplicarAtalho(atalho.dias)}
-              disabled={disabled}
-            >
-              {atalho.rotulo}
-            </button>
-          ))}
-        </div>
-      </fieldset>
-
-      {!porDia ? (
-        <CamposHorario
-          idBase={`${idBase}-comum`}
-          inicio={horarioComum.inicio}
-          fim={horarioComum.fim}
-          onAlterar={alterarHorarioComum}
-          disabled={disabled}
-        />
-      ) : (
-        <fieldset className="semana-coleta__grupo">
-          <legend className="campo-ds__rotulo">Horário de cada dia</legend>
-
-          {diasMarcados.length === 0 ? (
-            <p className="campo-ds__dica">
-              Marque os dias acima para definir o horário de cada um.
-            </p>
-          ) : (
-            <ul className="semana-coleta__dias">
-              {diasMarcados.map((dia) => (
-                <li key={dia.valor} className="semana-coleta__dia">
-                  <span className="semana-coleta__nome-dia">{dia.curto}</span>
-
-                  <label className="visualmente-oculto" htmlFor={`${idBase}-${dia.valor}-inicio`}>
-                    Início na {dia.longo}
-                  </label>
-                  <input
-                    id={`${idBase}-${dia.valor}-inicio`}
-                    type="time"
-                    className="campo-ds__controle"
-                    value={semana[dia.valor].inicio}
-                    onChange={(event) =>
-                      alterarHorarioDoDia(dia.valor, {
-                        ...semana[dia.valor],
-                        inicio: event.target.value,
-                      })
-                    }
-                    disabled={disabled}
-                  />
-
-                  <span aria-hidden="true">às</span>
-
-                  <label className="visualmente-oculto" htmlFor={`${idBase}-${dia.valor}-fim`}>
-                    Fim na {dia.longo}
-                  </label>
-                  <input
-                    id={`${idBase}-${dia.valor}-fim`}
-                    type="time"
-                    className="campo-ds__controle"
-                    value={semana[dia.valor].fim}
-                    onChange={(event) =>
-                      alterarHorarioDoDia(dia.valor, {
-                        ...semana[dia.valor],
-                        fim: event.target.value,
-                      })
-                    }
-                    disabled={disabled}
-                  />
-                </li>
+              {DIAS_SEMANA.map((dia) => (
+                <button
+                  key={dia.valor}
+                  type="button"
+                  className="seletor-dias__dia"
+                  aria-pressed={bloco.dias.includes(dia.valor)}
+                  aria-label={`${dia.longo}, ${turno.rotulo.toLowerCase()}`}
+                  onClick={() => alternarDia(turno.valor, dia.valor)}
+                  disabled={disabled}
+                >
+                  {dia.curto}
+                </button>
               ))}
-            </ul>
-          )}
-        </fieldset>
-      )}
+            </div>
 
-      <label className="caixa-opcao">
-        <input
-          type="checkbox"
-          checked={porDia}
-          onChange={(event) => alternarPorDia(event.target.checked)}
-          disabled={disabled}
-        />
-        <span>Horário diferente em algum dia</span>
-      </label>
+            {turno.valor !== 'NAO_INFORMADO' && (
+              <div
+                className="atalhos"
+                role="group"
+                aria-label={`Marcar dias da coleta ${turno.adjetivo}`}
+              >
+                {ATALHOS_DIAS.map((atalho) => (
+                  <button
+                    key={atalho.rotulo}
+                    type="button"
+                    className="atalho"
+                    aria-pressed={
+                      atalho.dias.length === bloco.dias.length &&
+                      atalho.dias.every((dia) => bloco.dias.includes(dia))
+                    }
+                    onClick={() => alterarTurno(turno.valor, { dias: [...atalho.dias] })}
+                    disabled={disabled}
+                  >
+                    {atalho.rotulo}
+                  </button>
+                ))}
+                {bloco.dias.length > 0 && (
+                  <button
+                    type="button"
+                    className="botao-link"
+                    onClick={() => alterarTurno(turno.valor, { dias: [] })}
+                    disabled={disabled}
+                  >
+                    Limpar
+                  </button>
+                )}
+              </div>
+            )}
+
+            {bloco.dias.length > 0 && (
+              <>
+                <label className="caixa-opcao">
+                  <input
+                    type="checkbox"
+                    checked={bloco.informado}
+                    onChange={(event) =>
+                      alterarTurno(turno.valor, { informado: event.target.checked })
+                    }
+                    disabled={disabled}
+                  />
+                  <span>A prefeitura informa o horário deste turno</span>
+                </label>
+
+                {bloco.informado && (
+                  <CamposHorario
+                    idBase={idTurno}
+                    legenda={`Horário da coleta ${turno.adjetivo}`}
+                    inicio={bloco.inicio}
+                    fim={bloco.fim}
+                    onAlterar={(horario) => alterarTurno(turno.valor, horario)}
+                    disabled={disabled}
+                  />
+                )}
+              </>
+            )}
+          </fieldset>
+        )
+      })}
 
       <p
-        className={`semana-coleta__previa${diasMarcados.length === 0 ? ' semana-coleta__previa--vazia' : ''}`}
+        className={`semana-coleta__previa${totalDias === 0 ? ' semana-coleta__previa--vazia' : ''}`}
         aria-live="polite"
       >
-        {diasMarcados.length === 0 ? (
+        {totalDias === 0 ? (
           'Nenhum dia marcado: os bairros desta rota ficariam sem coleta.'
         ) : (
           <>
-            O morador verá: <strong>coleta {resumoDias}</strong>
-            {faixasDaSemana(semana).length === 1
-              ? `, das ${diasMarcados.length ? semana[diasMarcados[0].valor].inicio : ''} às ${
-                  diasMarcados.length ? semana[diasMarcados[0].valor].fim : ''
-                }.`
-              : ', com horários diferentes por dia.'}
+            O morador verá: <strong>coleta {resumirSemana(semana)}</strong>.
+            {algumSemHorario && ' Sem horário, a consulta mostra só o turno.'}
             {algumViraODia && ' A coleta termina no dia seguinte.'}
           </>
         )}

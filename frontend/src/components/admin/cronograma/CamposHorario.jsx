@@ -1,12 +1,18 @@
-import { ATALHOS_HORARIO } from '../../../utils/cronogramas'
-
 /**
- * Início e fim da coleta, com atalhos para os dois períodos da cidade.
+ * Início e fim da coleta. Só para quando a prefeitura informa o horário:
+ * não há atalhos com horários prontos, para nada ser inventado.
  */
-function CamposHorario({ idBase, inicio, fim, onAlterar, disabled }) {
+function CamposHorario({
+  idBase,
+  inicio,
+  fim,
+  onAlterar,
+  disabled,
+  legenda = 'Horário da coleta',
+}) {
   return (
     <fieldset className="campos-horario">
-      <legend className="campo-ds__rotulo">Horário da coleta</legend>
+      <legend className="campo-ds__rotulo">{legenda}</legend>
 
       <div className="campos-horario__linha">
         <div className="campo-ds">
@@ -40,21 +46,6 @@ function CamposHorario({ idBase, inicio, fim, onAlterar, disabled }) {
             disabled={disabled}
           />
         </div>
-      </div>
-
-      <div className="atalhos" role="group" aria-label="Preencher horário">
-        {ATALHOS_HORARIO.map((atalho) => (
-          <button
-            key={atalho.rotulo}
-            type="button"
-            className="atalho"
-            aria-pressed={inicio === atalho.inicio && fim === atalho.fim}
-            onClick={() => onAlterar({ inicio: atalho.inicio, fim: atalho.fim })}
-            disabled={disabled}
-          >
-            {atalho.rotulo} {atalho.inicio}–{atalho.fim}
-          </button>
-        ))}
       </div>
     </fieldset>
   )

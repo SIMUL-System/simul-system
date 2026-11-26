@@ -17,6 +17,7 @@ public class CronogramaMapper {
 
         cronograma.setRota(rota);
         cronograma.setDiaSemana(requestDTO.diaSemana());
+        cronograma.setTurno(requestDTO.turno());
         cronograma.setHorarioInicio(requestDTO.horarioInicio());
         cronograma.setHorarioFim(requestDTO.horarioFim());
 
@@ -30,6 +31,7 @@ public class CronogramaMapper {
                 cronograma.getRota().getId(),
                 cronograma.getRota().getNome(),
                 cronograma.getDiaSemana(),
+                cronograma.getTurno(),
                 cronograma.getHorarioInicio(),
                 cronograma.getHorarioFim(),
                 cronograma.getAtivo(),
@@ -42,6 +44,7 @@ public class CronogramaMapper {
     public void atualizarEntity(Cronograma cronograma, CronogramaRequestDTO requestDTO, Rota rota) {
         cronograma.setRota(rota);
         cronograma.setDiaSemana(requestDTO.diaSemana());
+        cronograma.setTurno(requestDTO.turno());
         cronograma.setHorarioInicio(requestDTO.horarioInicio());
         cronograma.setHorarioFim(requestDTO.horarioFim());
     }

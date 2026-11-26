@@ -16,13 +16,16 @@ import {
 import { listarCronogramas } from '../../services/adminCronogramaService'
 import { listarRotas } from '../../services/adminRotaService'
 
-import { filtrarAreas } from '../../utils/areas'
+import useCidadeAdmin from '../../hooks/useCidadeAdmin'
+
+import { filtrarAreas, nomeRotaCurto } from '../../utils/areas'
 import { comoLista, ordenarTexto } from '../../utils/texto'
 
 const POR_PAGINA = 20
 
-/** Admin: bairros atendidos, com busca, filtros e editor do contorno. */
+/** Admin: bairros da cidade escolhida no painel, com busca, filtros e editor do contorno. */
 function AreasAdminPage() {
+  const { cidade, recarregarCidades } = useCidadeAdmin()
   const [areas, setAreas] = useState([])
   const [rotas, setRotas] = useState([])
   const [cronogramas, setCronogramas] = useState([])
@@ -45,7 +48,11 @@ function AreasAdminPage() {
   useEffect(() => {
     let ativo = true
 
-    Promise.all([listarAreasAtendidas(), listarRotas(), listarCronogramas()])
+    Promise.all([
+      listarAreasAtendidas(cidade.id),
+      listarRotas(cidade.id),
+      listarCronogramas(cidade.id),
+    ])
       .then(([dadosAreas, dadosRotas, dadosCronogramas]) => {
         if (!ativo) return
         setAreas(comoLista(dadosAreas))
@@ -64,18 +71,16 @@ function AreasAdminPage() {
     return () => {
       ativo = false
     }
-  }, [])
+  }, [cidade.id])
 
   async function recarregarAreas() {
-    const dados = comoLista(await listarAreasAtendidas())
+    const dados = comoLista(await listarAreasAtendidas(cidade.id))
     setAreas(dados)
+    recarregarCidades().catch(() => {})
     return dados
   }
 
   const rotasOrdenadas = [...rotas].sort((a, b) => ordenarTexto(a.nome, b.nome))
-  const cidades = [...new Set(areas.map((area) => area.cidade?.trim()).filter(Boolean))].sort(
-    ordenarTexto,
-  )
   const semDesenho = areas.filter((area) => !area.possuiGeometria).length
   const filtradas = filtrarAreas(areas, filtros)
 
@@ -192,12 +197,11 @@ function AreasAdminPage() {
     <div className="admin-pagina">
       <header className="admin-pagina__cabecalho">
         <div>
-          <h1 className="admin-pagina__titulo">Áreas atendidas</h1>
+          <h1 className="admin-pagina__titulo">Áreas atendidas em {cidade.nome}</h1>
           <p className="admin-pagina__texto">
-            {areas.length} bairros cadastrados
-            {cidades.length === 1 ? ` em ${cidades[0]}` : ` em ${cidades.length} cidades`}. Aqui
-            você cuida do contorno de cada bairro no mapa. Para adicionar vários bairros ou trocar a
-            rota deles, use a tela Rotas.
+            {areas.length === 1 ? '1 bairro cadastrado' : `${areas.length} bairros cadastrados`}.
+            Aqui você cuida do contorno de cada bairro no mapa. Para adicionar vários bairros ou
+            trocar a rota deles, use a tela Rotas.
           </p>
         </div>
 
@@ -262,7 +266,7 @@ function AreasAdminPage() {
                 <option value="">Todas as rotas</option>
                 {rotasOrdenadas.map((rota) => (
                   <option key={rota.id} value={rota.id}>
-                    {rota.nome}
+                    {nomeRotaCurto(rota.nome, cidade.nome)}
                   </option>
                 ))}
               </select>
@@ -296,7 +300,7 @@ function AreasAdminPage() {
             pagina={pagina}
             porPagina={POR_PAGINA}
             areaAberta={painel?.area?.id ?? null}
-            mostrarCidade={cidades.length > 1}
+            mostrarCidade={false}
             onEditar={abrirEdicao}
             onMudarPagina={setPagina}
           />
@@ -315,7 +319,7 @@ function AreasAdminPage() {
                 areas={areas}
                 rotas={rotasOrdenadas}
                 cronogramas={cronogramas}
-                cidades={cidades}
+                cidade={cidade.nome}
                 salvando={salvando}
                 onEnviar={salvarArea}
                 onAbrirContorno={abrirContorno}

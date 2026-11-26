@@ -2,7 +2,15 @@
  * Funções puras da tela de áreas atendidas do painel admin.
  */
 
-import { DIAS_SEMANA, horaCurta } from './cronogramas'
+import {
+  ativosDaRota,
+  DIAS_SEMANA,
+  horaCurta,
+  listarDias,
+  temHorario,
+  TURNOS,
+  turnoDe,
+} from './cronogramas'
 import { ordenarTexto, semAcento } from './texto'
 
 /** Busca por bairro ou cidade, sem diferenciar acentos e maiúsculas. */
@@ -52,27 +60,42 @@ export function converterGeoJson(texto) {
   }
 }
 
-/** "seg, qua e sex · 06:00–18:00" para mostrar ao lado da rota. */
+/**
+ * Resumo da coleta da rota por turno, para mostrar ao lado dela:
+ * "Coleta: diurna seg, qua e sex · noturna ter (19:00–23:00)".
+ * Sem horário informado, aparece só o turno.
+ */
 export function resumirColetaDaRota(cronogramas, rotaId) {
-  const ativos = cronogramas.filter((item) => item.ativo && item.rotaId === rotaId)
+  const ativos = ativosDaRota(cronogramas, rotaId)
 
   if (ativos.length === 0) {
-    return 'Rota sem horário de coleta cadastrado.'
+    return 'Rota sem dia de coleta cadastrado.'
   }
 
-  const dias = DIAS_SEMANA.filter((dia) => ativos.some((item) => item.diaSemana === dia.valor)).map(
-    (dia) => dia.curto.toLowerCase(),
-  )
+  const partes = TURNOS.map((turno) => {
+    const doTurno = ativos.filter((item) => turnoDe(item) === turno.valor)
 
-  const faixas = [
-    ...new Set(
-      ativos.map((item) => `${horaCurta(item.horarioInicio)}–${horaCurta(item.horarioFim)}`),
-    ),
-  ]
+    if (doTurno.length === 0) return null
 
-  const textoDias = dias.length > 1 ? `${dias.slice(0, -1).join(', ')} e ${dias.at(-1)}` : dias[0]
+    const dias = listarDias(
+      DIAS_SEMANA.filter((dia) => doTurno.some((item) => item.diaSemana === dia.valor)).map(
+        (dia) => dia.valor,
+      ),
+      'curto',
+    )
+    const faixas = [
+      ...new Set(
+        doTurno
+          .filter(temHorario)
+          .map((item) => `${horaCurta(item.horarioInicio)}–${horaCurta(item.horarioFim)}`),
+      ),
+    ]
+    const nome = turno.valor === 'NAO_INFORMADO' ? 'turno não informado' : turno.adjetivo
 
-  return `Coleta: ${textoDias} · ${faixas.join(' / ')}`
+    return `${nome} ${dias}${faixas.length ? ` (${faixas.join(' / ')})` : ''}`
+  }).filter(Boolean)
+
+  return `Coleta: ${partes.join(' · ')}`
 }
 
 /**

@@ -1,5 +1,6 @@
 package com.simulsystem.backend.business.notificacao.service;
 
+import com.simulsystem.backend.business.cidade.CidadesDeTeste;
 import com.simulsystem.backend.business.notificacao.mapper.PreferenciaNotificacaoMapper;
 import com.simulsystem.backend.business.notificacao.model.CanalNotificacao;
 import com.simulsystem.backend.business.notificacao.model.PreferenciaNotificacao;
@@ -193,7 +194,7 @@ class PreferenciaNotificacaoServiceImplTest {
         preferencia.setUsuario(usuario);
         AreaAtendida area = new AreaAtendida();
         area.setId(10L);
-        area.setCidade("Senador Canedo");
+        area.setCidade(CidadesDeTeste.senadorCanedo());
         area.setBairro("Centro");
         area.setRota(rota);
         preferencia.setAreaAtendida(area);

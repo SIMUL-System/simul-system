@@ -1,5 +1,9 @@
 package com.simulsystem.backend.business.rota.service;
 
+import com.simulsystem.backend.business.cidade.CidadesDeTeste;
+import com.simulsystem.backend.business.cidade.model.Cidade;
+import com.simulsystem.backend.business.cidade.repository.CidadeRepository;
+import com.simulsystem.backend.business.cidade.validation.CidadeValidation;
 import com.simulsystem.backend.business.cronograma.service.CronogramaService;
 import com.simulsystem.backend.business.rota.dto.BairrosRotaRequestDTO;
 import com.simulsystem.backend.business.rota.dto.BairrosRotaResponseDTO;
@@ -11,6 +15,7 @@ import com.simulsystem.backend.business.rota.repository.AreaAtendidaRepository;
 import com.simulsystem.backend.business.rota.repository.RotaRepository;
 import com.simulsystem.backend.business.rota.validation.AreaAtendidaValidation;
 import com.simulsystem.backend.business.rota.validation.RotaValidation;
+import com.simulsystem.backend.core.exception.CidadeDivergenteException;
 import com.simulsystem.backend.core.exception.RotaNaoEncontradaException;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +32,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -34,6 +41,8 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class RotaBairrosServiceImplTest {
+
+    private static final Cidade SENADOR_CANEDO = CidadesDeTeste.senadorCanedo();
 
     @Mock
     private RotaRepository rotaRepository;
@@ -56,6 +65,9 @@ class RotaBairrosServiceImplTest {
     @Mock
     private AreaAtendidaValidation areaAtendidaValidation;
 
+    @Mock
+    private CidadeRepository cidadeRepository;
+
     private RotaServiceImpl rotaService;
 
     @BeforeEach
@@ -67,12 +79,13 @@ class RotaBairrosServiceImplTest {
                 rotaMapper,
                 areaAtendidaMapper,
                 rotaValidation,
-                areaAtendidaValidation
+                areaAtendidaValidation,
+                new CidadeValidation(cidadeRepository)
         );
     }
 
     @Test
-    void deveCadastrarMoverEIgnorarBairrosConformeASituacao() {
+    void deveCadastrarMoverEIgnorarBairrosDaCidadeDaRota() {
         Rota destino = rota(1L);
         Rota outra = rota(2L);
 
@@ -80,11 +93,11 @@ class RotaBairrosServiceImplTest {
         AreaAtendida vilaGalvao = area("Vila Galvão", outra);
 
         when(rotaValidation.buscarRotaExistente(1L)).thenReturn(destino);
-        when(areaAtendidaRepository.findByCidadeIgnoreCaseAndBairroIgnoreCase("Senador Canedo", "Centro"))
+        when(areaAtendidaRepository.findByCidade_IdAndBairroIgnoreCase(1L, "Centro"))
                 .thenReturn(Optional.of(centro));
-        when(areaAtendidaRepository.findByCidadeIgnoreCaseAndBairroIgnoreCase("Senador Canedo", "vila galvão"))
+        when(areaAtendidaRepository.findByCidade_IdAndBairroIgnoreCase(1L, "vila galvão"))
                 .thenReturn(Optional.of(vilaGalvao));
-        when(areaAtendidaRepository.findByCidadeIgnoreCaseAndBairroIgnoreCase("Senador Canedo", "Jardim Novo"))
+        when(areaAtendidaRepository.findByCidade_IdAndBairroIgnoreCase(1L, "Jardim Novo"))
                 .thenReturn(Optional.empty());
 
         BairrosRotaRequestDTO pedido = new BairrosRotaRequestDTO(
@@ -102,9 +115,33 @@ class RotaBairrosServiceImplTest {
         ArgumentCaptor<AreaAtendida> salvas = ArgumentCaptor.forClass(AreaAtendida.class);
         verify(areaAtendidaRepository, times(2)).save(salvas.capture());
         AreaAtendida nova = salvas.getAllValues().get(1);
-        assertEquals("Senador Canedo", nova.getCidade());
+        assertSame(SENADOR_CANEDO, nova.getCidade());
         assertEquals("Jardim Novo", nova.getBairro());
         assertSame(destino, nova.getRota());
+    }
+
+    @Test
+    void deveAceitarPedidoSemCidadeUsandoACidadeDaRota() {
+        Rota destino = rota(1L);
+
+        when(rotaValidation.buscarRotaExistente(1L)).thenReturn(destino);
+        when(areaAtendidaRepository.findByCidade_IdAndBairroIgnoreCase(1L, "Centro")).thenReturn(Optional.empty());
+
+        BairrosRotaResponseDTO resposta =
+                rotaService.adicionarBairrosNaRota(1L, new BairrosRotaRequestDTO(null, List.of("Centro")));
+
+        assertEquals(List.of("Centro"), resposta.cadastrados());
+    }
+
+    @Test
+    void naoDeveColocarBairroDeOutraCidadeNaRota() {
+        when(rotaValidation.buscarRotaExistente(1L)).thenReturn(rota(1L));
+
+        BairrosRotaRequestDTO pedido = new BairrosRotaRequestDTO("Goiânia", List.of("Setor Bueno"));
+
+        assertThrows(CidadeDivergenteException.class, () -> rotaService.adicionarBairrosNaRota(1L, pedido));
+        verify(areaAtendidaRepository, never()).findByCidade_IdAndBairroIgnoreCase(anyLong(), anyString());
+        verify(areaAtendidaRepository, never()).save(any());
     }
 
     @Test
@@ -121,12 +158,13 @@ class RotaBairrosServiceImplTest {
     private Rota rota(Long id) {
         Rota rota = new Rota();
         rota.setId(id);
+        rota.setCidade(SENADOR_CANEDO);
         return rota;
     }
 
     private AreaAtendida area(String bairro, Rota rota) {
         AreaAtendida area = new AreaAtendida();
-        area.setCidade("Senador Canedo");
+        area.setCidade(SENADOR_CANEDO);
         area.setBairro(bairro);
         area.setRota(rota);
         return area;

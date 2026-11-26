@@ -10,9 +10,11 @@ function criarAreaAtendida(dados) {
   })
 }
 
-/** GET /api/admin/rotas/areas */
-function listarAreasAtendidas() {
-  return apiRequest('/api/admin/rotas/areas', {
+/** GET /api/admin/rotas/areas?cidadeId= (sem cidade: todas) */
+function listarAreasAtendidas(cidadeId) {
+  const filtro = cidadeId ? `?cidadeId=${encodeURIComponent(cidadeId)}` : ''
+
+  return apiRequest(`/api/admin/rotas/areas${filtro}`, {
     token: obterToken(),
   })
 }

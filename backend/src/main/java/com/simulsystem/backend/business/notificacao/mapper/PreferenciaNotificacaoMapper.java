@@ -47,7 +47,7 @@ public class PreferenciaNotificacaoMapper {
                 preferencia.getId(),
                 preferencia.getUsuario().getId(),
                 preferencia.getAreaAtendida().getId(),
-                preferencia.getAreaAtendida().getCidade(),
+                preferencia.getAreaAtendida().getNomeCidade(),
                 preferencia.getAreaAtendida().getBairro(),
                 preferencia.getRota().getId(),
                 preferencia.getRota().getNome(),

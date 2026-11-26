@@ -1,8 +1,10 @@
 package com.simulsystem.backend.business.notificacao.service;
 
+import com.simulsystem.backend.business.cidade.CidadesDeTeste;
 import com.simulsystem.backend.business.cronograma.mapper.CronogramaMapper;
 import com.simulsystem.backend.business.cronograma.model.Cronograma;
 import com.simulsystem.backend.business.cronograma.model.DiaSemana;
+import com.simulsystem.backend.business.cronograma.model.Turno;
 import com.simulsystem.backend.business.cronograma.repository.CronogramaRepository;
 import com.simulsystem.backend.business.cronograma.service.CronogramaServiceImpl;
 import com.simulsystem.backend.business.cronograma.validation.CronogramaValidation;
@@ -78,7 +80,7 @@ class DecisaoNotificacaoServiceImplTest {
         preferencia = new PreferenciaNotificacao();
         AreaAtendida area = new AreaAtendida();
         area.setId(10L);
-        area.setCidade("Senador Canedo");
+        area.setCidade(CidadesDeTeste.senadorCanedo());
         area.setBairro("Centro");
         area.setRota(rota);
         preferencia.setAreaAtendida(area);
@@ -154,6 +156,26 @@ class DecisaoNotificacaoServiceImplTest {
                 );
 
         assertTrue(resultado.isEmpty());
+    }
+
+    /**
+     * Coleta só com turno (fonte sem horário): o lembrete conta a partir do
+     * começo de referência do turno (noturno 18:00), sem inventar horário.
+     */
+    @Test
+    void deveAvisarColetaSemHorarioPeloComecoDoTurno() {
+        Cronograma quartaNoturna = new Cronograma();
+        quartaNoturna.setDiaSemana(DiaSemana.QUARTA);
+        quartaNoturna.setTurno(Turno.NOTURNO);
+        quartaNoturna.setAtivo(true);
+
+        when(cronogramaRepository.findByRotaIdAndAtivoTrue(ROTA_ID)).thenReturn(List.of(quartaNoturna));
+        preferencia.setAntecedenciaHoras(3);
+
+        // 25/11/2026 é quarta: 3 h antes das 18:00
+        assertEquals(Optional.of(LocalDateTime.of(2026, 11, 25, 18, 0)),
+                service.buscarColetaParaLembrete(preferencia, LocalDateTime.of(2026, 11, 25, 15, 0)));
+        assertTrue(service.buscarColetaParaLembrete(preferencia, LocalDateTime.of(2026, 11, 25, 16, 0)).isEmpty());
     }
 
     @Test

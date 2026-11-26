@@ -1,5 +1,5 @@
 /**
- * Funções de apresentação da coleta seletiva (somente front-end).
+ * Funções de apresentação da coleta (somente front-end).
  * Os dados vêm de GET /api/rotas/consulta; aqui só calculamos e
  * formatamos para exibir. Não há regra de negócio do servidor aqui.
  */
@@ -66,6 +66,73 @@ export function formatarHora(hora) {
   return hora ? String(hora).slice(0, 5) : ''
 }
 
+/**
+ * Turnos de coleta. Muitas prefeituras informam só o turno, sem horário.
+ * "referencia" e "fimReferencia" NÃO são mostrados como horário da coleta:
+ * servem só para ordenar e calcular a próxima coleta e o lembrete (o
+ * back-end usa o mesmo começo de referência para mandar o aviso).
+ */
+export const TURNOS = {
+  DIURNO: { rotulo: 'Diurno', adjetivo: 'diurna', referencia: '06:00', fimReferencia: '18:00' },
+  NOTURNO: { rotulo: 'Noturno', adjetivo: 'noturna', referencia: '18:00', fimReferencia: '23:59' },
+  NAO_INFORMADO: {
+    rotulo: 'Turno não informado',
+    adjetivo: 'sem turno informado',
+    referencia: '06:00',
+    fimReferencia: '23:59',
+  },
+}
+
+/** A coleta tem horário informado? (falso quando a fonte diz só o turno) */
+export function temHorario(cronograma) {
+  return Boolean(cronograma?.horarioInicio && cronograma?.horarioFim)
+}
+
+/** Turno da coleta; registros antigos sem turno: deduzido do horário. */
+export function turnoDaColeta(cronograma) {
+  if (cronograma?.turno) {
+    return cronograma.turno
+  }
+
+  const hora = Number(formatarHora(cronograma?.horarioInicio).slice(0, 2))
+
+  return hora >= 18 || hora < 6 ? 'NOTURNO' : 'DIURNO'
+}
+
+/**
+ * "07:00 – 12:00" ou "Turno noturno (horário não informado)".
+ * Com curto = true, sem o parêntese (quando a tela já explica ao lado).
+ */
+export function descreverHorario(cronograma, curto = false) {
+  if (temHorario(cronograma)) {
+    return `${formatarHora(cronograma.horarioInicio)} – ${formatarHora(cronograma.horarioFim)}`
+  }
+
+  const turno = turnoDaColeta(cronograma)
+
+  if (turno === 'NAO_INFORMADO') {
+    return curto ? 'Turno não informado' : 'Turno e horário não informados'
+  }
+
+  const nome = `Turno ${TURNOS[turno].rotulo.toLowerCase()}`
+
+  return curto ? nome : `${nome} (horário não informado)`
+}
+
+/** Início usado nos cálculos: o horário informado ou a referência do turno. */
+function inicioParaCalculo(cronograma) {
+  return temHorario(cronograma)
+    ? cronograma.horarioInicio
+    : TURNOS[turnoDaColeta(cronograma)].referencia
+}
+
+/** Fim usado nos cálculos: o horário informado ou o fim de referência do turno. */
+function fimParaCalculo(cronograma) {
+  return temHorario(cronograma)
+    ? cronograma.horarioFim
+    : TURNOS[turnoDaColeta(cronograma)].fimReferencia
+}
+
 /** Junta uma data e um horário "HH:MM:SS" num Date. */
 function combinar(data, hora) {
   const [h, m] = formatarHora(hora).split(':').map(Number)
@@ -93,7 +160,7 @@ export function ordenarCronogramas(cronogramas = []) {
   return [...cronogramas].sort(
     (a, b) =>
       ordem.indexOf(a.diaSemana) - ordem.indexOf(b.diaSemana) ||
-      formatarHora(a.horarioInicio).localeCompare(formatarHora(b.horarioInicio)),
+      formatarHora(inicioParaCalculo(a)).localeCompare(formatarHora(inicioParaCalculo(b))),
   )
 }
 
@@ -101,6 +168,7 @@ export function ordenarCronogramas(cronogramas = []) {
  * Próxima ocorrência da coleta a partir de "agora".
  * Uma coleta em andamento (início <= agora < fim) conta como a próxima.
  * Horário de fim menor que o de início significa que termina no dia seguinte.
+ * Coleta só com turno usa a janela de referência do turno (semHorario: true).
  */
 export function calcularProximaColeta(cronogramas = [], agora) {
   let melhor = null
@@ -122,8 +190,8 @@ export function calcularProximaColeta(cronogramas = [], agora) {
         continue
       }
 
-      const inicio = combinar(data, cronograma.horarioInicio)
-      let fim = combinar(data, cronograma.horarioFim)
+      const inicio = combinar(data, inicioParaCalculo(cronograma))
+      let fim = combinar(data, fimParaCalculo(cronograma))
 
       if (fim <= inicio) {
         fim = new Date(fim.getTime() + 24 * 60 * 60 * 1000)
@@ -167,6 +235,8 @@ export function calcularProximaColeta(cronogramas = [], agora) {
 
   return {
     ...melhor,
+    semHorario: !temHorario(melhor.cronograma),
+    turno: turnoDaColeta(melhor.cronograma),
     emAndamento,
     hoje,
     amanha: mesmoDia(melhor.inicio, amanha),
@@ -194,11 +264,12 @@ export function descreverQuando(proxima) {
     return ''
   }
 
-  if (proxima.emAndamento) {
+  // Sem horário informado não dá para dizer que o caminhão está passando agora.
+  if (proxima.emAndamento && !proxima.semHorario) {
     return 'Acontecendo agora'
   }
 
-  if (proxima.hoje) {
+  if (proxima.hoje || proxima.emAndamento) {
     return 'Hoje'
   }
 

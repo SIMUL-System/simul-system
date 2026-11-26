@@ -74,7 +74,7 @@ public class ProcessamentoRetryNotificacaoServiceImpl implements ProcessamentoRe
                     mensagemLembrete.assunto(),
                     mensagemLembrete.texto(
                             historico.getUsuario().getNome(),
-                            historico.getRota().getNome(),
+                            historico.getRota(),
                             historico.getDataHoraColeta()));
             historicoNotificacaoService.marcarComoEnviado(historico.getId(), referencia);
         } catch (RuntimeException exception) {

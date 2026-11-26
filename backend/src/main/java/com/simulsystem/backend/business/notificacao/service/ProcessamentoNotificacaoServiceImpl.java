@@ -75,7 +75,7 @@ public class ProcessamentoNotificacaoServiceImpl implements ProcessamentoNotific
                     preferencia.getUsuario().getEmail(),
                     mensagemLembrete.assunto(),
                     mensagemLembrete.texto(
-                            preferencia.getUsuario().getNome(), preferencia.getRota().getNome(), dataHoraColeta));
+                            preferencia.getUsuario().getNome(), preferencia.getRota(), dataHoraColeta));
             historicoNotificacaoService.marcarComoEnviado(historicoId, referencia);
         } catch (RuntimeException exception) {
             historicoNotificacaoService.marcarComoFalha(historicoId, mensagemDoErro(exception), referencia);

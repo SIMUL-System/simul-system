@@ -7,12 +7,12 @@ import jakarta.validation.constraints.Size;
 import java.util.List;
 
 /**
- * Bairros de uma cidade que passam a ser atendidos por uma rota.
- * Bairro novo é cadastrado; bairro que já existe em outra rota é movido.
+ * Bairros que passam a ser atendidos por uma rota, sempre da cidade da rota.
+ * Bairro novo é cadastrado; bairro da mesma cidade em outra rota é movido.
+ * A cidade é opcional; se vier, precisa ser a da rota.
  */
 public record BairrosRotaRequestDTO(
 
-        @NotBlank(message = "A cidade é obrigatória.")
         @Size(max = 120, message = "A cidade deve possuir no máximo 120 caracteres.")
         String cidade,
 

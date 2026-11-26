@@ -5,20 +5,20 @@ import { encontrarDuplicada, resumirColetaDaRota } from '../../../utils/areas'
 import { normalizarTexto } from '../../../utils/texto'
 
 /**
- * Cria ou edita uma área (cidade, bairro e rota). Na edição, mostra
- * também a situação do contorno no mapa e o botão para desenhá-lo.
+ * Cria ou edita um bairro da cidade escolhida no painel (bairro e rota).
+ * A cidade não muda aqui: as rotas da lista são só dessa cidade.
+ * Na edição, mostra também a situação do contorno e o botão para desenhá-lo.
  */
 function FormArea({
   area,
   areas,
   rotas,
   cronogramas,
-  cidades,
+  cidade,
   salvando,
   onEnviar,
   onAbrirContorno,
 }) {
-  const [cidade, setCidade] = useState(area?.cidade ?? (cidades.length === 1 ? cidades[0] : ''))
   const [bairro, setBairro] = useState(area?.bairro ?? '')
   const [rotaId, setRotaId] = useState(area ? String(area.rotaId) : '')
   const [erros, setErros] = useState({})
@@ -27,14 +27,13 @@ function FormArea({
     event.preventDefault()
 
     const dados = {
-      cidade: normalizarTexto(cidade),
+      cidade,
       bairro: normalizarTexto(bairro),
       rotaId: Number(rotaId),
     }
 
     const novosErros = {}
 
-    if (!dados.cidade) novosErros.cidade = 'Informe a cidade.'
     if (!dados.bairro) novosErros.bairro = 'Informe o bairro.'
     if (!rotaId) novosErros.rota = 'Escolha a rota que atende este bairro.'
 
@@ -64,26 +63,12 @@ function FormArea({
     <form className="painel-form" onSubmit={handleSubmit} noValidate>
       <div className="painel-form__dupla">
         <div className="campo-ds">
-          <label className="campo-ds__rotulo" htmlFor="area-cidade">
+          <span className="campo-ds__rotulo" id="area-cidade">
             Cidade
-          </label>
-          <input
-            id="area-cidade"
-            className="campo-ds__controle"
-            list="area-cidades"
-            value={cidade}
-            maxLength={120}
-            onChange={(event) => setCidade(event.target.value)}
-            aria-invalid={Boolean(erros.cidade)}
-            aria-describedby={erros.cidade ? 'area-cidade-erro' : undefined}
-            disabled={salvando}
-          />
-          <datalist id="area-cidades">
-            {cidades.map((item) => (
-              <option key={item} value={item} />
-            ))}
-          </datalist>
-          {campoErro('area-cidade', erros.cidade)}
+          </span>
+          <p className="campo-ds__fixo" aria-labelledby="area-cidade">
+            {cidade}
+          </p>
         </div>
 
         <div className="campo-ds">
@@ -131,7 +116,7 @@ function FormArea({
           <p id="area-rota-dica" className="campo-ds__dica">
             {rotaId
               ? resumirColetaDaRota(cronogramas, Number(rotaId))
-              : 'Os dias e horários do bairro vêm da rota escolhida.'}
+              : `Só aparecem rotas de ${cidade}. Os dias e turnos do bairro vêm da rota escolhida.`}
           </p>
         )}
       </div>

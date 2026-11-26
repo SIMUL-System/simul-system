@@ -13,11 +13,11 @@ import java.util.Optional;
 /** Regras dos horários de coleta, usadas pelo admin, pela consulta e pelos lembretes. */
 public interface CronogramaService {
 
-    /** Cria um horário (um ativo por rota e dia). */
+    /** Cria uma coleta (uma ativa por rota, dia e turno). */
     CronogramaResponseDTO cadastrar(CronogramaRequestDTO requestDTO);
 
-    /** Lista todos os horários. */
-    List<CronogramaResponseDTO> listar();
+    /** Lista as coletas: todas ou só as das rotas da cidade (cidadeId opcional). */
+    List<CronogramaResponseDTO> listar(Long cidadeId);
 
     /** Edita um horário existente. */
     CronogramaResponseDTO atualizar(Long id, CronogramaRequestDTO requestDTO);
@@ -43,8 +43,12 @@ public interface CronogramaService {
 
     /**
      * Retorna a data e hora informadas (truncadas ao minuto) somente se
-     * a rota tiver um cronograma ativo começando exatamente nesse dia da
-     * semana e horário.
+     * a rota tiver uma coleta ativa começando exatamente nesse dia da
+     * semana e horário. Coleta sem horário usa o começo de referência do
+     * turno ({@link com.simulsystem.backend.business.cronograma.model.Turno}).
      */
     Optional<LocalDateTime> buscarColetaNoHorario(Long rotaId, LocalDateTime dataHora);
+
+    /** A coleta ativa da rota nesse dia e horário (ou turno), para montar o lembrete. */
+    Optional<Cronograma> buscarCronogramaDaColeta(Long rotaId, LocalDateTime dataHora);
 }

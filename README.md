@@ -124,9 +124,10 @@ O back-end é **um único serviço** organizado por **domínio de negócio**. Pa
 
 ```text
 business/
+  cidade/        cidades atendidas e indicadores do painel por cidade
   usuario/       cadastro, login, confirmação de e-mail, recuperação de senha
-  rota/          rotas, áreas atendidas (bairros) e consulta pública
-  cronograma/    horários de coleta por rota e dia
+  rota/          rotas (sempre de uma cidade), áreas atendidas (bairros) e consulta pública
+  cronograma/    coletas por rota, dia e turno (horário opcional)
   notificacao/   preferências, histórico, agendador, e-mail e Web Push
 core/
   config/        CORS, relógio, Web Push, links para o front
@@ -171,17 +172,20 @@ simul-system/
 ├── .github/workflows/ci.yml      CI: testes do back-end, lint e build do front-end
 ├── .editorconfig                 indentação e fim de linha para todos os editores
 ├── README.md
+├── docs/
+│   ├── levantamento-dados-municipais.md   levantamento das fontes das prefeituras e pendências
+│   └── importacao/                        scripts e dados que geraram a V25
 ├── backend/
 │   ├── Dockerfile                build em duas etapas, executa sem root
 │   ├── pom.xml
 │   ├── mvnw, mvnw.cmd, .mvn/     Maven Wrapper (não precisa instalar o Maven)
 │   └── src/
 │       ├── main/java/com/simulsystem/backend/
-│       │   ├── business/{usuario,rota,cronograma,notificacao}/
-│       │   └── core/{config,exception,security,status,util}/
+│       │   ├── business/{cidade,usuario,rota,cronograma,notificacao,privacidade,institucional}/
+│       │   └── core/{config,exception,migracao,security,status,util}/
 │       ├── main/resources/
 │       │   ├── application.properties
-│       │   └── db/migration/      V1 … V19 (Flyway)
+│       │   └── db/migration/      V1 … V25 (Flyway; V21 é Java, em core/migracao)
 │       └── test/                  testes JUnit 5 + Mockito
 └── frontend/
     ├── .prettierrc.json           estilo de formatação do front-end
@@ -190,7 +194,7 @@ simul-system/
     └── src/
         ├── App.jsx                rotas e tratamento de sessão expirada
         ├── components/            componentes (admin, coleta, form, guia, auth…)
-        ├── hooks/                 tema claro/escuro e cores do mapa
+        ├── hooks/                 tema claro/escuro, cores do mapa e cidade do painel admin
         ├── pages/                 uma página por rota (admin em pages/admin)
         ├── services/              ÚNICO lugar que chama a API (via apiRequest)
         ├── styles/                tokens do design system e CSS por área
@@ -205,8 +209,8 @@ simul-system/
 
 1. A página inicial pede `GET /api/rotas/areas`, que devolve **só cidade e bairro de rotas ativas**.
 2. O morador escolhe a cidade e o bairro (com busca que ignora acentos).
-3. O front pede `GET /api/rotas/consulta?cidade=…&bairro=…` e recebe a rota, os **horários ativos** e o contorno do bairro (se houver).
-4. A tela mostra os dias da semana com coleta, os horários e a **próxima coleta** ("hoje às 18:00", "amanhã às 06:00"…), calculada no navegador a partir dos horários.
+3. O front pede `GET /api/rotas/consulta?cidade=…&bairro=…` e recebe a rota, as **coletas ativas** (dia + turno, com horário só quando a prefeitura informa), o **tipo de coleta** e o contorno do bairro (se houver).
+4. A tela mostra os dias da semana com coleta, o horário ou o turno e a **próxima coleta**, calculada no navegador. Quando a fonte informa só o turno, a tela mostra "Turno noturno" e avisa que o horário exato não foi informado — **nenhum horário é inventado**. Quando a fonte não diz se a coleta é a seletiva, o título vira "Coleta em …" e um aviso pede para confirmar com a prefeitura.
 5. O mapa enquadra o **contorno salvo no SIMUL**. Se o bairro ainda não tem contorno, usa o que o **Nominatim** (OpenStreetMap) encontrar. Se nada for encontrado, avisa que não conseguiu localizar a região.
 6. O morador pode mostrar a própria localização no mapa (geolocalização do navegador, só com permissão dele).
 
@@ -249,12 +253,12 @@ Página pública e lúdica, com conteúdo todo em `frontend/src/utils/guiaConteu
 
 ### 7.7 Painel administrativo
 
-- **Rotas:** desativar uma rota pede confirmação e explica o efeito. Os bairros dela saem da consulta e quem a escolheu para os lembretes deixa de recebê-los. **Nada é apagado**: ao reativar, tudo volta.
-- **Áreas atendidas:** cidade + bairro são únicos. O contorno é desenhado no mapa (Polygon ou MultiPolygon GeoJSON). Se ainda não existe contorno salvo, o editor parte do que o OpenStreetMap encontrar.
-- **Rotas:** cada rota é um padrão de coleta (dias + horário) e os bairros ligados a ela seguem esse padrão. A semana da rota é salva de uma vez por `PUT /api/admin/cronogramas/rota/{rotaId}`: os dias enviados ficam ativos (o registro de cada dia é reaproveitado) e os demais são desativados, numa única transação. Os bairros são adicionados por `PUT /api/admin/rotas/{id}/bairros`: bairro novo é cadastrado e bairro de outra rota é movido. A preferência do morador guarda o **bairro** (V20) e a rota vem dele: ao mover um bairro, os lembretes de quem mora nele passam a seguir a nova rota sem nenhuma ação do morador.
-- **Cronogramas:** só pode haver **um horário ativo por rota e dia**. A Agenda da semana permite mudar o horário de várias rotas **de uma vez só**: `PUT /api/admin/cronogramas/lote/horario` aplica tudo numa única transação, ou nada se algo falhar.
-- **Contornos do OpenStreetMap:** em Áreas atendidas, "Buscar contornos no mapa" consulta o Nominatim (uma busca por segundo) para cada bairro sem desenho e salva os polígonos encontrados na cidade certa. Os que o OpenStreetMap não tem continuam para desenho manual.
-- **Visão geral:** indicadores e lista "Precisa de atenção": áreas sem contorno, rotas ativas sem horário, rotas ativas sem bairros e bairros em rotas inativas.
+O painel é organizado **por cidade**. No topo de Visão geral, Rotas, Áreas atendidas e Agenda da semana fica o **seletor de cidade**, com o resumo dela (bairros, rotas ativas e coletas na semana). A cidade escolhida fica salva no navegador (`localStorage`, chave `simul.admin.cidade`) e vale para todas as seções; ao trocar, a seção recarrega só com os dados da nova cidade.
+
+- **Visão geral:** indicadores da cidade, "Precisa de atenção" (áreas sem contorno, rotas ativas sem dia de coleta, rotas ativas sem bairros, bairros em rotas inativas), "O que a prefeitura não informa" (coletas só com turno e rotas sem tipo de coleta na fonte), a fonte dos dados da cidade e a tabela **Cidades atendidas**, que compara as cidades e permite trocar de cidade.
+- **Rotas:** só as rotas da cidade. Cada rota é um padrão de coleta (**dias + turno**, horário opcional) e pertence a **uma única cidade**, definida na criação e que não muda depois. Só bairros da mesma cidade entram na rota; o back-end recusa com 409 qualquer tentativa de misturar cidades. A semana é editada **por turno** (bloco Diurno e bloco Noturno; um mesmo dia pode ter os dois) e salva de uma vez por `PUT /api/admin/cronogramas/rota/{rotaId}`. O horário só é preenchido quando a prefeitura informa ("A prefeitura informa o horário deste turno"). O tipo de coleta (seletiva ou não informado) e a fonte aparecem na rota. Desativar uma rota pede confirmação; **nada é apagado**. A preferência do morador guarda o **bairro** (V20): ao mover um bairro, os lembretes passam a seguir a nova rota sem ação do morador.
+- **Áreas atendidas:** só os bairros da cidade. A cidade do bairro é a da rota (campo fixo no formulário); bairro é único por cidade. O contorno é desenhado no mapa (Polygon/MultiPolygon GeoJSON) ou buscado no OpenStreetMap ("Buscar contornos no mapa").
+- **Agenda da semana:** coletas da cidade por dia, com o turno (e o horário, se houver). "Mudar horário de várias rotas" escolhe o **turno** e as rotas e aplica o novo horário — ou volta a mostrar só o turno — em todas de uma vez (`PUT /api/admin/cronogramas/lote/horario`, tudo ou nada). Só pode haver **uma coleta ativa por rota, dia e turno**.
 
 ### 7.8 Quando o servidor está "acordando"
 
@@ -279,7 +283,7 @@ Para cada preferência elegível (usuário ativo, bairro numa rota ativa e pelo 
 coleta alvo = minuto atual (sem segundos) + antecedência
 ```
 
-O lembrete vence se a rota tem um **cronograma ativo** naquele dia da semana e com aquele **horário de início**.
+O lembrete vence se a rota tem um **cronograma ativo** naquele dia da semana e com aquele **horário de início**. Quando a prefeitura informa só o turno, o cálculo usa o começo de referência do turno — **diurno 06:00, noturno 18:00** (`Turno.inicioReferencia`) — apenas para saber quando avisar; esse horário não é mostrado como horário da coleta.
 
 > Exemplo: coleta na quarta às 07:00 e antecedência de 48 h → o lembrete sai na **segunda às 07:00**.
 > Calcular a partir da coleta alvo (e não da "próxima coleta a partir de agora") evita perder o lembrete quando a antecedência é maior que o intervalo entre duas coletas.
@@ -301,8 +305,11 @@ A nova tentativa usa o **mesmo canal** da falha (e-mail ou Web Push) e confere a
 
 ### 8.5 Texto
 
-> Assunto: **SIMUL - Lembrete de coleta seletiva**
-> "Olá, Ana! A coleta seletiva da rota Senador Canedo - Diurna (seg, qua e sex) está prevista para 25/11/2026 às 06:00."
+> Assunto: **SIMUL - Lembrete de coleta**
+> Com horário: "Olá, Ana! A coleta seletiva da rota Goiânia - Diurna (seg) está prevista para 30/11/2026 às 07:00."
+> Só com turno: "Olá, Ana! A coleta da rota Trindade - Noturna (seg) está prevista para 30/11/2026, no turno noturno (a prefeitura não informa o horário exato)."
+
+A palavra "seletiva" só aparece quando a rota é do tipo `SELETIVA`.
 
 No Web Push, o assunto vira o título da notificação e o texto vira o corpo.
 
@@ -323,7 +330,7 @@ No Web Push, o assunto vira o título da notificação e o texto vira o corpo.
 | CORS | Só as origens de `SIMUL_CORS_ALLOWED_ORIGINS`, apenas em `/api/**`. |
 | Segredos | Sempre em variáveis de ambiente; nenhum segredo no repositório. |
 | LGPD | Aceite dos termos registrado (data e versão), cópia dos dados em JSON, exclusão da conta com senha, aviso de armazenamento essencial (sem cookies de rastreamento). Ver [9.1](#91-lgpd-e-privacidade). |
-| Banco | Restrições no próprio PostgreSQL (ver [11.3](#113-regras-garantidas-pelo-banco-v17)). |
+| Banco | Restrições no próprio PostgreSQL (ver [11.3](#113-regras-garantidas-pelo-banco)). |
 
 ### 9.1 LGPD e privacidade
 
@@ -382,18 +389,20 @@ Base local: `http://localhost:8080`. Erros seguem o formato ProblemDetail:
 
 | Método | Caminho | O que faz |
 |---|---|---|
-| GET / POST | `/api/admin/rotas` | Listar e criar rotas |
-| PUT | `/api/admin/rotas/{id}` | Editar nome e descrição |
+| GET | `/api/admin/cidades` | Cidades com indicadores (rotas, bairros, coletas, pendências) |
+| GET | `/api/admin/cidades/{id}` | Uma cidade com indicadores |
+| GET / POST | `/api/admin/rotas` | Listar (`?cidadeId=` filtra) e criar rotas (`cidadeId` obrigatório, `tipoColeta` opcional) |
+| PUT | `/api/admin/rotas/{id}` | Editar nome, descrição e tipo (a cidade não muda: 409) |
 | PATCH | `/api/admin/rotas/{id}/status?ativo=` | Ativar/desativar |
-| GET / POST | `/api/admin/rotas/areas` | Listar (todas) e criar áreas |
-| PUT | `/api/admin/rotas/areas/{id}` | Editar cidade, bairro e rota |
+| GET / POST | `/api/admin/rotas/areas` | Listar (`?cidadeId=` filtra) e criar áreas (a cidade é a da rota) |
+| PUT | `/api/admin/rotas/areas/{id}` | Editar bairro e rota (rota de outra cidade: 409) |
 | PUT | `/api/admin/rotas/areas/{id}/geometria` | Salvar o contorno GeoJSON |
-| PUT | `/api/admin/rotas/{id}/bairros` | Cadastrar bairros novos na rota e mover para ela os de outra rota |
-| GET / POST | `/api/admin/cronogramas` | Listar e criar horários |
+| PUT | `/api/admin/rotas/{id}/bairros` | Cadastrar bairros novos na rota e mover para ela os de outra rota da mesma cidade |
+| GET / POST | `/api/admin/cronogramas` | Listar (`?cidadeId=` filtra) e criar coletas (dia + `turno`, horário opcional) |
 | PUT | `/api/admin/cronogramas/{id}` | Editar um horário |
 | PATCH | `/api/admin/cronogramas/{id}/status?ativo=` | Ativar/desativar |
-| PUT | `/api/admin/cronogramas/lote/horario` | Mudar início e fim de vários horários (tudo ou nada) |
-| PUT | `/api/admin/cronogramas/rota/{rotaId}` | Definir os dias e horários da semana da rota (tudo ou nada) |
+| PUT | `/api/admin/cronogramas/lote/horario` | Mudar início e fim de várias coletas, ou limpar o horário (tudo ou nada) |
+| PUT | `/api/admin/cronogramas/rota/{rotaId}` | Definir dias e turnos da semana da rota (tudo ou nada) |
 | GET | `/api/admin/usuarios/verificar-acesso` | 204 para ADMIN (usado nos testes de segurança) |
 | PUT | `/api/admin/institucional` | Textos do "Quem somos" |
 | POST | `/api/admin/institucional/fotos` | Nova foto da faculdade (multipart: `arquivo`, `legenda`) |
@@ -447,31 +456,39 @@ PUT /api/admin/cronogramas/lote/horario
 | V21 | **migration em Java** (`core/migracao/V21__CriptografarEmails`): cifra os e-mails existentes e cria `email_hash` único |
 | V22 | registro do aceite dos termos (`termos_aceitos_em`, `termos_versao`) |
 | V23 | "Quem somos": `conteudo_institucional`, `imagens` (BYTEA), `fotos_instituicao`, `integrantes` |
+| V24 | tabela `cidades`; `rotas.cidade_id`, `tipo_coleta`, `fonte`; `areas_atendidas.cidade_id` com FK composta para a rota da mesma cidade; `cronogramas.turno` e horário opcional; os horários-padrão da carga de Senador Canedo viram turno sem horário |
+| V25 | importação das quatro cidades a partir das fontes municipais (gerada pelo levantamento; ver [docs/levantamento-dados-municipais.md](docs/levantamento-dados-municipais.md)) |
 
-### 11.3 Regras garantidas pelo banco (V17)
+### 11.3 Regras garantidas pelo banco
 
 | Regra | Como |
 |---|---|
-| E-mail único, sem diferenciar maiúsculas | índice único em `UPPER(email)` |
-| Um bairro por cidade | índice único em `UPPER(cidade), UPPER(bairro)` |
-| Um cronograma **ativo** por rota e dia | índice único parcial `(rota_id, dia_semana) WHERE ativo` |
+| E-mail único | índice único em `email_hash` (V21) |
+| Um bairro por cidade | índice único em `(cidade_id, UPPER(bairro))` (V24) |
+| Rota numa única cidade | `rotas.cidade_id NOT NULL` (V24) |
+| Bairro só em rota da própria cidade | FK composta `areas_atendidas (rota_id, cidade_id) → rotas (id, cidade_id)` (V24) |
+| Uma coleta **ativa** por rota, dia e turno | índice único parcial `(rota_id, dia_semana, turno) WHERE ativo` (V24) |
+| Horário completo ou nenhum | `CHECK ((horario_inicio IS NULL) = (horario_fim IS NULL))` (V24) |
+| Turno e tipo de coleta válidos | `CHECK` (V24) |
 | Antecedência de 0 a 72 horas | `CHECK` |
 | Canal e situação da notificação válidos | `CHECK` |
 | Início do cronograma diferente do fim | `CHECK` (fim menor que o início é permitido: coleta que passa da meia-noite) |
 
 ### 11.4 Dados que já vêm no banco
 
-**Senador Canedo (V15 + V18):** 109 bairros agrupados em 5 rotas e 18 cronogramas.
+As cidades, bairros, rotas e coletas vêm das fontes municipais de `Cidade.Bairros.Horarios.zip` (V15/V18 para a carga inicial de Senador Canedo e V25 para as quatro cidades). O levantamento completo, com padrões, inconsistências e pendências, está em [docs/levantamento-dados-municipais.md](docs/levantamento-dados-municipais.md).
 
-| Rota | Bairros | Dias | Horário |
-|---|---:|---|---|
-| Senador Canedo - Diurna (seg, qua e sex) | 47 | seg, qua, sex | 06:00 – 18:00 |
-| Senador Canedo - Diurna (ter, qui e sáb) | 35 | ter, qui, sáb | 06:00 – 18:00 |
-| Senador Canedo - Noturna (seg, qua e sex) | 19 | seg, qua, sex | 18:00 – 23:59 |
-| Senador Canedo - Noturna (ter, qui e sáb) | 6 | ter, qui, sáb | 18:00 – 23:59 |
-| Senador Canedo - Noturna (seg a sáb) | 2 | seg a sáb | 18:00 – 23:59 |
+| Cidade | Bairros | Rotas | Coletas na semana | Tipo de coleta | Fonte |
+|---|---:|---:|---:|---|---|
+| Goiânia | 492 | 18 | 30 | Seletiva | PDF da Comurg (só as colunas da coleta seletiva) |
+| Aparecida de Goiânia | 226 | 11 | 62 | Não informado | 5 imagens do cronograma |
+| Trindade | 120 | 19 | 51 | Não informado | `Trindade.txt` |
+| Senador Canedo | 109 | 5 | 18 | Não informado | imagem da relação oficial |
+| **Total** | **947** | **53** | **161** | | |
 
-A rota é o **grupo de dias e horários**; ela não representa o trajeto do caminhão. Para mudar o horário de um bairro, ligue-o a outra rota. Para mudar o horário de um grupo, edite os cronogramas da rota (ou use a alteração em massa).
+- **Nenhuma fonte informa horário**: todas as coletas importadas têm só o turno (diurno/noturno). O painel permite registrar o horário quando a prefeitura divulgar.
+- Cada **rota** é o grupo de bairros com **exatamente os mesmos dias e turnos** na cidade; ela não representa o trajeto do caminhão. Bairro que aparece em mais de um grupo da fonte recebe a soma dos dias (nada é descartado).
+- Em Senador Canedo, os 109 bairros já cadastrados conferem com a imagem oficial (mesmas 5 rotas); as grafias com erro da imagem ("Fransciso", "Industrias", "Sitio") foram mantidas corretas como já estavam. Os horários 06:00–18:00 e 18:00–23:59 da carga antiga não vinham da prefeitura e viraram turno sem horário.
 
 **Conta administrativa (V19):** `simul.sistema@gmail.com`, com senha combinada com a equipe (só o hash BCrypt fica no banco). Troque a senha pelo "Esqueci minha senha" depois da apresentação.
 

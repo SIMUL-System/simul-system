@@ -22,7 +22,11 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
-/** Horário de coleta de uma rota em um dia da semana (só um ativo por rota e dia). */
+/**
+ * Coleta de uma rota em um dia da semana e turno (só uma ativa por rota, dia e
+ * turno). O horário é opcional: quando a fonte informa só o turno, início e
+ * fim ficam vazios e nada é inventado.
+ */
 @Entity
 @Table(name = "cronogramas")
 @Getter
@@ -42,10 +46,14 @@ public class Cronograma {
     @Column(name = "dia_semana", nullable = false, length = 10)
     private DiaSemana diaSemana;
 
-    @Column(name = "horario_inicio", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 15)
+    private Turno turno;
+
+    @Column(name = "horario_inicio")
     private LocalTime horarioInicio;
 
-    @Column(name = "horario_fim", nullable = false)
+    @Column(name = "horario_fim")
     private LocalTime horarioFim;
 
     @Column(nullable = false)
@@ -57,6 +65,23 @@ public class Cronograma {
     @Column(name = "data_atualizacao", nullable = false)
     private LocalDateTime dataAtualizacao;
 
+    /** O horário exato é conhecido? (falso quando a fonte informa só o turno) */
+    public boolean possuiHorario() {
+        return horarioInicio != null && horarioFim != null;
+    }
+
+    /**
+     * Momento usado para calcular o lembrete: o início informado ou, sem
+     * horário, o começo de referência do turno (não exibido como horário).
+     */
+    public LocalTime horarioReferencia() {
+        if (horarioInicio != null) {
+            return horarioInicio;
+        }
+
+        return (turno == null ? Turno.NAO_INFORMADO : turno).getInicioReferencia();
+    }
+
     /** Preenche as datas (e os padrões) antes de inserir. */
     @PrePersist
     private void prePersist() {
@@ -67,6 +92,10 @@ public class Cronograma {
 
         if (this.ativo == null) {
             this.ativo = true;
+        }
+
+        if (this.turno == null) {
+            this.turno = Turno.doHorario(this.horarioInicio);
         }
     }
 

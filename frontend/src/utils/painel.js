@@ -3,7 +3,7 @@
  * listas de rotas, áreas e cronogramas (sem chamadas novas à API).
  */
 
-import { DIAS_SEMANA } from './cronogramas'
+import { DIAS_SEMANA, temHorario } from './cronogramas'
 import { ordenarTexto } from './texto'
 
 // Date.getDay(): 0 = domingo … 6 = sábado.
@@ -36,8 +36,8 @@ export function calcularResumo({ rotas, areas, cronogramas }) {
     },
     {
       id: 'sem-horario',
-      titulo: 'Rotas ativas sem horário',
-      texto: 'Os bairros dessas rotas aparecem na consulta sem dia nem horário de coleta.',
+      titulo: 'Rotas ativas sem dia de coleta',
+      texto: 'Os bairros dessas rotas aparecem na consulta sem nenhum dia de coleta.',
       quantidade: rotasAtivas.filter(
         (rota) => !horariosValidos.some((item) => item.rotaId === rota.id),
       ).length,
@@ -63,6 +63,29 @@ export function calcularResumo({ rotas, areas, cronogramas }) {
     },
   ]
 
+  // Avisos sobre o que a fonte da prefeitura não informa: não são erros do
+  // cadastro, mas o morador vê essa limitação na consulta.
+  const avisos = [
+    {
+      id: 'sem-horario-exato',
+      titulo: 'Coletas só com o turno',
+      texto:
+        'A prefeitura informa diurno ou noturno, sem horário. A consulta mostra o turno e o lembrete usa o começo do turno (06:00 ou 18:00) como referência.',
+      quantidade: horariosValidos.filter((item) => !temHorario(item)).length,
+      link: '/admin/cronogramas',
+      acao: 'Ver agenda',
+    },
+    {
+      id: 'tipo-nao-informado',
+      titulo: 'Rotas sem tipo de coleta na fonte',
+      texto:
+        'A fonte não diz se é a coleta seletiva. A consulta avisa o morador; altere o tipo na rota quando a prefeitura confirmar.',
+      quantidade: rotasAtivas.filter((rota) => rota.tipoColeta === 'NAO_INFORMADO').length,
+      link: '/admin/rotas',
+      acao: 'Ver rotas',
+    },
+  ].filter((item) => item.quantidade > 0)
+
   const areasPorRota = rotasAtivas
     .map((rota) => ({
       rota,
@@ -85,6 +108,7 @@ export function calcularResumo({ rotas, areas, cronogramas }) {
     unicaCidade: cidades.size === 1 ? [...cidades][0] : null,
     totalHorarios: horariosValidos.length,
     pendencias,
+    avisos,
     totalPendencias: pendencias.reduce((soma, item) => soma + item.quantidade, 0),
     areasPorRota,
     semana,

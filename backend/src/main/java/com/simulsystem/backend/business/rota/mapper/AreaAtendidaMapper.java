@@ -17,7 +17,8 @@ public class AreaAtendidaMapper {
     public AreaAtendida toEntity(AreaAtendidaRequestDTO requestDTO, Rota rota) {
         AreaAtendida areaAtendida = new AreaAtendida();
 
-        areaAtendida.setCidade(requestDTO.cidade());
+        // A cidade do bairro é sempre a da rota.
+        areaAtendida.setCidade(rota.getCidade());
 
         areaAtendida.setBairro(requestDTO.bairro());
 
@@ -35,11 +36,12 @@ public class AreaAtendidaMapper {
 
         return new AreaAtendidaResponseDTO(
                 areaAtendida.getId(),
-                areaAtendida.getCidade(),
+                areaAtendida.getNomeCidade(),
                 areaAtendida.getBairro(),
                 areaAtendida.getRota().getId(),
                 areaAtendida.getRota().getNome(),
-                possuiGeometria
+                possuiGeometria,
+                areaAtendida.getCidade() == null ? null : areaAtendida.getCidade().getId()
         );
     }
 
@@ -47,7 +49,7 @@ public class AreaAtendidaMapper {
     public AreaDisponivelResponseDTO toAreaDisponivelResponseDTO(AreaAtendida areaAtendida) {
         return new AreaDisponivelResponseDTO(
                 areaAtendida.getId(),
-                areaAtendida.getCidade(),
+                areaAtendida.getNomeCidade(),
                 areaAtendida.getBairro()
         );
     }
@@ -56,15 +58,15 @@ public class AreaAtendidaMapper {
     public AreaGeometriaResponseDTO toGeometriaResponseDTO(AreaAtendida areaAtendida) {
         return new AreaGeometriaResponseDTO(
                 areaAtendida.getId(),
-                areaAtendida.getCidade(),
+                areaAtendida.getNomeCidade(),
                 areaAtendida.getBairro(),
                 areaAtendida.getGeometriaGeoJson()
         );
     }
 
-    /** Copia cidade, bairro e rota para a área existente. */
+    /** Copia bairro e rota (e a cidade da rota) para a área existente. */
     public void atualizarEntity(AreaAtendida areaAtendida, AreaAtendidaRequestDTO requestDTO, Rota rota) {
-        areaAtendida.setCidade(requestDTO.cidade());
+        areaAtendida.setCidade(rota.getCidade());
 
         areaAtendida.setBairro(requestDTO.bairro());
 

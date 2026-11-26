@@ -10,16 +10,33 @@ import { listarAreasAtendidas } from '../../services/adminAreaService'
 import { listarCronogramas } from '../../services/adminCronogramaService'
 import { alterarStatusRota, listarRotas } from '../../services/adminRotaService'
 
-import { resumirColetaDaRota } from '../../utils/areas'
-import { ativosDaRota, ehNoturno } from '../../utils/cronogramas'
+import useCidadeAdmin from '../../hooks/useCidadeAdmin'
+
+import { nomeRotaCurto, resumirColetaDaRota } from '../../utils/areas'
+import { ativosDaRota, dadosTurno, turnosDaRota } from '../../utils/cronogramas'
 import { comoLista, ordenarTexto } from '../../utils/texto'
 
+/** "Diurna", "Noturna", "Diurna e noturna"… pelo conjunto de turnos da rota. */
+function rotuloTurnos(turnos) {
+  if (turnos.length === 0) return 'Sem dia de coleta'
+  if (turnos.length === 1) {
+    return turnos[0] === 'NAO_INFORMADO'
+      ? 'Turno não informado'
+      : dadosTurno(turnos[0]).rotulo.replace(/o$/, 'a')
+  }
+  return turnos
+    .map((turno) => (turno === 'NAO_INFORMADO' ? 'sem turno' : dadosTurno(turno).adjetivo))
+    .join(' e ')
+    .replace(/^./, (letra) => letra.toUpperCase())
+}
+
 /**
- * Admin: rotas. Cada rota é um padrão de coleta (dias + horário) e os bairros
- * ligados a ela herdam esses horários. A lista mostra as rotas em cartões;
- * "?rota=ID" abre o editor da rota e "?nova=1" o cadastro de uma rota nova.
+ * Admin: rotas da cidade escolhida no painel. Cada rota é um padrão de coleta
+ * (dias + turno) e os bairros ligados a ela herdam esses dias. A lista mostra
+ * as rotas em cartões; "?rota=ID" abre o editor e "?nova=1" o cadastro.
  */
 function RotasAdminPage() {
+  const { cidade, recarregarCidades } = useCidadeAdmin()
   const [parametros, setParametros] = useSearchParams()
   const [rotas, setRotas] = useState([])
   const [areas, setAreas] = useState([])
@@ -33,20 +50,27 @@ function RotasAdminPage() {
 
   async function carregarTudo() {
     const [dadosRotas, dadosAreas, dadosCronogramas] = await Promise.all([
-      listarRotas(),
-      listarAreasAtendidas(),
-      listarCronogramas(),
+      listarRotas(cidade.id),
+      listarAreasAtendidas(cidade.id),
+      listarCronogramas(cidade.id),
     ])
 
     setRotas(comoLista(dadosRotas))
     setAreas(comoLista(dadosAreas))
     setCronogramas(comoLista(dadosCronogramas))
+
+    // Atualiza os números do seletor de cidade (falha aqui não atrapalha a tela).
+    recarregarCidades().catch(() => {})
   }
 
   useEffect(() => {
     let ativo = true
 
-    Promise.all([listarRotas(), listarAreasAtendidas(), listarCronogramas()])
+    Promise.all([
+      listarRotas(cidade.id),
+      listarAreasAtendidas(cidade.id),
+      listarCronogramas(cidade.id),
+    ])
       .then(([dadosRotas, dadosAreas, dadosCronogramas]) => {
         if (!ativo) return
         setRotas(comoLista(dadosRotas))
@@ -63,7 +87,7 @@ function RotasAdminPage() {
     return () => {
       ativo = false
     }
-  }, [])
+  }, [cidade.id])
 
   const idAberto = Number(parametros.get('rota')) || null
   const criando = parametros.get('nova') === '1'
@@ -135,6 +159,7 @@ function RotasAdminPage() {
         <EditorRota
           key={rotaAberta?.id ?? 'nova'}
           rota={rotaAberta}
+          cidade={cidade}
           rotas={rotas}
           areas={areas}
           cronogramas={cronogramas}
@@ -150,6 +175,9 @@ function RotasAdminPage() {
   }
 
   const inativas = rotas.filter((rota) => !rota.ativo)
+  // Se a fonte da cidade inteira não diz o tipo, um aviso só basta (em vez de um selo por cartão).
+  const todasSemTipo =
+    rotas.length > 0 && rotas.every((rota) => rota.tipoColeta === 'NAO_INFORMADO')
   const visiveis = rotas
     .filter((rota) => mostrarInativas || rota.ativo)
     .sort((a, b) => Number(b.ativo) - Number(a.ativo) || ordenarTexto(a.nome, b.nome))
@@ -159,10 +187,11 @@ function RotasAdminPage() {
     <div className="admin-pagina">
       <header className="admin-pagina__cabecalho">
         <div>
-          <h1 className="admin-pagina__titulo">Rotas</h1>
+          <h1 className="admin-pagina__titulo">Rotas de {cidade.nome}</h1>
           <p className="admin-pagina__texto">
-            Cada rota é um padrão de coleta: os mesmos dias e o mesmo horário. Os bairros ligados a
-            uma rota seguem esses horários na consulta e nos lembretes.
+            Cada rota é um padrão de coleta: os mesmos dias e turnos. Os bairros ligados a uma rota
+            seguem esses dias na consulta e nos lembretes. Só bairros de {cidade.nome} entram nas
+            rotas desta cidade.
           </p>
         </div>
 
@@ -179,9 +208,17 @@ function RotasAdminPage() {
 
       {mensagem && <Alerta tipo={mensagem.tipo}>{mensagem.texto}</Alerta>}
 
+      {todasSemTipo && (
+        <Alerta tipo="info">
+          A fonte de {cidade.nome} informa dias e turnos, mas não diz se a coleta é a seletiva. As
+          rotas estão com o tipo “não informado” e a consulta avisa o morador. Quando a prefeitura
+          confirmar, mude o tipo em cada rota.
+        </Alerta>
+      )}
+
       <ol className="passos-admin" aria-label="Como cadastrar a coleta de um bairro">
         <li>
-          <strong>Escolha a rota</strong> com os dias e o horário do bairro (ou crie uma, se nenhuma
+          <strong>Escolha a rota</strong> com os dias e o turno do bairro (ou crie uma, se nenhuma
           servir).
         </li>
         <li>
@@ -196,7 +233,8 @@ function RotasAdminPage() {
         {visiveis.map((rota) => {
           const ativos = ativosDaRota(cronogramas, rota.id)
           const total = quantidadeAreas(rota.id)
-          const noturna = ativos.some((item) => ehNoturno(item.horarioInicio))
+          const turnos = turnosDaRota(cronogramas, rota.id)
+          const noturna = turnos.length === 1 && turnos[0] === 'NOTURNO'
 
           return (
             <li
@@ -207,14 +245,31 @@ function RotasAdminPage() {
             >
               <div className="cartao-rota__topo">
                 <span className="cartao-rota__periodo">
-                  <Icone nome={noturna ? 'lua' : 'sol'} tamanho={16} />
-                  {ativos.length === 0 ? 'Sem horário' : noturna ? 'Noturna' : 'Diurna'}
+                  <Icone
+                    nome={
+                      noturna
+                        ? 'lua'
+                        : turnos.length === 1 && turnos[0] === 'DIURNO'
+                          ? 'sol'
+                          : 'relogio'
+                    }
+                    tamanho={16}
+                  />
+                  {rotuloTurnos(turnos)}
                 </span>
 
                 {!rota.ativo && <span className="selo selo--inativo">Inativa</span>}
+                {rota.tipoColeta === 'NAO_INFORMADO' && !todasSemTipo && (
+                  <span
+                    className="selo selo--pendente"
+                    title="A fonte não diz se é a coleta seletiva"
+                  >
+                    Tipo não informado
+                  </span>
+                )}
               </div>
 
-              <h2 className="cartao-rota__nome">{rota.nome}</h2>
+              <h2 className="cartao-rota__nome">{nomeRotaCurto(rota.nome, cidade.nome)}</h2>
 
               <p className="cartao-rota__coleta">
                 <Icone nome="calendario" tamanho={16} />
@@ -260,7 +315,9 @@ function RotasAdminPage() {
       </ul>
 
       {visiveis.length === 0 && (
-        <p className="admin-vazio">Nenhuma rota ativa. Cadastre uma em “Nova rota”.</p>
+        <p className="admin-vazio">
+          Nenhuma rota ativa em {cidade.nome}. Cadastre uma em “Nova rota”.
+        </p>
       )}
 
       {inativas.length > 0 && (

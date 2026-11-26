@@ -23,9 +23,9 @@ public class AreaAtendidaValidation {
         this.objectMapper = objectMapper;
     }
 
-    /** Impede cidade e bairro repetidos. */
-    public void validarAreaNaoCadastrada(String cidade, String bairro) {
-        boolean existe = areaAtendidaRepository.existsByCidadeIgnoreCaseAndBairroIgnoreCase(cidade, bairro);
+    /** Impede bairro repetido na mesma cidade. */
+    public void validarAreaNaoCadastrada(Long cidadeId, String bairro) {
+        boolean existe = areaAtendidaRepository.existsByCidade_IdAndBairroIgnoreCase(cidadeId, bairro);
 
         if (existe) {
             throw new AreaAtendidaJaCadastradaException(
@@ -35,8 +35,8 @@ public class AreaAtendidaValidation {
     }
 
     /** Mesma regra na edição, ignorando o próprio registro. */
-    public void validarAreaNaoCadastradaParaOutroRegistro(Long id, String cidade, String bairro) {
-        boolean existe = areaAtendidaRepository.existsByCidadeIgnoreCaseAndBairroIgnoreCaseAndIdNot(cidade, bairro, id);
+    public void validarAreaNaoCadastradaParaOutroRegistro(Long id, Long cidadeId, String bairro) {
+        boolean existe = areaAtendidaRepository.existsByCidade_IdAndBairroIgnoreCaseAndIdNot(cidadeId, bairro, id);
 
         if (existe) {
             throw new AreaAtendidaJaCadastradaException(
@@ -88,7 +88,7 @@ public class AreaAtendidaValidation {
     /** Área do bairro com rota ativa ou 404. */
     public AreaAtendida buscarAreaAtendidaComRotaAtiva(String cidade, String bairro) {
         return areaAtendidaRepository
-                .findByCidadeIgnoreCaseAndBairroIgnoreCaseAndRota_AtivoTrue(cidade, bairro)
+                .findByCidade_NomeIgnoreCaseAndBairroIgnoreCaseAndRota_AtivoTrue(cidade, bairro)
                 .orElseThrow(() ->
                         new AreaAtendidaNaoEncontradaException(
                                 "Não existe rota ativa para a cidade e bairro informados."

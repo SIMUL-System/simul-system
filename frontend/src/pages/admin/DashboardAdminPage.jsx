@@ -8,12 +8,15 @@ import { listarAreasAtendidas } from '../../services/adminAreaService'
 import { listarCronogramas } from '../../services/adminCronogramaService'
 import { listarRotas } from '../../services/adminRotaService'
 
+import useCidadeAdmin from '../../hooks/useCidadeAdmin'
+
 import { calcularResumo, diaDeHoje } from '../../utils/painel'
 import { nomeRotaCurto } from '../../utils/areas'
 import { comoLista } from '../../utils/texto'
 
-/** Admin: indicadores, pendências e resumo da semana. */
+/** Admin: indicadores, pendências e resumo da semana da cidade escolhida. */
 function DashboardAdminPage() {
+  const { cidade, cidades, trocarCidade } = useCidadeAdmin()
   const [dados, setDados] = useState(null)
   const [erro, setErro] = useState('')
   const [hoje] = useState(() => diaDeHoje(new Date().getDay()))
@@ -21,7 +24,11 @@ function DashboardAdminPage() {
   useEffect(() => {
     let ativo = true
 
-    Promise.all([listarRotas(), listarAreasAtendidas(), listarCronogramas()])
+    Promise.all([
+      listarRotas(cidade.id),
+      listarAreasAtendidas(cidade.id),
+      listarCronogramas(cidade.id),
+    ])
       .then(([rotas, areas, cronogramas]) => {
         if (ativo) {
           setDados({
@@ -38,7 +45,7 @@ function DashboardAdminPage() {
     return () => {
       ativo = false
     }
-  }, [])
+  }, [cidade.id])
 
   if (erro) {
     return <Alerta tipo="erro">{erro}</Alerta>
@@ -64,17 +71,15 @@ function DashboardAdminPage() {
       link: '/admin/rotas',
     },
     {
-      rotulo: 'Áreas atendidas',
+      rotulo: 'Bairros atendidos',
       valor: resumo.totalAreas,
-      detalhe: resumo.unicaCidade
-        ? `bairros em ${resumo.unicaCidade}`
-        : `bairros em ${resumo.totalCidades} cidades`,
+      detalhe: `em ${cidade.nome}`,
       link: '/admin/areas',
     },
     {
-      rotulo: 'Horários publicados',
+      rotulo: 'Coletas na semana',
       valor: resumo.totalHorarios,
-      detalhe: 'ativos em rotas ativas',
+      detalhe: 'dias e turnos em rotas ativas',
       link: '/admin/cronogramas',
     },
   ]
@@ -83,10 +88,16 @@ function DashboardAdminPage() {
     <div className="admin-pagina">
       <header className="admin-pagina__cabecalho">
         <div>
-          <h1 className="admin-pagina__titulo">Visão geral da coleta</h1>
+          <h1 className="admin-pagina__titulo">Visão geral de {cidade.nome}</h1>
           <p className="admin-pagina__texto">
-            O que está publicado para os moradores e o que precisa de atenção.
+            O que está publicado para os moradores desta cidade e o que precisa de atenção.
           </p>
+          {cidade.fonte && (
+            <p className="campo-ds__dica painel-fonte">
+              <Icone nome="info" tamanho={16} />
+              Fonte dos dados: {cidade.fonte}
+            </p>
+          )}
         </div>
 
         <div className="admin-pagina__acoes">
@@ -180,7 +191,7 @@ function DashboardAdminPage() {
                 <li key={rota.id}>
                   <Link to={`/admin/areas?rota=${rota.id}`} className="barras__item">
                     <span className="barras__topo">
-                      <span>{nomeRotaCurto(rota.nome, resumo.unicaCidade)}</span>
+                      <span>{nomeRotaCurto(rota.nome, cidade.nome)}</span>
                       <strong>{quantidade}</strong>
                     </span>
                     <span className="barras__trilho" aria-hidden="true">
@@ -196,6 +207,91 @@ function DashboardAdminPage() {
           )}
         </section>
       </div>
+
+      {resumo.avisos.length > 0 && (
+        <section className="admin-quadro painel-bloco" aria-labelledby="titulo-avisos">
+          <h2 id="titulo-avisos" className="painel-bloco__titulo">
+            O que a prefeitura não informa
+          </h2>
+
+          <ul className="pendencias">
+            {resumo.avisos.map((item) => (
+              <li key={item.id} className="pendencia">
+                <span className="pendencia__icone pendencia__icone--info">
+                  <Icone nome="info" tamanho={18} />
+                </span>
+
+                <div className="pendencia__texto">
+                  <strong>{item.titulo}</strong>
+                  <span>{item.texto}</span>
+                </div>
+
+                <span className="pendencia__numero">{item.quantidade}</span>
+
+                <Link to={item.link} className="botao botao--pequeno botao--secundario">
+                  {item.acao}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {cidades.length > 1 && (
+        <section className="admin-quadro painel-bloco" aria-labelledby="titulo-cidades">
+          <h2 id="titulo-cidades" className="painel-bloco__titulo">
+            Cidades atendidas
+          </h2>
+
+          <div className="tabela-rolavel">
+            <table className="tabela-cidades">
+              <caption className="visualmente-oculto">
+                Bairros, rotas e coletas de cada cidade
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Cidade</th>
+                  <th scope="col">Bairros</th>
+                  <th scope="col">Rotas ativas</th>
+                  <th scope="col">Coletas na semana</th>
+                  <th scope="col">Sem horário exato</th>
+                  <th scope="col">
+                    <span className="visualmente-oculto">Ação</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {cidades.map((item) => {
+                  const atual = item.id === cidade.id
+
+                  return (
+                    <tr key={item.id} aria-current={atual ? 'true' : undefined}>
+                      <th scope="row">{item.nome}</th>
+                      <td>{item.bairros}</td>
+                      <td>{item.rotasAtivas}</td>
+                      <td>{item.coletasAtivas}</td>
+                      <td>{item.coletasSemHorario}</td>
+                      <td>
+                        {atual ? (
+                          <span className="selo selo--info">Selecionada</span>
+                        ) : (
+                          <button
+                            type="button"
+                            className="botao-link"
+                            onClick={() => trocarCidade(item.id)}
+                          >
+                            Abrir {item.nome}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       <section className="admin-quadro painel-bloco" aria-labelledby="titulo-semana">
         <div className="painel-bloco__topo">
