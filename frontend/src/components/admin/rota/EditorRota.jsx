@@ -32,6 +32,7 @@ const LIMITE_DESCRICAO = 255
 
 const TIPOS_COLETA = [
   { valor: 'SELETIVA', rotulo: 'Coleta seletiva' },
+  { valor: 'CONVENCIONAL', rotulo: 'Coleta convencional (lixo comum)' },
   { valor: 'NAO_INFORMADO', rotulo: 'Tipo não informado pela fonte' },
 ]
 
@@ -377,6 +378,9 @@ function EditorRota({ rota, cidade, rotas, areas, cronogramas, onVoltar, onRecar
           <p className="admin-pagina__texto">
             {rota.tipoColeta === 'NAO_INFORMADO' && (
               <span className="selo selo--pendente">Tipo de coleta não informado</span>
+            )}
+            {rota.tipoColeta === 'CONVENCIONAL' && (
+              <span className="selo selo--info">Coleta convencional</span>
             )}{' '}
             {rota.ativo ? (
               <span className="selo selo--ativo">Ativa</span>

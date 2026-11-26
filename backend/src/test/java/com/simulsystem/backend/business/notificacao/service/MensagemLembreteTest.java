@@ -1,5 +1,6 @@
 package com.simulsystem.backend.business.notificacao.service;
 
+import com.simulsystem.backend.business.cidade.model.Cidade;
 import com.simulsystem.backend.business.cronograma.model.Cronograma;
 import com.simulsystem.backend.business.cronograma.model.Turno;
 import com.simulsystem.backend.business.cronograma.service.CronogramaService;
@@ -67,6 +68,26 @@ class MensagemLembreteTest {
         assertEquals(
                 "Olá, Ana! A coleta seletiva da rota Goiânia - Noturna (qua) está prevista para 25/11/2026 "
                         + "(a prefeitura não informa o turno nem o horário).",
+                comCronogramas.texto("Ana", rota, QUARTA_18H));
+    }
+
+    @Test
+    void deveCitarAColetaConvencionalEAFaixaDoTurnoDaCidade() {
+        Cidade trindade = new Cidade();
+        trindade.setNome("Trindade");
+        trindade.setNoturnoInicio(LocalTime.of(18, 0));
+        trindade.setNoturnoFim(LocalTime.of(3, 0));
+
+        Rota rota = rota(TipoColeta.CONVENCIONAL);
+        rota.setCidade(trindade);
+        Cronograma coleta = coleta(Turno.NOTURNO, null);
+        coleta.setRota(rota);
+
+        MensagemLembrete comCronogramas = new MensagemLembrete(servicoCom(rota, coleta));
+
+        assertEquals(
+                "Olá, Ana! A coleta convencional da rota Goiânia - Noturna (qua) está prevista para 25/11/2026, "
+                        + "no turno noturno (aprox. das 18:00 às 03:00; o horário exato varia por rua).",
                 comCronogramas.texto("Ana", rota, QUARTA_18H));
     }
 

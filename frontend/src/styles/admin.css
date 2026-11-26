@@ -2057,3 +2057,50 @@
 .tabela-cidades tr[aria-current='true'] {
   background: var(--brand-green-tint);
 }
+
+/* ---------- Faixa dos turnos da cidade (visão geral) ---------- */
+.faixa-turnos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.faixa-turnos__item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-left: 4px solid var(--brand-yellow);
+  border-radius: var(--radius-md);
+  background: var(--brand-yellow-tint);
+}
+
+.faixa-turnos__item--noturno {
+  border-left-color: var(--brand-blue);
+  background: var(--brand-blue-tint);
+}
+
+.faixa-turnos__rotulo {
+  font-weight: 700;
+}
+
+.faixa-turnos__horario {
+  grid-column: 1 / -1;
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+.faixa-turnos__form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.faixa-turnos__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}

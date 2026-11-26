@@ -70,7 +70,7 @@ export function calcularResumo({ rotas, areas, cronogramas }) {
       id: 'sem-horario-exato',
       titulo: 'Coletas só com o turno',
       texto:
-        'A prefeitura informa diurno ou noturno, sem horário. A consulta mostra o turno e o lembrete usa o começo do turno (06:00 ou 18:00) como referência.',
+        'A prefeitura informa diurno ou noturno, sem horário exato. A consulta mostra o turno com a faixa média da cidade (veja "Faixa dos turnos") e o lembrete conta a partir do início do turno.',
       quantidade: horariosValidos.filter((item) => !temHorario(item)).length,
       link: '/admin/cronogramas',
       acao: 'Ver agenda',

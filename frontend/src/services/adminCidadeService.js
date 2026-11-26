@@ -8,4 +8,16 @@ function listarCidades() {
   })
 }
 
-export { listarCidades }
+/**
+ * PUT /api/admin/cidades/{id}/turnos: faixa média do turno diurno e do
+ * noturno ({ diurnoInicio, diurnoFim, noturnoInicio, noturnoFim, fonte }).
+ */
+function atualizarTurnosCidade(id, faixa) {
+  return apiRequest(`/api/admin/cidades/${id}/turnos`, {
+    method: 'PUT',
+    token: obterToken(),
+    body: faixa,
+  })
+}
+
+export { atualizarTurnosCidade, listarCidades }

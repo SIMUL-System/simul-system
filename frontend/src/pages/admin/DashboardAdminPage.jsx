@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 import Alerta from '../../components/Alerta'
 import Icone from '../../components/Icone'
+import FaixaTurnos from '../../components/admin/cidade/FaixaTurnos'
 
 import { listarAreasAtendidas } from '../../services/adminAreaService'
 import { listarCronogramas } from '../../services/adminCronogramaService'
@@ -16,7 +17,7 @@ import { comoLista } from '../../utils/texto'
 
 /** Admin: indicadores, pendências e resumo da semana da cidade escolhida. */
 function DashboardAdminPage() {
-  const { cidade, cidades, trocarCidade } = useCidadeAdmin()
+  const { cidade, cidades, trocarCidade, recarregarCidades } = useCidadeAdmin()
   const [dados, setDados] = useState(null)
   const [erro, setErro] = useState('')
   const [hoje] = useState(() => diaDeHoje(new Date().getDay()))
@@ -236,6 +237,8 @@ function DashboardAdminPage() {
           </ul>
         </section>
       )}
+
+      <FaixaTurnos key={cidade.id} cidade={cidade} onSalva={recarregarCidades} />
 
       {cidades.length > 1 && (
         <section className="admin-quadro painel-bloco" aria-labelledby="titulo-cidades">

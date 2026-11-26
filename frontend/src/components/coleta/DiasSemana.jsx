@@ -12,7 +12,7 @@ function DiasSemana({ cronogramas = [], hoje }) {
 
   return (
     <div>
-      <ul className="dias-semana" aria-label="Dias da semana com coleta seletiva">
+      <ul className="dias-semana" aria-label="Dias da semana com coleta">
         {DIAS_SEMANA.map((dia) => {
           const temColeta = diasComColeta.has(dia.chave)
 

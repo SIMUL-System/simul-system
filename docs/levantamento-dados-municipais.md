@@ -150,3 +150,20 @@ só **dias e turno** (diurno ou noturno), e é isso que o sistema guarda e mostr
 - **Parte de um bairro** (ex.: "Setor Sul (parte de cima)" em Trindade): é cadastrado como um bairro com esse nome; o sistema não divide o contorno do bairro.
 - **Vias e trechos** (ex.: "Avenida Raimundo de Aquino", "Trecho da GO-469" em Trindade): cadastrados como áreas com o nome da fonte, porque não são bairros.
 - **Coleta orgânica de Goiânia**: o PDF também traz a coleta orgânica, que não foi importada (o SIMUL trata da coleta seletiva).
+
+## Atualização da V26: faixa dos turnos e coleta convencional
+
+Decisão da equipe (26/11/2026), aplicada pela `V26__faixa_dos_turnos_e_coleta_convencional.sql`:
+
+- **Tipo de coleta**: Aparecida de Goiânia, Trindade e Senador Canedo passam a ter as rotas como **coleta convencional** (lixo comum). Goiânia continua **seletiva**.
+- **Faixa média dos turnos** por cidade, a partir das informações das operadoras. É mostrada como horário aproximado ("aprox. 19:00 – 04:00") e usada como início do turno no lembrete; o horário exato de cada rota continua não informado e varia por rua.
+
+| Cidade | Operadora | Diurno | Noturno |
+|---|---|---|---|
+| Goiânia | Consórcio LimpaGyn | 07:00 – 16:00 | 19:00 – 04:00 |
+| Aparecida de Goiânia | Consórcio Aparecida Limpa | 06:00 – 16:00 | 18:00 – 03:00 |
+| Senador Canedo | Prefeitura de Senador Canedo | 06:00 – 16:00 | 18:00 – 03:00 |
+| Trindade | Quebec Ambiental | 07:00 – 16:00 | 18:00 – 03:00 |
+
+- Orientação mostrada ao morador: deixar o lixo na calçada até 1 hora antes do início do turno.
+- **Pendência**: confirmar as faixas com documentos oficiais das operadoras; elas podem ser corrigidas no painel (Visão geral → Faixa dos turnos) sem nova migration.

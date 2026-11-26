@@ -17,6 +17,7 @@ import {
   compararColetas,
   dadosTurno,
   DIAS_SEMANA,
+  horaCurta,
   horaParaApi,
   rotuloHorario,
   temHorario,
@@ -119,6 +120,11 @@ function CronogramasAdminPage() {
   const idsAtivas = new Set(rotasAtivas.map((rota) => rota.id))
   const hoje = diaDeHoje(new Date().getDay())
   const cidadeUnica = cidade.nome
+  const faixa = cidade.turnos ?? {}
+  const faixaDiurno =
+    faixa.diurnoInicio && `${horaCurta(faixa.diurnoInicio)}–${horaCurta(faixa.diurnoFim)}`
+  const faixaNoturno =
+    faixa.noturnoInicio && `${horaCurta(faixa.noturnoInicio)}–${horaCurta(faixa.noturnoFim)}`
 
   const bairrosPorRota = new Map()
   areas.forEach((area) =>
@@ -251,8 +257,10 @@ function CronogramasAdminPage() {
 
       <p className="admin-rodape">
         <span className="agenda__legenda agenda__legenda--dia" aria-hidden="true" /> Diurna
-        <span className="agenda__legenda agenda__legenda--noite" aria-hidden="true" /> Noturna · Sem
-        horário informado, aparece só o turno
+        {faixaDiurno && ` (aprox. ${faixaDiurno})`}
+        <span className="agenda__legenda agenda__legenda--noite" aria-hidden="true" /> Noturna
+        {faixaNoturno && ` (aprox. ${faixaNoturno})`} · Sem horário exato, aparece o turno com a
+        faixa da cidade (editável na Visão geral)
         {rotas.length > rotasAtivas.length &&
           ` · ${rotas.length - rotasAtivas.length} rota(s) inativa(s) não aparecem na agenda.`}
       </p>

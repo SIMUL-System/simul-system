@@ -117,12 +117,39 @@ class ImportacaoColetaPorCidadeTest {
         }
     }
 
+    /** Na V25 só Goiânia é seletiva; a V26 passa as outras três cidades para CONVENCIONAL. */
     @Test
     void soGoianiaDeveSerClassificadaComoSeletiva() {
         for (List<String> rota : rotas) {
             TipoColeta esperado = rota.get(0).equals("Goiânia") ? TipoColeta.SELETIVA : TipoColeta.NAO_INFORMADO;
             assertEquals(esperado.name(), rota.get(3), rota.get(1));
         }
+    }
+
+    @Test
+    void v26DeveDarFaixaDosTurnosAsQuatroCidadesEConvencionalAsOutrasTres() throws IOException {
+        String v26;
+
+        try (InputStream entrada = ImportacaoColetaPorCidadeTest.class.getClassLoader()
+                .getResourceAsStream("db/migration/V26__faixa_dos_turnos_e_coleta_convencional.sql")) {
+            assertNotNull(entrada, "A migration V26 precisa estar no classpath.");
+            v26 = new String(entrada.readAllBytes(), StandardCharsets.UTF_8);
+        }
+
+        // Linhas (cidade, início/fim do diurno, início/fim do noturno, fonte) do UPDATE ... FROM (VALUES ...).
+        List<List<String>> faixas = valores(v26.replace("FROM (VALUES", "INSERT INTO faixa VALUES"), "faixa")
+                .stream()
+                .filter(linha -> linha != null && linha.size() == 6)
+                .distinct()
+                .toList();
+
+        assertEquals(4, faixas.size());
+        for (List<String> faixa : faixas) {
+            assertTrue(cidades.stream().anyMatch(cidade -> cidade.get(0).equals(faixa.get(0))),
+                    "Cidade da faixa não importada: " + faixa.get(0));
+        }
+        assertEquals(List.of("Goiânia", "07:00", "16:00", "19:00", "04:00"), faixas.get(0).subList(0, 5));
+        assertTrue(v26.contains("IN ('APARECIDA DE GOIÂNIA', 'TRINDADE', 'SENADOR CANEDO')"));
     }
 
     @Test

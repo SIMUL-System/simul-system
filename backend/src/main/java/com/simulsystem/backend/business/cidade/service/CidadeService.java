@@ -1,6 +1,7 @@
 package com.simulsystem.backend.business.cidade.service;
 
 import com.simulsystem.backend.business.cidade.dto.CidadeResponseDTO;
+import com.simulsystem.backend.business.cidade.dto.FaixaTurnosDTO;
 
 import java.util.List;
 
@@ -12,4 +13,7 @@ public interface CidadeService {
 
     /** Uma cidade com indicadores, ou 404. */
     CidadeResponseDTO buscarComIndicadores(Long id);
+
+    /** Atualiza a faixa média dos turnos da cidade (vale para a consulta e os lembretes). */
+    CidadeResponseDTO atualizarTurnos(Long id, FaixaTurnosDTO faixa);
 }

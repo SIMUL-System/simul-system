@@ -1,5 +1,6 @@
 package com.simulsystem.backend.business.rota.mapper;
 
+import com.simulsystem.backend.business.cidade.dto.FaixaTurnosDTO;
 import com.simulsystem.backend.business.cidade.model.Cidade;
 import com.simulsystem.backend.business.cronograma.model.Cronograma;
 import com.simulsystem.backend.business.rota.dto.ConsultaColetaResponseDTO;
@@ -71,7 +72,8 @@ public class RotaMapper {
                 cronogramasResumo,
                 areaAtendida.getId(),
                 areaAtendida.getRota().getTipoColeta(),
-                areaAtendida.getRota().getFonte()
+                areaAtendida.getRota().getFonte(),
+                areaAtendida.getCidade() == null ? null : FaixaTurnosDTO.de(areaAtendida.getCidade())
         );
     }
 

@@ -71,15 +71,21 @@ public class Cronograma {
     }
 
     /**
-     * Momento usado para calcular o lembrete: o início informado ou, sem
-     * horário, o começo de referência do turno (não exibido como horário).
+     * Momento usado para calcular o lembrete: o início informado; sem
+     * horário, o início do turno na cidade da rota (faixa da operadora);
+     * sem essa faixa, o começo de referência do turno.
      */
     public LocalTime horarioReferencia() {
         if (horarioInicio != null) {
             return horarioInicio;
         }
 
-        return (turno == null ? Turno.NAO_INFORMADO : turno).getInicioReferencia();
+        Turno turnoDaColeta = turno == null ? Turno.NAO_INFORMADO : turno;
+        LocalTime daCidade = rota == null || rota.getCidade() == null
+                ? null
+                : rota.getCidade().inicioDoTurno(turnoDaColeta);
+
+        return daCidade != null ? daCidade : turnoDaColeta.getInicioReferencia();
     }
 
     /** Preenche as datas (e os padrões) antes de inserir. */

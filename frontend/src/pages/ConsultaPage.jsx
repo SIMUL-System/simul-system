@@ -431,12 +431,20 @@ function ConsultaPage() {
 
   const cronogramasOrdenados = ordenarCronogramas(resultado?.cronogramas)
 
-  const proximaColeta = calcularProximaColeta(cronogramasOrdenados, agora)
+  // Faixa média dos turnos na cidade (operadora): horário aproximado quando a prefeitura informa só o turno.
+  const faixaTurnos = resultado?.turnos ?? null
+
+  const proximaColeta = calcularProximaColeta(cronogramasOrdenados, agora, faixaTurnos)
 
   const usuarioLogado = Boolean(obterToken())
 
-  // Só Goiânia informa que é a coleta seletiva; nas outras fontes o tipo não vem.
-  const seletiva = resultado?.tipoColeta !== 'NAO_INFORMADO'
+  // Tipo da coleta do bairro: seletiva (recicláveis), convencional (lixo comum) ou não informado.
+  const tipoColeta = resultado?.tipoColeta ?? 'SELETIVA'
+  const nomeColeta = {
+    SELETIVA: 'Coleta seletiva',
+    CONVENCIONAL: 'Coleta convencional',
+    NAO_INFORMADO: 'Coleta',
+  }[tipoColeta]
 
   const algumSemHorario = cronogramasOrdenados.some((cronograma) => !temHorario(cronograma))
 
@@ -459,10 +467,10 @@ function ConsultaPage() {
     <main className="consulta-pagina" aria-busy={paginaCarregando}>
       <section className="consulta-hero" aria-labelledby="titulo-consulta-publica">
         <div className="consulta-hero__texto">
-          <p className="sobretitulo sobretitulo--verde">Coleta seletiva</p>
+          <p className="sobretitulo sobretitulo--verde">Coleta no seu bairro</p>
 
           <h1 id="titulo-consulta-publica" className="consulta-hero__titulo">
-            Quando passa a coleta seletiva no seu bairro?
+            Quando passa a coleta no seu bairro?
           </h1>
 
           <p className="consulta-hero__lead">
@@ -587,7 +595,7 @@ function ConsultaPage() {
                   tabIndex="-1"
                   className="consulta-resultado__titulo"
                 >
-                  {seletiva ? 'Coleta seletiva' : 'Coleta'} em {resultado.bairro}
+                  {nomeColeta} em {resultado.bairro}
                 </h2>
 
                 <p className="consulta-resultado__local">
@@ -633,7 +641,7 @@ function ConsultaPage() {
                               </span>
                             ) : (
                               <span className="horarios__hora horarios__hora--turno">
-                                {descreverHorario(cronograma, true)}
+                                {descreverHorario(cronograma, true, faixaTurnos)}
                               </span>
                             )}
                           </li>
@@ -643,12 +651,26 @@ function ConsultaPage() {
 
                     {algumSemHorario && (
                       <p className="horarios__nota">
-                        A prefeitura informa só o turno da coleta, sem o horário exato.
+                        {faixaTurnos?.diurnoInicio || faixaTurnos?.noturnoInicio
+                          ? `A prefeitura informa só o turno. A faixa é a média da cidade${faixaTurnos.fonte ? ` (${faixaTurnos.fonte.split(':')[0]})` : ''}; o horário exato varia por rua. Deixe o lixo na calçada até 1 hora antes do início do turno.`
+                          : 'A prefeitura informa só o turno da coleta, sem o horário exato.'}
                       </p>
                     )}
                   </section>
 
-                  {!seletiva && (
+                  {tipoColeta === 'CONVENCIONAL' && (
+                    <div className="alerta alerta--info" role="note">
+                      <Icone nome="info" />
+
+                      <div>
+                        <strong>Coleta convencional</strong>
+                        Em {resultado.cidade}, os dias e turnos cadastrados são da coleta de lixo
+                        comum. A prefeitura não informou um cronograma separado de coleta seletiva.
+                      </div>
+                    </div>
+                  )}
+
+                  {tipoColeta === 'NAO_INFORMADO' && (
                     <div className="alerta alerta--info" role="note">
                       <Icone nome="info" />
 

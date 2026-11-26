@@ -1,9 +1,13 @@
 package com.simulsystem.backend.business.cidade.validation;
 
+import com.simulsystem.backend.business.cidade.dto.FaixaTurnosDTO;
 import com.simulsystem.backend.business.cidade.model.Cidade;
 import com.simulsystem.backend.business.cidade.repository.CidadeRepository;
 import com.simulsystem.backend.core.exception.CidadeDivergenteException;
 import com.simulsystem.backend.core.exception.CidadeNaoEncontradaException;
+import com.simulsystem.backend.core.exception.HorarioCronogramaInvalidoException;
+
+import java.time.LocalTime;
 
 import org.springframework.stereotype.Component;
 
@@ -40,6 +44,24 @@ public class CidadeValidation {
             throw new CidadeDivergenteException(
                     "A rota escolhida é de " + cidadeDaRota.getNome()
                             + ". Um bairro só pode ficar numa rota da própria cidade.");
+        }
+    }
+
+    /** Cada turno: início e fim juntos (ou os dois vazios) e diferentes entre si. */
+    public void validarFaixaTurnos(FaixaTurnosDTO faixa) {
+        validarFaixa("diurno", faixa.diurnoInicio(), faixa.diurnoFim());
+        validarFaixa("noturno", faixa.noturnoInicio(), faixa.noturnoFim());
+    }
+
+    private void validarFaixa(String turno, LocalTime inicio, LocalTime fim) {
+        if ((inicio == null) != (fim == null)) {
+            throw new HorarioCronogramaInvalidoException(
+                    "Informe o início e o fim do turno " + turno + ", ou deixe os dois em branco.");
+        }
+
+        if (inicio != null && inicio.equals(fim)) {
+            throw new HorarioCronogramaInvalidoException(
+                    "O início e o fim do turno " + turno + " não podem ser iguais.");
         }
     }
 

@@ -2,6 +2,12 @@ import Icone from '../Icone'
 
 import { descreverQuando, formatarData, formatarHora, TURNOS } from '../../utils/coleta'
 
+/** "19:00" → "18:00" (uma hora antes, virando o dia se preciso). */
+function umaHoraAntes(hora) {
+  const [h, m] = hora.split(':').map(Number)
+  return `${String((h + 23) % 24).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
 /**
  * ColetaCard do Design System: a próxima coleta da região.
  * Variante "hoje" (amarela) quando a coleta é hoje ou está acontecendo.
@@ -23,11 +29,16 @@ function CartaoProximaColeta({ proxima, bairro }) {
 
   let orientacao
 
-  if (proxima.semHorario) {
+  if (proxima.semHorario && proxima.faixa && proxima.emAndamento) {
+    orientacao = `O turno vai até cerca de ${proxima.faixa.fim}: o caminhão pode passar a qualquer momento.`
+  } else if (proxima.semHorario && proxima.faixa) {
+    // Orientação das prefeituras: lixo na calçada até 1 hora antes do início do turno.
+    orientacao = `Deixe o lixo na calçada até 1 hora antes do início do turno (${umaHoraAntes(proxima.faixa.inicio)}). O horário exato varia por rua.`
+  } else if (proxima.semHorario) {
     orientacao =
       proxima.turno === 'NAO_INFORMADO'
-        ? 'A prefeitura não informa o turno nem o horário: separe os recicláveis com antecedência.'
-        : `Coleta no turno ${TURNOS[proxima.turno].rotulo.toLowerCase()}. A prefeitura não informa o horário exato: separe os recicláveis com antecedência.`
+        ? 'A prefeitura não informa o turno nem o horário: separe o lixo com antecedência.'
+        : `Coleta no turno ${TURNOS[proxima.turno].rotulo.toLowerCase()}. A prefeitura não informa o horário exato: separe o lixo com antecedência.`
   } else {
     orientacao = proxima.emAndamento
       ? `O caminhão pode passar até as ${fim}`
@@ -58,7 +69,14 @@ function CartaoProximaColeta({ proxima, bairro }) {
           proxima.turno === 'NAO_INFORMADO' ? (
             'Turno não informado'
           ) : (
-            `Turno ${TURNOS[proxima.turno].rotulo.toLowerCase()}`
+            <>
+              Turno {TURNOS[proxima.turno].rotulo.toLowerCase()}
+              {proxima.faixa && (
+                <span className="coleta-cartao__faixa">
+                  aprox. {proxima.faixa.inicio} – {proxima.faixa.fim}
+                </span>
+              )}
+            </>
           )
         ) : (
           <>

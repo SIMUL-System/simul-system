@@ -13,6 +13,8 @@ package com.simulsystem.backend.business.cidade.dto;
  * @param rotasSemColeta        rotas ativas sem nenhum dia de coleta
  * @param rotasSemBairro        rotas ativas sem bairros
  * @param rotasTipoNaoInformado rotas ativas cuja fonte não diz se a coleta é a seletiva
+ * @param rotasConvencionais    rotas ativas de coleta convencional
+ * @param turnos                faixa média dos turnos na cidade
  */
 public record CidadeResponseDTO(
         Long id,
@@ -27,6 +29,8 @@ public record CidadeResponseDTO(
         long coletasSemHorario,
         long rotasSemColeta,
         long rotasSemBairro,
-        long rotasTipoNaoInformado
+        long rotasTipoNaoInformado,
+        long rotasConvencionais,
+        FaixaTurnosDTO turnos
 ) {
 }

@@ -1,11 +1,13 @@
 package com.simulsystem.backend.business.cronograma.service;
 
+import com.simulsystem.backend.business.cidade.model.Cidade;
 import com.simulsystem.backend.business.cronograma.mapper.CronogramaMapper;
 import com.simulsystem.backend.business.cronograma.model.Cronograma;
 import com.simulsystem.backend.business.cronograma.model.DiaSemana;
 import com.simulsystem.backend.business.cronograma.model.Turno;
 import com.simulsystem.backend.business.cronograma.repository.CronogramaRepository;
 import com.simulsystem.backend.business.cronograma.validation.CronogramaValidation;
+import com.simulsystem.backend.business.rota.model.Rota;
 import com.simulsystem.backend.business.rota.validation.RotaValidation;
 
 import org.junit.jupiter.api.Test;
@@ -118,6 +120,26 @@ class CronogramaServiceImplTest {
 
         // Nenhum horário inventado: 19:00 de quarta não é coleta.
         assertTrue(cronogramaService.buscarColetaNoHorario(ROTA_ID, LocalDateTime.of(2026, 8, 19, 19, 0)).isEmpty());
+    }
+
+    @Test
+    void deveUsarOInicioDoTurnoDaCidadeQuandoExistir() {
+        Cidade goiania = new Cidade();
+        goiania.setNoturnoInicio(LocalTime.of(19, 0));
+        goiania.setNoturnoFim(LocalTime.of(4, 0));
+        Rota rota = new Rota();
+        rota.setCidade(goiania);
+
+        Cronograma quartaNoturna = criarCronograma(DiaSemana.QUARTA, null, null);
+        quartaNoturna.setTurno(Turno.NOTURNO);
+        quartaNoturna.setRota(rota);
+
+        when(cronogramaRepository.findByRotaIdAndAtivoTrue(ROTA_ID)).thenReturn(List.of(quartaNoturna));
+
+        // Goiânia: turno noturno começa às 19:00 (faixa da operadora), não às 18:00.
+        LocalDateTime quarta19h = LocalDateTime.of(2026, 8, 19, 19, 0);
+        assertEquals(Optional.of(quarta19h), cronogramaService.buscarColetaNoHorario(ROTA_ID, quarta19h));
+        assertTrue(cronogramaService.buscarColetaNoHorario(ROTA_ID, LocalDateTime.of(2026, 8, 19, 18, 0)).isEmpty());
     }
 
     @Test

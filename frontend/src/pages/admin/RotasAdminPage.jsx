@@ -175,9 +175,11 @@ function RotasAdminPage() {
   }
 
   const inativas = rotas.filter((rota) => !rota.ativo)
-  // Se a fonte da cidade inteira não diz o tipo, um aviso só basta (em vez de um selo por cartão).
-  const todasSemTipo =
-    rotas.length > 0 && rotas.every((rota) => rota.tipoColeta === 'NAO_INFORMADO')
+  // Se todas as rotas da cidade têm o mesmo tipo, um aviso só basta (em vez de um selo por cartão).
+  const tipoUnico =
+    rotas.length > 0 && rotas.every((rota) => rota.tipoColeta === rotas[0].tipoColeta)
+      ? rotas[0].tipoColeta
+      : null
   const visiveis = rotas
     .filter((rota) => mostrarInativas || rota.ativo)
     .sort((a, b) => Number(b.ativo) - Number(a.ativo) || ordenarTexto(a.nome, b.nome))
@@ -208,7 +210,15 @@ function RotasAdminPage() {
 
       {mensagem && <Alerta tipo={mensagem.tipo}>{mensagem.texto}</Alerta>}
 
-      {todasSemTipo && (
+      {tipoUnico === 'CONVENCIONAL' && (
+        <Alerta tipo="info">
+          As rotas de {cidade.nome} são da <strong>coleta convencional</strong> (lixo comum): a
+          prefeitura não informou um cronograma separado de coleta seletiva. Se ele for divulgado,
+          crie rotas do tipo “coleta seletiva”.
+        </Alerta>
+      )}
+
+      {tipoUnico === 'NAO_INFORMADO' && (
         <Alerta tipo="info">
           A fonte de {cidade.nome} informa dias e turnos, mas não diz se a coleta é a seletiva. As
           rotas estão com o tipo “não informado” e a consulta avisa o morador. Quando a prefeitura
@@ -259,13 +269,19 @@ function RotasAdminPage() {
                 </span>
 
                 {!rota.ativo && <span className="selo selo--inativo">Inativa</span>}
-                {rota.tipoColeta === 'NAO_INFORMADO' && !todasSemTipo && (
+                {!tipoUnico && rota.tipoColeta === 'NAO_INFORMADO' && (
                   <span
                     className="selo selo--pendente"
                     title="A fonte não diz se é a coleta seletiva"
                   >
                     Tipo não informado
                   </span>
+                )}
+                {!tipoUnico && rota.tipoColeta === 'CONVENCIONAL' && (
+                  <span className="selo selo--info">Convencional</span>
+                )}
+                {!tipoUnico && rota.tipoColeta === 'SELETIVA' && (
+                  <span className="selo selo--ativo">Seletiva</span>
                 )}
               </div>
 

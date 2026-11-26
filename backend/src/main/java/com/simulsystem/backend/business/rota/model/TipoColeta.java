@@ -1,11 +1,12 @@
 package com.simulsystem.backend.business.rota.model;
 
 /**
- * Tipo de coleta da rota, conforme a fonte. Quando o documento da prefeitura
- * não diz se é a coleta seletiva, a rota fica NAO_INFORMADO, e a consulta
- * avisa o morador, em vez de afirmar que é seletiva.
+ * Tipo de coleta da rota, conforme a fonte: seletiva (recicláveis),
+ * convencional (lixo comum) ou não informado. A consulta e o lembrete só
+ * falam em "coleta seletiva" quando a rota é SELETIVA.
  */
 public enum TipoColeta {
     SELETIVA,
+    CONVENCIONAL,
     NAO_INFORMADO
 }

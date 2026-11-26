@@ -210,7 +210,7 @@ simul-system/
 1. A página inicial pede `GET /api/rotas/areas`, que devolve **só cidade e bairro de rotas ativas**.
 2. O morador escolhe a cidade e o bairro (com busca que ignora acentos).
 3. O front pede `GET /api/rotas/consulta?cidade=…&bairro=…` e recebe a rota, as **coletas ativas** (dia + turno, com horário só quando a prefeitura informa), o **tipo de coleta** e o contorno do bairro (se houver).
-4. A tela mostra os dias da semana com coleta, o horário ou o turno e a **próxima coleta**, calculada no navegador. Quando a fonte informa só o turno, a tela mostra "Turno noturno" e avisa que o horário exato não foi informado — **nenhum horário é inventado**. Quando a fonte não diz se a coleta é a seletiva, o título vira "Coleta em …" e um aviso pede para confirmar com a prefeitura.
+4. A tela mostra os dias da semana com coleta, o horário ou o turno e a **próxima coleta**, calculada no navegador. Quando a fonte informa só o turno, a tela mostra o turno com a **faixa média da cidade** ("Turno noturno · aprox. 19:00 – 04:00", informada pela operadora) e avisa que o horário exato varia por rua; a orientação é deixar o lixo na calçada até 1 hora antes do início do turno. O título diz o tipo: "Coleta seletiva em …" (Goiânia) ou "Coleta convencional em …" (Aparecida de Goiânia, Trindade e Senador Canedo, que só têm a coleta de lixo comum cadastrada).
 5. O mapa enquadra o **contorno salvo no SIMUL**. Se o bairro ainda não tem contorno, usa o que o **Nominatim** (OpenStreetMap) encontrar. Se nada for encontrado, avisa que não conseguiu localizar a região.
 6. O morador pode mostrar a própria localização no mapa (geolocalização do navegador, só com permissão dele).
 
@@ -255,7 +255,7 @@ Página pública e lúdica, com conteúdo todo em `frontend/src/utils/guiaConteu
 
 O painel é organizado **por cidade**. O menu tem Visão geral, Rotas, Áreas atendidas e Agenda da semana; a edição do "Quem somos" fica fora do menu e é aberta pelo botão **Editar esta página**, que só o administrador logado vê em `/quem-somos`. No topo de Visão geral, Rotas, Áreas atendidas e Agenda da semana fica o **seletor de cidade**, com o resumo dela (bairros, rotas ativas e coletas na semana). A cidade escolhida fica salva no navegador (`localStorage`, chave `simul.admin.cidade`) e vale para todas as seções; ao trocar, a seção recarrega só com os dados da nova cidade.
 
-- **Visão geral:** indicadores da cidade, "Precisa de atenção" (áreas sem contorno, rotas ativas sem dia de coleta, rotas ativas sem bairros, bairros em rotas inativas), "O que a prefeitura não informa" (coletas só com turno e rotas sem tipo de coleta na fonte), a fonte dos dados da cidade e a tabela **Cidades atendidas**, que compara as cidades e permite trocar de cidade.
+- **Visão geral:** indicadores da cidade, **Faixa dos turnos** (início e fim médios do turno diurno e do noturno na cidade, com a fonte; editável em `PUT /api/admin/cidades/{id}/turnos`), "Precisa de atenção" (áreas sem contorno, rotas ativas sem dia de coleta, rotas ativas sem bairros, bairros em rotas inativas), "O que a prefeitura não informa" (coletas só com turno e rotas sem tipo de coleta na fonte), a fonte dos dados da cidade e a tabela **Cidades atendidas**, que compara as cidades e permite trocar de cidade.
 - **Rotas:** só as rotas da cidade. Cada rota é um padrão de coleta (**dias + turno**, horário opcional) e pertence a **uma única cidade**, definida na criação e que não muda depois. Só bairros da mesma cidade entram na rota; o back-end recusa com 409 qualquer tentativa de misturar cidades. A semana é editada **por turno** (bloco Diurno e bloco Noturno; um mesmo dia pode ter os dois) e salva de uma vez por `PUT /api/admin/cronogramas/rota/{rotaId}`. O horário só é preenchido quando a prefeitura informa ("A prefeitura informa o horário deste turno"). O tipo de coleta (seletiva ou não informado) e a fonte aparecem na rota. Desativar uma rota pede confirmação; **nada é apagado**. A preferência do morador guarda o **bairro** (V20): ao mover um bairro, os lembretes passam a seguir a nova rota sem ação do morador.
 - **Áreas atendidas:** só os bairros da cidade. A cidade do bairro é a da rota (campo fixo no formulário); bairro é único por cidade. O contorno é desenhado no mapa (Polygon/MultiPolygon GeoJSON) ou buscado no OpenStreetMap ("Buscar contornos no mapa").
 - **Agenda da semana:** coletas da cidade por dia, com o turno (e o horário, se houver). "Mudar horário de várias rotas" escolhe o **turno** e as rotas e aplica o novo horário — ou volta a mostrar só o turno — em todas de uma vez (`PUT /api/admin/cronogramas/lote/horario`, tudo ou nada). Só pode haver **uma coleta ativa por rota, dia e turno**.
@@ -283,7 +283,7 @@ Para cada preferência elegível (usuário ativo, bairro numa rota ativa e pelo 
 coleta alvo = minuto atual (sem segundos) + antecedência
 ```
 
-O lembrete vence se a rota tem um **cronograma ativo** naquele dia da semana e com aquele **horário de início**. Quando a prefeitura informa só o turno, o cálculo usa o começo de referência do turno — **diurno 06:00, noturno 18:00** (`Turno.inicioReferencia`) — apenas para saber quando avisar; esse horário não é mostrado como horário da coleta.
+O lembrete vence se a rota tem um **cronograma ativo** naquele dia da semana e com aquele **horário de início**. Quando a prefeitura informa só o turno, o cálculo usa o **início do turno na cidade** (faixa da operadora, por exemplo 19:00 no noturno de Goiânia). Sem faixa cadastrada, usa a referência do turno: diurno 06:00, noturno 18:00 (`Turno.inicioReferencia`).
 
 > Exemplo: coleta na quarta às 07:00 e antecedência de 48 h → o lembrete sai na **segunda às 07:00**.
 > Calcular a partir da coleta alvo (e não da "próxima coleta a partir de agora") evita perder o lembrete quando a antecedência é maior que o intervalo entre duas coletas.
@@ -307,9 +307,9 @@ A nova tentativa usa o **mesmo canal** da falha (e-mail ou Web Push) e confere a
 
 > Assunto: **SIMUL - Lembrete de coleta**
 > Com horário: "Olá, Ana! A coleta seletiva da rota Goiânia - Diurna (seg) está prevista para 30/11/2026 às 07:00."
-> Só com turno: "Olá, Ana! A coleta da rota Trindade - Noturna (seg) está prevista para 30/11/2026, no turno noturno (a prefeitura não informa o horário exato)."
+> Só com turno: "Olá, Ana! A coleta convencional da rota Trindade - Noturna (seg) está prevista para 30/11/2026, no turno noturno (aprox. das 18:00 às 03:00; o horário exato varia por rua)."
 
-A palavra "seletiva" só aparece quando a rota é do tipo `SELETIVA`.
+O texto diz "coleta seletiva" ou "coleta convencional" conforme o tipo da rota (`SELETIVA`, `CONVENCIONAL`; `NAO_INFORMADO` vira só "coleta").
 
 No Web Push, o assunto vira o título da notificação e o texto vira o corpo.
 
@@ -391,6 +391,7 @@ Base local: `http://localhost:8080`. Erros seguem o formato ProblemDetail:
 |---|---|---|
 | GET | `/api/admin/cidades` | Cidades com indicadores (rotas, bairros, coletas, pendências) |
 | GET | `/api/admin/cidades/{id}` | Uma cidade com indicadores |
+| PUT | `/api/admin/cidades/{id}/turnos` | Faixa média do turno diurno e do noturno na cidade (e a fonte) |
 | GET / POST | `/api/admin/rotas` | Listar (`?cidadeId=` filtra) e criar rotas (`cidadeId` obrigatório, `tipoColeta` opcional) |
 | PUT | `/api/admin/rotas/{id}` | Editar nome, descrição e tipo (a cidade não muda: 409) |
 | PATCH | `/api/admin/rotas/{id}/status?ativo=` | Ativar/desativar |
@@ -457,6 +458,7 @@ PUT /api/admin/cronogramas/lote/horario
 | V22 | registro do aceite dos termos (`termos_aceitos_em`, `termos_versao`) |
 | V23 | "Quem somos": `conteudo_institucional`, `imagens` (BYTEA), `fotos_instituicao`, `integrantes` |
 | V24 | tabela `cidades`; `rotas.cidade_id`, `tipo_coleta`, `fonte`; `areas_atendidas.cidade_id` com FK composta para a rota da mesma cidade; `cronogramas.turno` e horário opcional; os horários-padrão da carga de Senador Canedo viram turno sem horário |
+| V26 | faixa média dos turnos por cidade (`cidades.diurno_*`, `noturno_*`, `fonte_turnos`) e tipo de coleta `CONVENCIONAL` para Aparecida de Goiânia, Trindade e Senador Canedo |
 | V25 | importação das quatro cidades a partir das fontes municipais (gerada pelo levantamento; ver [docs/levantamento-dados-municipais.md](docs/levantamento-dados-municipais.md)) |
 
 ### 11.3 Regras garantidas pelo banco
@@ -478,15 +480,16 @@ PUT /api/admin/cronogramas/lote/horario
 
 As cidades, bairros, rotas e coletas vêm das fontes municipais de `Cidade.Bairros.Horarios.zip` (V15/V18 para a carga inicial de Senador Canedo e V25 para as quatro cidades). O levantamento completo, com padrões, inconsistências e pendências, está em [docs/levantamento-dados-municipais.md](docs/levantamento-dados-municipais.md).
 
-| Cidade | Bairros | Rotas | Coletas na semana | Tipo de coleta | Fonte |
-|---|---:|---:|---:|---|---|
-| Goiânia | 492 | 18 | 30 | Seletiva | PDF da Comurg (só as colunas da coleta seletiva) |
-| Aparecida de Goiânia | 226 | 11 | 62 | Não informado | 5 imagens do cronograma |
-| Trindade | 120 | 19 | 51 | Não informado | `Trindade.txt` |
-| Senador Canedo | 109 | 5 | 18 | Não informado | imagem da relação oficial |
-| **Total** | **947** | **53** | **161** | | |
+| Cidade | Bairros | Rotas | Coletas na semana | Tipo de coleta | Turno diurno (média) | Turno noturno (média) | Operadora |
+|---|---:|---:|---:|---|---|---|---|
+| Goiânia | 492 | 18 | 30 | Seletiva | 07:00 – 16:00 | 19:00 – 04:00 | Consórcio LimpaGyn |
+| Aparecida de Goiânia | 226 | 11 | 62 | Convencional | 06:00 – 16:00 | 18:00 – 03:00 | Consórcio Aparecida Limpa |
+| Trindade | 120 | 19 | 51 | Convencional | 07:00 – 16:00 | 18:00 – 03:00 | Quebec Ambiental |
+| Senador Canedo | 109 | 5 | 18 | Convencional | 06:00 – 16:00 | 18:00 – 03:00 | Prefeitura de Senador Canedo |
+| **Total** | **947** | **53** | **161** | | | | |
 
-- **Nenhuma fonte informa horário**: todas as coletas importadas têm só o turno (diurno/noturno). O painel permite registrar o horário quando a prefeitura divulgar.
+- **Dias e turnos** vêm das fontes municipais (V25). **Nenhuma fonte informa o horário exato** de cada rota: as coletas guardam só o turno.
+- A **faixa média dos turnos** (V26) foi definida pela equipe a partir das informações das operadoras e é mostrada como horário aproximado. O horário exato varia por rua; o painel permite corrigir a faixa e registrar o horário exato de uma rota quando a prefeitura divulgar.
 - Cada **rota** é o grupo de bairros com **exatamente os mesmos dias e turnos** na cidade; ela não representa o trajeto do caminhão. Bairro que aparece em mais de um grupo da fonte recebe a soma dos dias (nada é descartado).
 - Em Senador Canedo, os 109 bairros já cadastrados conferem com a imagem oficial (mesmas 5 rotas); as grafias com erro da imagem ("Fransciso", "Industrias", "Sitio") foram mantidas corretas como já estavam. Os horários 06:00–18:00 e 18:00–23:59 da carga antiga não vinham da prefeitura e viraram turno sem horário.
 

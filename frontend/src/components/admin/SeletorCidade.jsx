@@ -40,6 +40,9 @@ function SeletorCidade({ cidades, cidade, onTrocar }) {
           <strong>{cidade.coletasAtivas}</strong>{' '}
           {cidade.coletasAtivas === 1 ? 'coleta na semana' : 'coletas na semana'}
         </span>
+        {cidade.rotasConvencionais > 0 && (
+          <span className="selo selo--info">Coleta convencional</span>
+        )}
         {cidade.rotasTipoNaoInformado > 0 && (
           <span className="selo selo--pendente">Tipo de coleta não informado</span>
         )}

@@ -2,6 +2,7 @@ package com.simulsystem.backend.business.cidade.service;
 
 import com.simulsystem.backend.business.cidade.CidadesDeTeste;
 import com.simulsystem.backend.business.cidade.dto.CidadeResponseDTO;
+import com.simulsystem.backend.business.cidade.dto.FaixaTurnosDTO;
 import com.simulsystem.backend.business.cidade.model.Cidade;
 import com.simulsystem.backend.business.cidade.repository.CidadeRepository;
 import com.simulsystem.backend.business.cidade.validation.CidadeValidation;
@@ -15,6 +16,7 @@ import com.simulsystem.backend.business.rota.model.TipoColeta;
 import com.simulsystem.backend.business.rota.repository.AreaAtendidaRepository;
 import com.simulsystem.backend.business.rota.repository.RotaRepository;
 import com.simulsystem.backend.core.exception.CidadeNaoEncontradaException;
+import com.simulsystem.backend.core.exception.HorarioCronogramaInvalidoException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +30,9 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -89,6 +94,30 @@ class CidadeServiceImplTest {
         assertEquals(1, cidade.rotasSemColeta());
         assertEquals(1, cidade.rotasSemBairro());
         assertEquals(1, cidade.rotasTipoNaoInformado());
+    }
+
+    @Test
+    void deveAtualizarAFaixaDosTurnosDaCidade() {
+        Cidade goiania = CidadesDeTeste.goiania();
+
+        when(cidadeRepository.findById(2L)).thenReturn(Optional.of(goiania));
+        when(cidadeRepository.save(goiania)).thenReturn(goiania);
+
+        CidadeResponseDTO resposta = cidadeService.atualizarTurnos(2L, new FaixaTurnosDTO(
+                LocalTime.of(7, 0, 30), LocalTime.of(16, 0), LocalTime.of(19, 0), LocalTime.of(4, 0), " LimpaGyn "));
+
+        assertEquals(LocalTime.of(7, 0), goiania.getDiurnoInicio());
+        assertEquals(LocalTime.of(4, 0), goiania.getNoturnoFim());
+        assertEquals("LimpaGyn", resposta.turnos().fonte());
+    }
+
+    @Test
+    void naoDeveAceitarTurnoComSoUmDosHorarios() {
+        when(cidadeRepository.findById(2L)).thenReturn(Optional.of(CidadesDeTeste.goiania()));
+
+        assertThrows(HorarioCronogramaInvalidoException.class, () -> cidadeService.atualizarTurnos(2L,
+                new FaixaTurnosDTO(LocalTime.of(7, 0), null, null, null, null)));
+        verify(cidadeRepository, never()).save(any());
     }
 
     @Test

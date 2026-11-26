@@ -329,6 +329,16 @@ select.campo-ds__controle {
   color: var(--brand-blue);
 }
 
+/* Faixa aproximada do turno, abaixo do nome do turno. */
+.coleta-cartao__faixa {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
 /* Só o turno (a prefeitura não informa o horário): texto menor que os números. */
 .coleta-cartao__hora--turno {
   font-size: 28px;

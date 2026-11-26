@@ -131,6 +131,7 @@ function PreferenciasPage() {
               cidade: coleta.cidade,
               bairro: coleta.bairro,
               cronogramas: ordenarCronogramas(coleta.cronogramas),
+              turnos: coleta.turnos ?? null,
             })
           }
 
@@ -235,6 +236,7 @@ function PreferenciasPage() {
         cidade: dados.cidade,
         bairro: dados.bairro,
         cronogramas: ordenarCronogramas(dados.cronogramas),
+        turnos: dados.turnos ?? null,
       })
     } catch (error) {
       setRotaSelecionada(null)
@@ -356,7 +358,7 @@ function PreferenciasPage() {
   }
 
   const proximaColeta = rotaSelecionada?.cronogramas?.length
-    ? calcularProximaColeta(rotaSelecionada.cronogramas, agora)
+    ? calcularProximaColeta(rotaSelecionada.cronogramas, agora, rotaSelecionada.turnos)
     : null
 
   const horarioLembrete =
@@ -649,13 +651,13 @@ function PreferenciasPage() {
               <strong>
                 {formatarData(proximaColeta.inicio)}
                 {proximaColeta.semHorario
-                  ? `, ${descreverHorario(proximaColeta.cronograma).toLowerCase()}`
+                  ? `, ${descreverHorario(proximaColeta.cronograma, false, rotaSelecionada.turnos).toLowerCase()}`
                   : `, às ${formatarHora(proximaColeta.cronograma.horarioInicio)}`}
               </strong>
               .{' '}
               {proximaColeta.semHorario &&
                 proximaColeta.turno !== 'NAO_INFORMADO' &&
-                `Sem horário informado, o aviso conta a partir do começo do turno ${TURNOS[proximaColeta.turno].rotulo.toLowerCase()} (${TURNOS[proximaColeta.turno].referencia}). `}
+                `Sem horário exato, o aviso conta a partir do começo do turno ${TURNOS[proximaColeta.turno].rotulo.toLowerCase()} na cidade (${proximaColeta.faixa?.inicio ?? TURNOS[proximaColeta.turno].referencia}). `}
               {lembreteJaPassou ? (
                 'Para esta coleta o horário do lembrete já passou; as próximas seguem a antecedência escolhida.'
               ) : (

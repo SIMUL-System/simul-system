@@ -1,6 +1,7 @@
 package com.simulsystem.backend.business.cidade.service;
 
 import com.simulsystem.backend.business.cidade.dto.CidadeResponseDTO;
+import com.simulsystem.backend.business.cidade.dto.FaixaTurnosDTO;
 import com.simulsystem.backend.business.cidade.model.Cidade;
 import com.simulsystem.backend.business.cidade.repository.CidadeRepository;
 import com.simulsystem.backend.business.cidade.validation.CidadeValidation;
@@ -15,6 +16,8 @@ import com.simulsystem.backend.business.rota.repository.RotaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -86,8 +89,30 @@ public class CidadeServiceImpl implements CidadeService {
                 coletas.stream().filter(coleta -> !coleta.possuiHorario()).count(),
                 ativas.stream().filter(rota -> !rotasComColeta.contains(rota.getId())).count(),
                 ativas.stream().filter(rota -> !rotasComBairro.contains(rota.getId())).count(),
-                ativas.stream().filter(rota -> rota.getTipoColeta() == TipoColeta.NAO_INFORMADO).count()
+                ativas.stream().filter(rota -> rota.getTipoColeta() == TipoColeta.NAO_INFORMADO).count(),
+                ativas.stream().filter(rota -> rota.getTipoColeta() == TipoColeta.CONVENCIONAL).count(),
+                FaixaTurnosDTO.de(cidade)
         );
+    }
+
+    @Override
+    @Transactional
+    public CidadeResponseDTO atualizarTurnos(Long id, FaixaTurnosDTO faixa) {
+        Cidade cidade = cidadeValidation.buscarCidadeExistente(id);
+
+        cidadeValidation.validarFaixaTurnos(faixa);
+
+        cidade.setDiurnoInicio(porMinuto(faixa.diurnoInicio()));
+        cidade.setDiurnoFim(porMinuto(faixa.diurnoFim()));
+        cidade.setNoturnoInicio(porMinuto(faixa.noturnoInicio()));
+        cidade.setNoturnoFim(porMinuto(faixa.noturnoFim()));
+        cidade.setFonteTurnos(faixa.fonte() == null || faixa.fonte().isBlank() ? null : faixa.fonte().trim());
+
+        return indicadores(cidadeRepository.save(cidade));
+    }
+
+    private static LocalTime porMinuto(LocalTime horario) {
+        return horario == null ? null : horario.truncatedTo(ChronoUnit.MINUTES);
     }
 
     private static boolean semTexto(String texto) {

@@ -1,6 +1,7 @@
 package com.simulsystem.backend.business.cidade.controller;
 
 import com.simulsystem.backend.business.cidade.dto.CidadeResponseDTO;
+import com.simulsystem.backend.business.cidade.dto.FaixaTurnosDTO;
 import com.simulsystem.backend.business.cidade.service.CidadeService;
 import com.simulsystem.backend.business.cronograma.controller.CronogramaController;
 import com.simulsystem.backend.business.cronograma.service.CronogramaService;
@@ -25,6 +26,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
+import java.time.LocalTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -84,13 +86,16 @@ class PainelPorCidadeHttpTest {
     void adminDeveVerIndicadoresDeCadaCidade() throws Exception {
         when(jwtDecoder.decode("token")).thenReturn(jwt("ADMIN"));
         when(cidadeService.listarComIndicadores()).thenReturn(List.of(
-                new CidadeResponseDTO(2L, "Goiânia", "GO", "Comurg", 18, 18, 492, 492, 30, 30, 0, 0, 0)));
+                new CidadeResponseDTO(2L, "Goiânia", "GO", "Comurg", 18, 18, 492, 492, 30, 30, 0, 0, 0, 0,
+                        new FaixaTurnosDTO(LocalTime.of(7, 0), LocalTime.of(16, 0),
+                                LocalTime.of(19, 0), LocalTime.of(4, 0), "Consórcio LimpaGyn"))));
 
         mockMvc.perform(get("/api/admin/cidades").header(HttpHeaders.AUTHORIZATION, "Bearer token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].nome").value("Goiânia"))
                 .andExpect(jsonPath("$[0].bairros").value(492))
-                .andExpect(jsonPath("$[0].coletasSemHorario").value(30));
+                .andExpect(jsonPath("$[0].coletasSemHorario").value(30))
+                .andExpect(jsonPath("$[0].turnos.noturnoInicio").value("19:00:00"));
     }
 
     @Test
