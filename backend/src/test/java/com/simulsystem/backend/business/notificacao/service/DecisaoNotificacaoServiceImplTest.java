@@ -7,6 +7,7 @@ import com.simulsystem.backend.business.cronograma.repository.CronogramaReposito
 import com.simulsystem.backend.business.cronograma.service.CronogramaServiceImpl;
 import com.simulsystem.backend.business.cronograma.validation.CronogramaValidation;
 import com.simulsystem.backend.business.notificacao.model.PreferenciaNotificacao;
+import com.simulsystem.backend.business.rota.model.AreaAtendida;
 import com.simulsystem.backend.business.rota.model.Rota;
 import com.simulsystem.backend.business.rota.validation.RotaValidation;
 
@@ -75,7 +76,12 @@ class DecisaoNotificacaoServiceImplTest {
         rota.setId(ROTA_ID);
 
         preferencia = new PreferenciaNotificacao();
-        preferencia.setRota(rota);
+        AreaAtendida area = new AreaAtendida();
+        area.setId(10L);
+        area.setCidade("Senador Canedo");
+        area.setBairro("Centro");
+        area.setRota(rota);
+        preferencia.setAreaAtendida(area);
 
         when(cronogramaRepository.findByRotaIdAndAtivoTrue(ROTA_ID))
                 .thenReturn(List.of(

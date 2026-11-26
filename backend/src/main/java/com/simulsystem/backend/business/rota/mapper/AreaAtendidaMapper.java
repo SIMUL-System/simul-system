@@ -45,7 +45,11 @@ public class AreaAtendidaMapper {
 
     /** Só cidade e bairro, para a lista pública. */
     public AreaDisponivelResponseDTO toAreaDisponivelResponseDTO(AreaAtendida areaAtendida) {
-        return new AreaDisponivelResponseDTO(areaAtendida.getCidade(), areaAtendida.getBairro());
+        return new AreaDisponivelResponseDTO(
+                areaAtendida.getId(),
+                areaAtendida.getCidade(),
+                areaAtendida.getBairro()
+        );
     }
 
     /** Monta a resposta do contorno salvo. */

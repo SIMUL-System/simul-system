@@ -7,12 +7,13 @@ import com.simulsystem.backend.business.notificacao.model.CanalNotificacao;
 import com.simulsystem.backend.business.notificacao.model.PreferenciaNotificacao;
 import com.simulsystem.backend.business.notificacao.repository.PreferenciaNotificacaoRepository;
 import com.simulsystem.backend.business.notificacao.validation.PreferenciaNotificacaoValidation;
-import com.simulsystem.backend.business.rota.model.Rota;
-import com.simulsystem.backend.business.rota.validation.RotaValidation;
+import com.simulsystem.backend.business.rota.model.AreaAtendida;
+import com.simulsystem.backend.business.rota.validation.AreaAtendidaValidation;
 import com.simulsystem.backend.business.usuario.model.Usuario;
 import com.simulsystem.backend.business.usuario.service.UsuarioService;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -24,23 +25,24 @@ public class PreferenciaNotificacaoServiceImpl
     private final PreferenciaNotificacaoMapper mapper;
     private final PreferenciaNotificacaoValidation validation;
     private final UsuarioService usuarioService;
-    private final RotaValidation rotaValidation;
+    private final AreaAtendidaValidation areaAtendidaValidation;
 
     public PreferenciaNotificacaoServiceImpl(
             PreferenciaNotificacaoRepository repository,
             PreferenciaNotificacaoMapper mapper,
             PreferenciaNotificacaoValidation validation,
             UsuarioService usuarioService,
-            RotaValidation rotaValidation
+            AreaAtendidaValidation areaAtendidaValidation
     ) {
         this.repository = repository;
         this.mapper = mapper;
         this.validation = validation;
         this.usuarioService = usuarioService;
-        this.rotaValidation = rotaValidation;
+        this.areaAtendidaValidation = areaAtendidaValidation;
     }
 
     @Override
+    @Transactional
     public PreferenciaNotificacaoResponseDTO cadastrar(
             String emailUsuario,
             PreferenciaNotificacaoRequestDTO requestDTO
@@ -49,9 +51,9 @@ public class PreferenciaNotificacaoServiceImpl
 
         validation.validarPreferenciaNaoCadastrada(usuario.getId());
 
-        Rota rota = rotaValidation.buscarRotaExistente(requestDTO.rotaId());
+        AreaAtendida areaAtendida = areaAtendidaValidation.buscarPorId(requestDTO.areaAtendidaId());
 
-        PreferenciaNotificacao preferencia = mapper.toEntity(requestDTO, usuario, rota);
+        PreferenciaNotificacao preferencia = mapper.toEntity(requestDTO, usuario, areaAtendida);
 
         PreferenciaNotificacao preferenciaSalva = repository.save(preferencia);
 
@@ -59,6 +61,7 @@ public class PreferenciaNotificacaoServiceImpl
     }
 
     @Override
+    @Transactional
     public PreferenciaNotificacaoResponseDTO buscar(String emailUsuario) {
         Usuario usuario = usuarioService.buscarEntidadePorEmail(emailUsuario);
 
@@ -68,6 +71,7 @@ public class PreferenciaNotificacaoServiceImpl
     }
 
     @Override
+    @Transactional
     public PreferenciaNotificacaoResponseDTO atualizar(
             String emailUsuario,
             PreferenciaNotificacaoRequestDTO requestDTO
@@ -76,9 +80,9 @@ public class PreferenciaNotificacaoServiceImpl
 
         PreferenciaNotificacao preferencia = validation.buscarPreferenciaExistente(usuario.getId());
 
-        Rota rota = rotaValidation.buscarRotaExistente(requestDTO.rotaId());
+        AreaAtendida areaAtendida = areaAtendidaValidation.buscarPorId(requestDTO.areaAtendidaId());
 
-        mapper.atualizarEntity(preferencia, requestDTO, rota);
+        mapper.atualizarEntity(preferencia, requestDTO, areaAtendida);
 
         PreferenciaNotificacao preferenciaAtualizada = repository.save(preferencia);
 
@@ -98,7 +102,7 @@ public class PreferenciaNotificacaoServiceImpl
 
         PreferenciaNotificacao preferencia = repository.findByUsuarioId(usuarioId).orElse(null);
 
-        // Sem preferência, ou o usuário trocou de rota depois da falha.
+        // Sem preferência, ou o bairro do usuário está em outra rota desde a falha.
         if (preferencia == null || !rotaId.equals(preferencia.getRota().getId())) {
             return false;
         }

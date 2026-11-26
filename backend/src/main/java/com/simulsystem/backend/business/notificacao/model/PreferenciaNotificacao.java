@@ -1,5 +1,6 @@
 package com.simulsystem.backend.business.notificacao.model;
 
+import com.simulsystem.backend.business.rota.model.AreaAtendida;
 import com.simulsystem.backend.business.rota.model.Rota;
 import com.simulsystem.backend.business.usuario.model.Usuario;
 
@@ -10,7 +11,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-/** Como o morador quer ser lembrado: rota, canais e antecedência. */
+/** Como o morador quer ser lembrado: bairro, canais e antecedência. */
 @Entity
 @Table(name = "preferencias_notificacao")
 @Getter
@@ -26,9 +27,13 @@ public class PreferenciaNotificacao {
     @JoinColumn(name = "usuario_id", nullable = false, unique = true)
     private Usuario usuario;
 
+    /**
+     * Bairro escolhido pelo morador. A rota vem do bairro, então se o
+     * administrador mover o bairro para outra rota, o lembrete acompanha.
+     */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "rota_id", nullable = false)
-    private Rota rota;
+    @JoinColumn(name = "area_atendida_id", nullable = false)
+    private AreaAtendida areaAtendida;
 
     @Column(name = "email_ativo", nullable = false)
     private Boolean emailAtivo;
@@ -44,6 +49,11 @@ public class PreferenciaNotificacao {
 
     @Column(name = "data_atualizacao", nullable = false)
     private LocalDateTime dataAtualizacao;
+
+    /** Rota atual do bairro escolhido (null se ainda não houver bairro). */
+    public Rota getRota() {
+        return areaAtendida == null ? null : areaAtendida.getRota();
+    }
 
     /** Preenche as datas (e os padrões) antes de inserir. */
     @PrePersist

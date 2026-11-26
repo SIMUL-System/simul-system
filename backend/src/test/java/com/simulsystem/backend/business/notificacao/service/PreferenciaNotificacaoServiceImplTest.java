@@ -5,8 +5,9 @@ import com.simulsystem.backend.business.notificacao.model.CanalNotificacao;
 import com.simulsystem.backend.business.notificacao.model.PreferenciaNotificacao;
 import com.simulsystem.backend.business.notificacao.repository.PreferenciaNotificacaoRepository;
 import com.simulsystem.backend.business.notificacao.validation.PreferenciaNotificacaoValidation;
+import com.simulsystem.backend.business.rota.model.AreaAtendida;
 import com.simulsystem.backend.business.rota.model.Rota;
-import com.simulsystem.backend.business.rota.validation.RotaValidation;
+import com.simulsystem.backend.business.rota.validation.AreaAtendidaValidation;
 import com.simulsystem.backend.business.usuario.model.Usuario;
 import com.simulsystem.backend.business.usuario.service.UsuarioService;
 
@@ -38,13 +39,13 @@ class PreferenciaNotificacaoServiceImplTest {
     private UsuarioService usuarioService;
 
     @Mock
-    private RotaValidation rotaValidation;
+    private AreaAtendidaValidation areaAtendidaValidation;
 
     private PreferenciaNotificacaoServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new PreferenciaNotificacaoServiceImpl(repository, mapper, validation, usuarioService, rotaValidation);
+        service = new PreferenciaNotificacaoServiceImpl(repository, mapper, validation, usuarioService, areaAtendidaValidation);
     }
 
     @Test
@@ -60,6 +61,24 @@ class PreferenciaNotificacaoServiceImplTest {
 
         verify(repository)
                 .findByUsuarioId(3L);
+    }
+
+    @Test
+    void deveAcompanharORotaDoBairroQuandoOBairroForMovido() {
+        PreferenciaNotificacao preferencia = criarPreferencia(3L, true, 1L, true, true);
+
+        Rota novaRota = new Rota();
+        novaRota.setId(2L);
+        novaRota.setAtivo(true);
+
+        // O administrador moveu o bairro para a rota 2.
+        preferencia.getAreaAtendida().setRota(novaRota);
+
+        when(repository.findByUsuarioId(3L))
+                .thenReturn(Optional.of(preferencia));
+
+        assertTrue(service.podeReceber(3L, 2L, CanalNotificacao.EMAIL));
+        assertFalse(service.podeReceber(3L, 1L, CanalNotificacao.EMAIL));
     }
 
     @Test
@@ -172,7 +191,12 @@ class PreferenciaNotificacaoServiceImplTest {
         PreferenciaNotificacao preferencia = new PreferenciaNotificacao();
 
         preferencia.setUsuario(usuario);
-        preferencia.setRota(rota);
+        AreaAtendida area = new AreaAtendida();
+        area.setId(10L);
+        area.setCidade("Senador Canedo");
+        area.setBairro("Centro");
+        area.setRota(rota);
+        preferencia.setAreaAtendida(area);
         preferencia.setEmailAtivo(emailAtivo);
 
         return preferencia;

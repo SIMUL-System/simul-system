@@ -9,6 +9,12 @@ public record PreferenciaNotificacaoResponseDTO(
 
         Long usuarioId,
 
+        Long areaAtendidaId,
+
+        String cidade,
+
+        String bairro,
+
         Long rotaId,
 
         String nomeRota,

@@ -99,10 +99,38 @@ function PreferenciasPage() {
         if (dadosPreferencia) {
           setPreferencia(dadosPreferencia)
 
+          // O bairro salvo já vem escolhido; a rota é sempre a atual do bairro.
+          setCidade(dadosPreferencia.cidade ?? '')
+          setBairro(dadosPreferencia.bairro ?? '')
+
           setRotaSelecionada({
+            areaAtendidaId: dadosPreferencia.areaAtendidaId,
             rotaId: dadosPreferencia.rotaId,
             nomeRota: dadosPreferencia.nomeRota,
+            cidade: dadosPreferencia.cidade,
+            bairro: dadosPreferencia.bairro,
           })
+
+          // Dias de coleta do bairro, para a prévia (se falhar, a tela segue sem eles).
+          const coleta = await consultarColeta(
+            dadosPreferencia.cidade,
+            dadosPreferencia.bairro,
+          ).catch(() => null)
+
+          if (!componenteAtivo) {
+            return
+          }
+
+          if (coleta) {
+            setRotaSelecionada({
+              areaAtendidaId: coleta.areaAtendidaId ?? dadosPreferencia.areaAtendidaId,
+              rotaId: coleta.rotaId,
+              nomeRota: coleta.nomeRota,
+              cidade: coleta.cidade,
+              bairro: coleta.bairro,
+              cronogramas: ordenarCronogramas(coleta.cronogramas),
+            })
+          }
 
           setEmailAtivo(dadosPreferencia.emailAtivo ?? true)
 
@@ -199,6 +227,7 @@ function PreferenciasPage() {
       setAgora(new Date())
 
       setRotaSelecionada({
+        areaAtendidaId: dados.areaAtendidaId,
         rotaId: dados.rotaId,
         nomeRota: dados.nomeRota,
         cidade: dados.cidade,
@@ -265,7 +294,7 @@ function PreferenciasPage() {
   async function handleSalvar() {
     limparMensagens()
 
-    if (!rotaSelecionada?.rotaId) {
+    if (!rotaSelecionada?.areaAtendidaId) {
       setErro('Escolha o bairro antes de salvar.')
 
       return
@@ -286,7 +315,7 @@ function PreferenciasPage() {
     }
 
     const dados = {
-      rotaId: rotaSelecionada.rotaId,
+      areaAtendidaId: rotaSelecionada.areaAtendidaId,
       emailAtivo,
       webPushAtivo,
       antecedenciaHoras: antecedencia,
@@ -305,6 +334,8 @@ function PreferenciasPage() {
         resposta || {
           ...dados,
           nomeRota: rotaSelecionada.nomeRota,
+          cidade: rotaSelecionada.cidade,
+          bairro: rotaSelecionada.bairro,
         },
       )
 
@@ -378,6 +409,7 @@ function PreferenciasPage() {
                 ? 'Lembrete ativo'
                 : 'Lembrete pausado'}
             </strong>
+            {preferencia.bairro ? `${preferencia.bairro} · ` : ''}
             {preferencia.nomeRota}
             {' · '}
             {descreverAntecedencia(preferencia.antecedenciaHoras)}
@@ -456,11 +488,7 @@ function PreferenciasPage() {
                   : 'Digite ou escolha o bairro'
             }
             idDica="ajuda-bairro-preferencia"
-            dica={
-              preferencia && !rotaSelecionada?.cronogramas
-                ? 'Escolha de novo só se quiser trocar de bairro.'
-                : 'A rota do bairro é encontrada automaticamente.'
-            }
+            dica="A rota e os horários vêm do bairro. Se a prefeitura mudar a rota do bairro, o lembrete acompanha."
             mensagemVazia="Nenhum bairro encontrado com esse nome."
           />
         </div>
@@ -642,7 +670,7 @@ function PreferenciasPage() {
       <div className="barra-salvar">
         <p className="barra-salvar__texto">
           {rotaSelecionada
-            ? `${rotaSelecionada.nomeRota} · ${antecedenciaValida ? descreverAntecedencia(antecedencia) : 'antecedência inválida'}`
+            ? `${rotaSelecionada.bairro || rotaSelecionada.nomeRota} · ${antecedenciaValida ? descreverAntecedencia(antecedencia) : 'antecedência inválida'}`
             : 'Escolha o bairro para salvar.'}
         </p>
 

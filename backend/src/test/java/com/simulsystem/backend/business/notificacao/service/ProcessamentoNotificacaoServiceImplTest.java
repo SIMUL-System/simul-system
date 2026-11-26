@@ -3,6 +3,7 @@ package com.simulsystem.backend.business.notificacao.service;
 import com.simulsystem.backend.business.notificacao.model.CanalNotificacao;
 import com.simulsystem.backend.business.notificacao.model.HistoricoNotificacao;
 import com.simulsystem.backend.business.notificacao.model.PreferenciaNotificacao;
+import com.simulsystem.backend.business.rota.model.AreaAtendida;
 import com.simulsystem.backend.business.rota.model.Rota;
 import com.simulsystem.backend.business.usuario.model.Usuario;
 
@@ -59,7 +60,12 @@ class ProcessamentoNotificacaoServiceImplTest {
 
         preferencia = new PreferenciaNotificacao();
         preferencia.setUsuario(usuario);
-        preferencia.setRota(rota);
+        AreaAtendida area = new AreaAtendida();
+        area.setId(10L);
+        area.setCidade("Senador Canedo");
+        area.setBairro("Centro");
+        area.setRota(rota);
+        preferencia.setAreaAtendida(area);
         preferencia.setEmailAtivo(true);
         preferencia.setWebPushAtivo(false);
         preferencia.setAntecedenciaHoras(3);

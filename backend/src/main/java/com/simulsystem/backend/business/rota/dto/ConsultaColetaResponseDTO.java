@@ -9,6 +9,7 @@ public record ConsultaColetaResponseDTO(
         Long rotaId,
         String nomeRota,
         String geometriaGeoJson,
-        List<CronogramaResumoDTO> cronogramas
+        List<CronogramaResumoDTO> cronogramas,
+        Long areaAtendidaId
 ) {
 }

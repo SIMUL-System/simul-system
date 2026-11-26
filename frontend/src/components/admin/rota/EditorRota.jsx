@@ -550,9 +550,9 @@ function EditorRota({ rota, rotas, areas, cronogramas, onVoltar, onRecarregar, o
                 <Alerta tipo="aviso">
                   {movidos.length === 1 ? 'Este bairro sai' : 'Estes bairros saem'} da rota atual e
                   passa{movidos.length === 1 ? '' : 'm'} a seguir os horários desta:{' '}
-                  {movidos.map((item) => `${item.bairro} (${item.rotaOrigem})`).join(', ')}. Quem já
-                  salvou lembrete para {movidos.length === 1 ? 'ele' : 'eles'} precisa escolher o
-                  bairro de novo em Meus lembretes.
+                  {movidos.map((item) => `${item.bairro} (${item.rotaOrigem})`).join(', ')}. Os
+                  lembretes de quem mora {movidos.length === 1 ? 'nele' : 'neles'} passam a usar os
+                  novos horários automaticamente.
                 </Alerta>
               )}
 

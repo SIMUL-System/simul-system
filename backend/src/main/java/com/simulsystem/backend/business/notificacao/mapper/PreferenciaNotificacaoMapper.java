@@ -3,7 +3,7 @@ package com.simulsystem.backend.business.notificacao.mapper;
 import com.simulsystem.backend.business.notificacao.dto.PreferenciaNotificacaoRequestDTO;
 import com.simulsystem.backend.business.notificacao.dto.PreferenciaNotificacaoResponseDTO;
 import com.simulsystem.backend.business.notificacao.model.PreferenciaNotificacao;
-import com.simulsystem.backend.business.rota.model.Rota;
+import com.simulsystem.backend.business.rota.model.AreaAtendida;
 import com.simulsystem.backend.business.usuario.model.Usuario;
 
 import org.springframework.stereotype.Component;
@@ -13,11 +13,15 @@ import org.springframework.stereotype.Component;
 public class PreferenciaNotificacaoMapper {
 
     /** Cria a preferência a partir do pedido. */
-    public PreferenciaNotificacao toEntity(PreferenciaNotificacaoRequestDTO requestDTO, Usuario usuario, Rota rota) {
+    public PreferenciaNotificacao toEntity(
+            PreferenciaNotificacaoRequestDTO requestDTO,
+            Usuario usuario,
+            AreaAtendida areaAtendida
+    ) {
         PreferenciaNotificacao preferencia = new PreferenciaNotificacao();
 
         preferencia.setUsuario(usuario);
-        preferencia.setRota(rota);
+        preferencia.setAreaAtendida(areaAtendida);
         preferencia.setEmailAtivo(requestDTO.emailAtivo());
         preferencia.setWebPushAtivo(requestDTO.webPushAtivo());
         preferencia.setAntecedenciaHoras(requestDTO.antecedenciaHoras());
@@ -25,13 +29,13 @@ public class PreferenciaNotificacaoMapper {
         return preferencia;
     }
 
-    /** Copia rota, canais e antecedência para a preferência existente. */
+    /** Copia bairro, canais e antecedência para a preferência existente. */
     public void atualizarEntity(
             PreferenciaNotificacao preferencia,
             PreferenciaNotificacaoRequestDTO requestDTO,
-            Rota rota
+            AreaAtendida areaAtendida
     ) {
-        preferencia.setRota(rota);
+        preferencia.setAreaAtendida(areaAtendida);
         preferencia.setEmailAtivo(requestDTO.emailAtivo());
         preferencia.setWebPushAtivo(requestDTO.webPushAtivo());
         preferencia.setAntecedenciaHoras(requestDTO.antecedenciaHoras());
@@ -42,6 +46,9 @@ public class PreferenciaNotificacaoMapper {
         return new PreferenciaNotificacaoResponseDTO(
                 preferencia.getId(),
                 preferencia.getUsuario().getId(),
+                preferencia.getAreaAtendida().getId(),
+                preferencia.getAreaAtendida().getCidade(),
+                preferencia.getAreaAtendida().getBairro(),
                 preferencia.getRota().getId(),
                 preferencia.getRota().getNome(),
                 preferencia.getEmailAtivo(),

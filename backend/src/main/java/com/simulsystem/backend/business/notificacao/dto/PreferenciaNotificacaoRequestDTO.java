@@ -4,11 +4,11 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
-/** Corpo da preferência: rota, canais ligados e antecedência (0 a 72 horas). */
+/** Corpo da preferência: bairro, canais ligados e antecedência (0 a 72 horas). */
 public record PreferenciaNotificacaoRequestDTO(
 
-        @NotNull(message = "A rota é obrigatória.")
-        Long rotaId,
+        @NotNull(message = "Escolha o bairro.")
+        Long areaAtendidaId,
 
         @NotNull(message = "A configuração de e-mail é obrigatória.")
         Boolean emailAtivo,

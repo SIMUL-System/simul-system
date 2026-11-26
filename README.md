@@ -234,7 +234,7 @@ Bairro de **rota inativa** não aparece na lista e a consulta direta responde 40
 
 ### 7.5 Preferências de lembrete
 
-- Cada usuário tem **uma** preferência: rota (escolhida pelo bairro), e-mail ligado/desligado, navegador ligado/desligado e antecedência de **0 a 72 horas**.
+- Cada usuário tem **uma** preferência: o **bairro** (a rota e os horários vêm dele), e-mail ligado/desligado, navegador ligado/desligado e antecedência de **0 a 72 horas**.
 - Ligar o canal "navegador" pede permissão de notificação, registra o `sw.js` e inscreve o navegador (`POST /api/notificacoes/push/subscriptions`). Um navegador só pode estar ligado a **uma conta**.
 
 ### 7.6 Guia de descarte
@@ -251,7 +251,7 @@ Página pública e lúdica, com conteúdo todo em `frontend/src/utils/guiaConteu
 
 - **Rotas:** desativar uma rota pede confirmação e explica o efeito. Os bairros dela saem da consulta e quem a escolheu para os lembretes deixa de recebê-los. **Nada é apagado**: ao reativar, tudo volta.
 - **Áreas atendidas:** cidade + bairro são únicos. O contorno é desenhado no mapa (Polygon ou MultiPolygon GeoJSON). Se ainda não existe contorno salvo, o editor parte do que o OpenStreetMap encontrar.
-- **Rotas:** cada rota é um padrão de coleta (dias + horário) e os bairros ligados a ela seguem esse padrão. A semana da rota é salva de uma vez por `PUT /api/admin/cronogramas/rota/{rotaId}`: os dias enviados ficam ativos (o registro de cada dia é reaproveitado) e os demais são desativados, numa única transação. Os bairros são adicionados por `PUT /api/admin/rotas/{id}/bairros`: bairro novo é cadastrado e bairro de outra rota é movido. Como a preferência do morador guarda a rota (e não o bairro), quem já tinha lembrete de um bairro movido continua na rota antiga até escolher o bairro de novo.
+- **Rotas:** cada rota é um padrão de coleta (dias + horário) e os bairros ligados a ela seguem esse padrão. A semana da rota é salva de uma vez por `PUT /api/admin/cronogramas/rota/{rotaId}`: os dias enviados ficam ativos (o registro de cada dia é reaproveitado) e os demais são desativados, numa única transação. Os bairros são adicionados por `PUT /api/admin/rotas/{id}/bairros`: bairro novo é cadastrado e bairro de outra rota é movido. A preferência do morador guarda o **bairro** (V20) e a rota vem dele: ao mover um bairro, os lembretes de quem mora nele passam a seguir a nova rota sem nenhuma ação do morador.
 - **Cronogramas:** só pode haver **um horário ativo por rota e dia**. A Agenda da semana permite mudar o horário de várias rotas **de uma vez só**: `PUT /api/admin/cronogramas/lote/horario` aplica tudo numa única transação, ou nada se algo falhar.
 - **Contornos do OpenStreetMap:** em Áreas atendidas, "Buscar contornos no mapa" consulta o Nominatim (uma busca por segundo) para cada bairro sem desenho e salva os polígonos encontrados na cidade certa. Os que o OpenStreetMap não tem continuam para desenho manual.
 - **Visão geral:** indicadores e lista "Precisa de atenção": áreas sem contorno, rotas ativas sem horário, rotas ativas sem bairros e bairros em rotas inativas.
@@ -273,7 +273,7 @@ O `NotificacaoScheduler` roda **a cada minuto** (cron `0 * * * * *`, fuso `Ameri
 
 ### 8.2 Quando um lembrete "vence"
 
-Para cada preferência elegível (usuário ativo, rota ativa e pelo menos um canal ligado):
+Para cada preferência elegível (usuário ativo, bairro numa rota ativa e pelo menos um canal ligado):
 
 ```text
 coleta alvo = minuto atual (sem segundos) + antecedência
@@ -415,6 +415,7 @@ PUT /api/admin/cronogramas/lote/horario
 | V17 | integridade e índices |
 | V18 | consolidação das rotas de Senador Canedo (109 → 5) |
 | V19 | conta admin fixa do sistema |
+| V20 | preferência ligada ao **bairro** (`area_atendida_id`); a rota passa a vir do bairro |
 
 ### 11.3 Regras garantidas pelo banco (V17)
 

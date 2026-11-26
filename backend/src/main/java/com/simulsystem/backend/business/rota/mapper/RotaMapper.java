@@ -59,7 +59,8 @@ public class RotaMapper {
                 areaAtendida.getRota().getId(),
                 areaAtendida.getRota().getNome(),
                 areaAtendida.getGeometriaGeoJson(),
-                cronogramasResumo
+                cronogramasResumo,
+                areaAtendida.getId()
         );
     }
 
