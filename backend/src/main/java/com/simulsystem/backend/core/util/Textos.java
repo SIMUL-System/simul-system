@@ -12,4 +12,9 @@ public final class Textos {
     public static String normalizarEmail(String email) {
         return email == null ? null : email.trim().toLowerCase(Locale.ROOT);
     }
+
+    /** Tira espaços das pontas e junta espaços repetidos ("Jardim  Europa " vira "Jardim Europa"). */
+    public static String normalizarEspacos(String texto) {
+        return texto == null ? null : texto.trim().replaceAll("\\s+", " ");
+    }
 }

@@ -14,6 +14,8 @@ const CAMINHOS = {
   lua: <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" />,
   menu: <path d="M4 6h16M4 12h16M4 18h16" />,
   fechar: <path d="M6 6l12 12M18 6 6 18" />,
+  mais: <path d="M12 5v14M5 12h14" />,
+  voltar: <path d="m15 18-6-6 6-6" />,
   sair: (
     <>
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />

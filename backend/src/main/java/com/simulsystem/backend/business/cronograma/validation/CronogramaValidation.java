@@ -88,4 +88,17 @@ public class CronogramaValidation {
 
         return cronogramas;
     }
+
+    /** Cada dia só pode aparecer uma vez na semana enviada. */
+    public void validarDiasSemRepeticao(List<DiaSemana> dias) {
+        Set<DiaSemana> vistos = new LinkedHashSet<>();
+
+        for (DiaSemana dia : dias) {
+            if (!vistos.add(dia)) {
+                throw new HorarioCronogramaInvalidoException(
+                        "O dia " + dia.name() + " foi informado mais de uma vez."
+                );
+            }
+        }
+    }
 }

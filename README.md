@@ -70,9 +70,9 @@ A entrega é uma **plataforma web**. Não há aplicativo nativo.
 | Funcionalidade | Onde |
 |---|---|
 | Visão geral: indicadores, pendências (bairros sem contorno, rotas sem horário etc.) e coletas da semana | `/admin` |
-| Rotas: criar, editar, ativar/desativar (com confirmação explicando o efeito) | `/admin/rotas` |
-| Áreas atendidas: tabela com busca e filtros, edição em painel lateral e **desenho do contorno no mapa** | `/admin/areas` |
-| Cronogramas: **grade semanal** rota × dia, criação de vários dias de uma vez e **alteração de horário em massa** | `/admin/cronogramas` |
+| Rotas: cartões com o padrão de cada rota; ao abrir, **dias e horário**, **bairros (seleção múltipla com pesquisa, cadastro e movimentação)** e nome, com dicas para o administrador | `/admin/rotas` |
+| Áreas atendidas: tabela com busca e filtros, **desenho do contorno no mapa** e **importação dos contornos do OpenStreetMap** de uma vez | `/admin/areas` |
+| Agenda da semana: quais rotas passam em cada dia; toque abre a rota; **alteração de horário de várias rotas** | `/admin/cronogramas` |
 
 ---
 
@@ -251,7 +251,9 @@ Página pública e lúdica, com conteúdo todo em `frontend/src/utils/guiaConteu
 
 - **Rotas:** desativar uma rota pede confirmação e explica o efeito. Os bairros dela saem da consulta e quem a escolheu para os lembretes deixa de recebê-los. **Nada é apagado**: ao reativar, tudo volta.
 - **Áreas atendidas:** cidade + bairro são únicos. O contorno é desenhado no mapa (Polygon ou MultiPolygon GeoJSON). Se ainda não existe contorno salvo, o editor parte do que o OpenStreetMap encontrar.
-- **Cronogramas:** só pode haver **um horário ativo por rota e dia**. A grade semanal permite criar vários dias de uma vez (um pedido por dia) e mudar o horário de várias rotas **de uma vez só**: `PUT /api/admin/cronogramas/lote/horario` aplica tudo numa única transação, ou nada se algo falhar.
+- **Rotas:** cada rota é um padrão de coleta (dias + horário) e os bairros ligados a ela seguem esse padrão. A semana da rota é salva de uma vez por `PUT /api/admin/cronogramas/rota/{rotaId}`: os dias enviados ficam ativos (o registro de cada dia é reaproveitado) e os demais são desativados, numa única transação. Os bairros são adicionados por `PUT /api/admin/rotas/{id}/bairros`: bairro novo é cadastrado e bairro de outra rota é movido. Como a preferência do morador guarda a rota (e não o bairro), quem já tinha lembrete de um bairro movido continua na rota antiga até escolher o bairro de novo.
+- **Cronogramas:** só pode haver **um horário ativo por rota e dia**. A Agenda da semana permite mudar o horário de várias rotas **de uma vez só**: `PUT /api/admin/cronogramas/lote/horario` aplica tudo numa única transação, ou nada se algo falhar.
+- **Contornos do OpenStreetMap:** em Áreas atendidas, "Buscar contornos no mapa" consulta o Nominatim (uma busca por segundo) para cada bairro sem desenho e salva os polígonos encontrados na cidade certa. Os que o OpenStreetMap não tem continuam para desenho manual.
 - **Visão geral:** indicadores e lista "Precisa de atenção": áreas sem contorno, rotas ativas sem horário, rotas ativas sem bairros e bairros em rotas inativas.
 
 ### 7.8 Quando o servidor está "acordando"
@@ -366,10 +368,12 @@ Base local: `http://localhost:8080`. Erros seguem o formato ProblemDetail:
 | GET / POST | `/api/admin/rotas/areas` | Listar (todas) e criar áreas |
 | PUT | `/api/admin/rotas/areas/{id}` | Editar cidade, bairro e rota |
 | PUT | `/api/admin/rotas/areas/{id}/geometria` | Salvar o contorno GeoJSON |
+| PUT | `/api/admin/rotas/{id}/bairros` | Cadastrar bairros novos na rota e mover para ela os de outra rota |
 | GET / POST | `/api/admin/cronogramas` | Listar e criar horários |
 | PUT | `/api/admin/cronogramas/{id}` | Editar um horário |
 | PATCH | `/api/admin/cronogramas/{id}/status?ativo=` | Ativar/desativar |
 | PUT | `/api/admin/cronogramas/lote/horario` | Mudar início e fim de vários horários (tudo ou nada) |
+| PUT | `/api/admin/cronogramas/rota/{rotaId}` | Definir os dias e horários da semana da rota (tudo ou nada) |
 | GET | `/api/admin/usuarios/verificar-acesso` | 204 para ADMIN (usado nos testes de segurança) |
 
 Exemplo do lote:

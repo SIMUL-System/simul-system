@@ -754,6 +754,28 @@
   color: var(--ink-muted);
 }
 
+/* ---------- Movimento reduzido ---------- */
+/*
+ * Com "reduzir movimento" ativo no sistema, o index.css desliga as animações do site.
+ * O retorno do jogo continua: é curto, não se repete e só acontece depois de um toque,
+ * então ajuda a criança a entender se acertou. O pulo contínuo da abertura fica parado.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .jogo__item--certo,
+  .jogo__lixeira--certa,
+  .missao__parabens {
+    animation: guia-comemora 0.5s ease !important;
+  }
+
+  .jogo__item--errado {
+    animation: guia-balanca 0.4s ease !important;
+  }
+
+  .mito--virado {
+    animation: guia-virar 0.4s ease !important;
+  }
+}
+
 /* ---------- Responsivo ---------- */
 @media (max-width: 960px) {
   .guia-hero {

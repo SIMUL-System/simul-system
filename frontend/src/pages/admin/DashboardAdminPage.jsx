@@ -90,11 +90,11 @@ function DashboardAdminPage() {
         </div>
 
         <div className="admin-pagina__acoes">
-          <Link to="/admin/areas" className="botao botao--secundario">
-            Áreas atendidas
+          <Link to="/admin/cronogramas" className="botao botao--secundario">
+            Agenda da semana
           </Link>
-          <Link to="/admin/cronogramas" className="botao botao--primario">
-            Cronogramas
+          <Link to="/admin/rotas" className="botao botao--primario">
+            Rotas e bairros
           </Link>
         </div>
       </header>
@@ -202,7 +202,7 @@ function DashboardAdminPage() {
           <h2 id="titulo-semana" className="painel-bloco__titulo">
             Coletas da semana
           </h2>
-          <Link to="/admin/cronogramas">Abrir a grade completa</Link>
+          <Link to="/admin/cronogramas">Abrir a agenda</Link>
         </div>
 
         <ol className="semana-resumo">

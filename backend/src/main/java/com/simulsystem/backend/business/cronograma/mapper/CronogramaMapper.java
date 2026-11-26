@@ -37,11 +37,12 @@ public class CronogramaMapper {
                 cronograma.getDataAtualizacao()
         );
     }
+
     /** Copia os dados do pedido para a entidade existente. */
     public void atualizarEntity(Cronograma cronograma, CronogramaRequestDTO requestDTO, Rota rota) {
-    cronograma.setRota(rota);
-    cronograma.setDiaSemana(requestDTO.diaSemana());
-    cronograma.setHorarioInicio(requestDTO.horarioInicio());
-    cronograma.setHorarioFim(requestDTO.horarioFim());
-}
+        cronograma.setRota(rota);
+        cronograma.setDiaSemana(requestDTO.diaSemana());
+        cronograma.setHorarioInicio(requestDTO.horarioInicio());
+        cronograma.setHorarioFim(requestDTO.horarioFim());
+    }
 }

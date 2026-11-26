@@ -7,6 +7,8 @@ import com.simulsystem.backend.business.rota.dto.AreaAtendidaResponseDTO;
 import com.simulsystem.backend.business.rota.dto.AreaDisponivelResponseDTO;
 import com.simulsystem.backend.business.rota.dto.AreaGeometriaRequestDTO;
 import com.simulsystem.backend.business.rota.dto.AreaGeometriaResponseDTO;
+import com.simulsystem.backend.business.rota.dto.BairrosRotaRequestDTO;
+import com.simulsystem.backend.business.rota.dto.BairrosRotaResponseDTO;
 import com.simulsystem.backend.business.rota.dto.ConsultaColetaResponseDTO;
 import com.simulsystem.backend.business.rota.dto.RotaRequestDTO;
 import com.simulsystem.backend.business.rota.dto.RotaResponseDTO;
@@ -18,11 +20,16 @@ import com.simulsystem.backend.business.rota.repository.AreaAtendidaRepository;
 import com.simulsystem.backend.business.rota.repository.RotaRepository;
 import com.simulsystem.backend.business.rota.validation.AreaAtendidaValidation;
 import com.simulsystem.backend.business.rota.validation.RotaValidation;
+import com.simulsystem.backend.core.util.Textos;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /** Implementação de RotaService. */
 @Service
@@ -163,5 +170,52 @@ public class RotaServiceImpl implements RotaService {
         Rota rotaAtualizada = rotaRepository.save(rota);
 
         return rotaMapper.toResponseDTO(rotaAtualizada);
+    }
+
+    @Override
+    @Transactional
+    public BairrosRotaResponseDTO adicionarBairrosNaRota(Long rotaId, BairrosRotaRequestDTO requestDTO) {
+        Rota rota = rotaValidation.buscarRotaExistente(rotaId);
+
+        String cidade = Textos.normalizarEspacos(requestDTO.cidade());
+
+        List<String> cadastrados = new ArrayList<>();
+        List<String> movidos = new ArrayList<>();
+        List<String> jaEstavamNaRota = new ArrayList<>();
+
+        for (String bairro : removerRepetidos(requestDTO.bairros())) {
+            AreaAtendida area = areaAtendidaRepository
+                    .findByCidadeIgnoreCaseAndBairroIgnoreCase(cidade, bairro)
+                    .orElse(null);
+
+            if (area == null) {
+                AreaAtendida nova = new AreaAtendida();
+                nova.setCidade(cidade);
+                nova.setBairro(bairro);
+                nova.setRota(rota);
+                areaAtendidaRepository.save(nova);
+                cadastrados.add(bairro);
+            } else if (area.getRota().getId().equals(rotaId)) {
+                jaEstavamNaRota.add(area.getBairro());
+            } else {
+                area.setRota(rota);
+                areaAtendidaRepository.save(area);
+                movidos.add(area.getBairro());
+            }
+        }
+
+        return new BairrosRotaResponseDTO(cadastrados, movidos, jaEstavamNaRota);
+    }
+
+    /** Tira espaços extras e repetições (sem diferenciar maiúsculas), mantendo a ordem. */
+    private List<String> removerRepetidos(List<String> bairros) {
+        Map<String, String> unicos = new LinkedHashMap<>();
+
+        for (String bairro : bairros) {
+            String limpo = Textos.normalizarEspacos(bairro);
+            unicos.putIfAbsent(limpo.toUpperCase(Locale.ROOT), limpo);
+        }
+
+        return new ArrayList<>(unicos.values());
     }
 }

@@ -34,4 +34,16 @@ function alterarStatusRota(id, ativo) {
   })
 }
 
-export { listarRotas, criarRota, atualizarRota, alterarStatusRota }
+/**
+ * PUT /api/admin/rotas/{id}/bairros
+ * Cadastra os bairros novos na rota e move para ela os que estavam em outra.
+ */
+function adicionarBairrosNaRota(id, cidade, bairros) {
+  return apiRequest(`/api/admin/rotas/${id}/bairros`, {
+    method: 'PUT',
+    token: obterToken(),
+    body: { cidade, bairros },
+  })
+}
+
+export { listarRotas, criarRota, atualizarRota, alterarStatusRota, adicionarBairrosNaRota }

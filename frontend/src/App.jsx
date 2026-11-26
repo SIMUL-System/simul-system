@@ -64,7 +64,7 @@ const TITULOS_PAGINAS = {
 
   '/admin/areas': 'Gerenciar áreas atendidas | SIMUL',
 
-  '/admin/cronogramas': 'Gerenciar cronogramas | SIMUL',
+  '/admin/cronogramas': 'Agenda da semana | SIMUL',
 }
 
 /** Tela mostrada enquanto o código de uma página é baixado (rotas carregadas sob demanda). */

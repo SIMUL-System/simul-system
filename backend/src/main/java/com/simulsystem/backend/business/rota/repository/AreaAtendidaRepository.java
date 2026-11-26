@@ -13,6 +13,9 @@ public interface AreaAtendidaRepository
     /** Área do bairro, só se a rota estiver ativa. */
     Optional<AreaAtendida> findByCidadeIgnoreCaseAndBairroIgnoreCaseAndRota_AtivoTrue(String cidade, String bairro);
 
+    /** Área de um bairro, qualquer que seja a rota. */
+    Optional<AreaAtendida> findByCidadeIgnoreCaseAndBairroIgnoreCase(String cidade, String bairro);
+
     /** Cidade e bairro já cadastrados? */
     boolean existsByCidadeIgnoreCaseAndBairroIgnoreCase(String cidade, String bairro);
 

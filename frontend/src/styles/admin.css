@@ -146,8 +146,7 @@
   cursor: pointer;
 }
 
-.caixa-opcao input,
-.grade-cronogramas__caixa {
+.caixa-opcao input {
   width: 20px;
   height: 20px;
   margin: 0;
@@ -176,21 +175,6 @@
   background: var(--surface-raised);
   box-shadow: var(--shadow-card);
   overflow: hidden;
-}
-
-.admin-quadro__barra {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--border);
-}
-
-.admin-quadro__rotulo {
-  margin-right: var(--space-1);
-  font-size: 14px;
-  font-weight: 600;
 }
 
 .admin-quadro__vazio {
@@ -233,214 +217,6 @@
 .atalho:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-/* ---------- Barra de seleção em massa ---------- */
-.barra-selecao {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2) var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  background: var(--ink);
-  color: var(--surface);
-}
-
-.barra-selecao__texto {
-  flex-grow: 1;
-  font-size: 15px;
-}
-
-.botao--destaque {
-  background: var(--brand-yellow);
-  color: var(--on-accent);
-}
-
-.botao--destaque:hover {
-  filter: brightness(0.95);
-}
-
-.botao--contorno-claro {
-  border-color: var(--surface);
-  background: transparent;
-  color: var(--surface);
-}
-
-.botao--link-claro {
-  background: transparent;
-  color: var(--surface);
-  text-decoration: underline;
-}
-
-.barra-selecao .botao:focus-visible {
-  outline-color: var(--brand-yellow);
-}
-
-/* ---------- Grade semanal ---------- */
-.grade-cronogramas__rolagem {
-  overflow-x: auto;
-}
-
-.grade-cronogramas {
-  width: 100%;
-  min-width: 900px;
-  border-collapse: collapse;
-  font-size: 14px;
-}
-
-.grade-cronogramas thead th {
-  padding: var(--space-3) var(--space-2);
-  background: var(--surface-sunken);
-  font-weight: 600;
-  text-align: center;
-}
-
-.grade-cronogramas abbr {
-  text-decoration: none;
-}
-
-.grade-cronogramas tbody tr {
-  border-top: 1px solid var(--border);
-}
-
-.grade-cronogramas td {
-  padding: var(--space-2) var(--space-1);
-  text-align: center;
-  vertical-align: middle;
-}
-
-.grade-cronogramas .grade-cronogramas__rota {
-  position: sticky;
-  left: 0;
-  z-index: 1;
-  width: 240px;
-  min-width: 240px;
-  padding: var(--space-3) var(--space-4);
-  background: var(--surface-raised);
-  text-align: left;
-}
-
-.grade-cronogramas thead .grade-cronogramas__rota {
-  background: var(--surface-sunken);
-}
-
-.grade-cronogramas__rota-conteudo {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.grade-cronogramas__rota-conteudo label {
-  display: grid;
-  gap: 2px;
-  cursor: pointer;
-}
-
-.grade-cronogramas__nome {
-  font-weight: 600;
-}
-
-.grade-cronogramas__meta {
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--ink-muted);
-}
-
-.grade-cronogramas__linha--inativa .grade-cronogramas__nome {
-  color: var(--ink-muted);
-}
-
-.horario-chip,
-.horario-vazio {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  width: 100%;
-  min-height: 44px;
-  padding: 0 var(--space-1);
-  border-radius: var(--radius-md);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  cursor: pointer;
-}
-
-.horario-chip--diurno {
-  border: 1px solid var(--brand-blue);
-  background: var(--brand-blue-tint);
-  color: var(--brand-blue);
-}
-
-.horario-chip--noturno {
-  border: 1px solid var(--ink);
-  background: var(--ink);
-  color: var(--surface);
-}
-
-.horario-chip--inativo {
-  border-style: dashed;
-  background: transparent;
-  color: var(--ink-muted);
-  border-color: var(--border-strong);
-  text-decoration: line-through;
-}
-
-.horario-chip--aberto {
-  outline: 3px solid var(--brand-yellow);
-  outline-offset: 2px;
-}
-
-.horario-vazio {
-  border: 1px dashed var(--border);
-  background: transparent;
-  color: var(--ink-muted);
-  font-size: 18px;
-}
-
-.horario-vazio:hover {
-  border-color: var(--brand-blue);
-  color: var(--brand-blue);
-  background: var(--brand-blue-tint);
-}
-
-.legenda-horarios {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-6);
-  margin: 0;
-  padding: var(--space-3) var(--space-4);
-  border-top: 1px solid var(--border);
-  list-style: none;
-  font-size: 13px;
-  color: var(--ink-muted);
-}
-
-.legenda-horarios li {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.legenda-horarios__amostra {
-  width: 14px;
-  height: 14px;
-  border-radius: 4px;
-}
-
-.legenda-horarios__amostra--diurno {
-  border: 1px solid var(--brand-blue);
-  background: var(--brand-blue-tint);
-}
-
-.legenda-horarios__amostra--noturno {
-  background: var(--ink);
-}
-
-.legenda-horarios__amostra--vazio,
-.legenda-horarios__amostra--inativo {
-  border: 1px dashed var(--border-strong);
 }
 
 /* ---------- Painel lateral ---------- */
@@ -490,34 +266,6 @@
   color: var(--ink);
 }
 
-.painel-form__situacao {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  margin: 0;
-  font-size: 14px;
-  color: var(--ink-muted);
-}
-
-.painel-form__selecao {
-  display: grid;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
-  background: var(--surface-sunken);
-  font-size: 14px;
-}
-
-.painel-form__selecao ul {
-  margin: 0;
-  padding-left: var(--space-4);
-}
-
-.painel-form__selecao span {
-  color: var(--ink-muted);
-}
-
 .painel-form__resumo {
   margin: 0;
   padding: var(--space-3) var(--space-4);
@@ -535,16 +283,6 @@
 
 .painel-form__principal {
   flex-grow: 1;
-}
-
-.botao--texto-perigo {
-  color: var(--danger);
-  border-color: var(--danger);
-}
-
-.botao--texto-perigo:hover {
-  background: var(--danger-tint);
-  color: var(--danger);
 }
 
 .campo-ds__rotulo--leve {
@@ -681,23 +419,6 @@
   to {
     opacity: 1;
     transform: none;
-  }
-}
-
-/* Celular: coluna da rota mais estreita para caber mais dias. */
-@media (max-width: 640px) {
-  .grade-cronogramas .grade-cronogramas__rota {
-    width: 150px;
-    min-width: 150px;
-    padding: var(--space-2) var(--space-3);
-  }
-
-  .grade-cronogramas__rota-conteudo {
-    gap: var(--space-2);
-  }
-
-  .grade-cronogramas__nome {
-    font-size: 13px;
   }
 }
 
@@ -879,64 +600,6 @@
   display: block;
 }
 
-.admin-tabela__detalhe {
-  margin-top: 2px;
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--ink-muted);
-}
-
-.admin-tabela__linha--inativa .admin-tabela__principal > span:first-child {
-  color: var(--ink-muted);
-}
-
-.interruptor-linha {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: 44px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--ink);
-  font: inherit;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.interruptor-linha__trilho {
-  position: relative;
-  width: 44px;
-  height: 26px;
-  border-radius: var(--radius-full);
-  background: var(--border-strong);
-  transition: background-color 0.15s ease;
-}
-
-.interruptor-linha__botao {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 20px;
-  height: 20px;
-  border-radius: var(--radius-full);
-  background: var(--surface-raised);
-  transition: transform 0.15s ease;
-}
-
-.interruptor-linha[aria-checked='true'] .interruptor-linha__trilho {
-  background: var(--brand-green);
-}
-
-.interruptor-linha[aria-checked='true'] .interruptor-linha__botao {
-  transform: translateX(18px);
-}
-
-.interruptor-linha:disabled {
-  opacity: 0.6;
-  cursor: progress;
-}
-
 .campo-ds__controle--texto {
   min-height: 88px;
   padding-block: var(--space-3);
@@ -949,22 +612,7 @@
   color: var(--ink-muted);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .interruptor-linha__trilho,
-  .interruptor-linha__botao {
-    transition: none;
-  }
-}
-
 @media (max-width: 560px) {
-  .interruptor-linha__texto {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-  }
-
   .admin-tabela .admin-tabela__acoes .botao {
     padding-inline: var(--space-3);
   }
@@ -1240,5 +888,714 @@
   .indicador__valor {
     font-size: 30px;
     line-height: 36px;
+  }
+}
+
+/* ============================================================
+   Rotas (cartões + editor), Agenda da semana
+   ============================================================ */
+
+.botao-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--brand-blue);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.botao-link:hover {
+  color: var(--brand-blue-strong);
+}
+
+.admin-vazio,
+.admin-rodape {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+
+.admin-rodape {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ---------- Como funciona (3 passos) ---------- */
+.passos-admin {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: passo;
+}
+
+.passos-admin li {
+  position: relative;
+  padding: var(--space-3) var(--space-4) var(--space-3) 52px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ink-muted);
+  counter-increment: passo;
+}
+
+.passos-admin li::before {
+  content: counter(passo);
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-4);
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--brand-blue);
+  color: var(--on-brand);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.passos-admin strong {
+  color: var(--ink);
+}
+
+/* ---------- Cartões de rota ---------- */
+.cartoes-rota {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cartao-rota {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: var(--space-2);
+  padding: var(--space-5, 20px);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--brand-yellow);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-card);
+}
+
+.cartao-rota--noturna {
+  border-top-color: var(--brand-blue);
+}
+
+.cartao-rota--inativa {
+  border-top-color: var(--border-strong);
+  opacity: 0.8;
+}
+
+.cartao-rota__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.cartao-rota__periodo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+}
+
+.cartao-rota__nome {
+  margin: 0;
+  font-size: 18px;
+  line-height: 24px;
+  overflow-wrap: anywhere;
+}
+
+.cartao-rota__coleta,
+.cartao-rota__bairros {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--ink-muted);
+}
+
+.cartao-rota__coleta svg,
+.cartao-rota__bairros svg {
+  flex: none;
+  margin-top: 3px;
+}
+
+.cartao-rota__alerta {
+  color: var(--warning-ink);
+  font-weight: 600;
+}
+
+.cartao-rota__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.cartao-rota__acoes .botao {
+  flex: 1 1 auto;
+}
+
+/* ---------- Editor de rota ---------- */
+.editor-rota {
+  max-width: 880px;
+}
+
+.editor-rota__topo {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+
+.editor-rota__topo .admin-pagina__titulo {
+  overflow-wrap: anywhere;
+}
+
+.bloco-rota {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  /* A lista de bairros precisa sair da caixa sem ser cortada. */
+  overflow: visible;
+}
+
+.bloco-rota__titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-size: 20px;
+  line-height: 28px;
+}
+
+.bloco-rota__numero {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--brand-blue-tint);
+  color: var(--brand-blue);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.bloco-rota__contagem {
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--surface-sunken);
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.bloco-rota__dica {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--brand-blue-tint);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.bloco-rota__dica svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--brand-blue);
+}
+
+.bloco-rota__vazio {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.bloco-rota__salvar {
+  justify-self: start;
+}
+
+.bloco-rota__adicionar {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.bloco-rota__cidade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+
+/* ---------- Semana de coleta ---------- */
+.semana-coleta {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.semana-coleta__grupo {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.semana-coleta__dias {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.semana-coleta__dia {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 420px;
+}
+
+.semana-coleta__nome-dia {
+  font-weight: 700;
+}
+
+.semana-coleta__previa.semana-coleta__previa--vazia {
+  border-left-color: var(--brand-yellow);
+  background: var(--brand-yellow-tint);
+}
+
+.semana-coleta__previa {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-left: 4px solid var(--brand-green);
+  border-radius: var(--radius-sm);
+  background: var(--brand-green-tint);
+  font-size: 15px;
+  line-height: 22px;
+}
+
+/* ---------- Bairros da rota ---------- */
+.lista-bairros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  max-height: 260px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.lista-bairros__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.lista-bairros__marca {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brand-yellow);
+  vertical-align: middle;
+}
+
+/* ---------- Seleção múltipla de bairros ---------- */
+.seletor-bairros {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.seletor-bairros__caixa {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 48px;
+  padding: var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  cursor: text;
+}
+
+.seletor-bairros__caixa:focus-within {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.seletor-bairros__caixa--desabilitada {
+  background: var(--surface-sunken);
+  cursor: not-allowed;
+}
+
+.seletor-bairros__chips {
+  display: contents;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.seletor-bairros__entrada {
+  flex: 1 1 200px;
+  min-width: 0;
+  min-height: 32px;
+  padding: 0 var(--space-1);
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+  outline: none;
+}
+
+.seletor-bairros__novo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--brand-green);
+}
+
+.seletor-bairros__novo strong {
+  color: var(--ink);
+}
+
+.seletor-bairros__origem {
+  flex: none;
+  max-width: 50%;
+  font-size: 13px;
+  color: var(--ink-muted);
+  text-align: right;
+}
+
+.chip-bairro {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: 100%;
+  padding: 2px 2px 2px var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.chip-bairro--novo {
+  background: var(--brand-green-tint);
+}
+
+.chip-bairro--mover {
+  background: var(--brand-yellow-tint);
+}
+
+.chip-bairro__nome {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
+.chip-bairro__tipo {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+}
+
+.chip-bairro__remover {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.chip-bairro__remover:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* ---------- Agenda da semana ---------- */
+.agenda {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.agenda__dia {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+}
+
+.agenda__dia--hoje {
+  border-color: var(--brand-blue);
+  box-shadow: inset 0 3px 0 var(--brand-blue);
+}
+
+.agenda__titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-1);
+  padding: 0 var(--space-1);
+  font-size: 16px;
+}
+
+.agenda__nome-longo {
+  /* No computador só o nome curto aparece; o longo fica para leitores de tela. */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.agenda__lista {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agenda__coleta {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-2);
+  border-left: 4px solid var(--brand-yellow);
+  border-radius: var(--radius-sm);
+  background: var(--brand-yellow-tint);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.agenda__coleta--noturna {
+  border-left-color: var(--brand-blue);
+  background: var(--brand-blue-tint);
+}
+
+.agenda__coleta:hover .agenda__rota {
+  text-decoration: underline;
+}
+
+.agenda__horario {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.agenda__rota {
+  font-size: 13px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+
+.agenda__bairros {
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.agenda__vazio {
+  margin: 0;
+  padding: var(--space-2);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--ink-muted);
+  text-align: center;
+}
+
+.agenda__legenda {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.agenda__legenda--dia {
+  background: var(--brand-yellow);
+}
+
+.agenda__legenda--noite {
+  margin-left: var(--space-2);
+  background: var(--brand-blue);
+}
+
+/* Com o painel lateral aberto, a semana passa a ter 4 colunas. */
+.admin-area--com-painel .agenda {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* ---------- Horário de várias rotas ---------- */
+.lote-rotas {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.lote-rotas__lista {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lote-rotas__item span {
+  display: grid;
+}
+
+.lote-rotas__item small {
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+@media (max-width: 1100px) {
+  .agenda {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .passos-admin {
+    grid-template-columns: 1fr;
+  }
+
+  .bloco-rota {
+    padding: var(--space-4);
+  }
+
+  .bloco-rota__salvar {
+    justify-self: stretch;
+  }
+
+  /* No celular, um dia por linha, com o nome completo. */
+  .agenda,
+  .admin-area--com-painel .agenda {
+    grid-template-columns: 1fr;
+  }
+
+  .agenda__nome-curto {
+    display: none;
+  }
+
+  .agenda__nome-longo {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+    display: inline-block;
+  }
+
+  .agenda__nome-longo::first-letter {
+    text-transform: uppercase;
+  }
+
+  .agenda__lista {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+}
+
+/* ---------- Importar contornos do OpenStreetMap ---------- */
+.importar-contornos__progresso {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.importar-contornos__progresso p {
+  margin: 0;
+}
+
+.barra-progresso {
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+
+.barra-progresso span {
+  display: block;
+  height: 100%;
+  background: var(--brand-green);
+  transition: width 0.3s ease;
+}
+
+.importar-contornos__detalhes summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.importar-contornos__detalhes p {
+  margin: var(--space-2) 0 0;
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+/* Na semana da rota, os dias ficam do tamanho de um toque confortável. */
+.semana-coleta .seletor-dias__grade {
+  grid-template-columns: repeat(7, minmax(44px, 64px));
+}
+
+.semana-coleta .seletor-dias__dia {
+  min-height: 44px;
+  font-size: 15px;
+}
+
+@media (max-width: 420px) {
+  .semana-coleta .seletor-dias__grade {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }

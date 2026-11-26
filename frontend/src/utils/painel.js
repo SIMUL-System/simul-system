@@ -42,7 +42,7 @@ export function calcularResumo({ rotas, areas, cronogramas }) {
         (rota) => !horariosValidos.some((item) => item.rotaId === rota.id),
       ).length,
       link: '/admin/cronogramas',
-      acao: 'Criar horários',
+      acao: 'Ver quais são',
     },
     {
       id: 'sem-bairro',
@@ -50,8 +50,8 @@ export function calcularResumo({ rotas, areas, cronogramas }) {
       texto: 'Ninguém encontra essas rotas pela busca de bairro.',
       quantidade: rotasAtivas.filter((rota) => !areas.some((area) => area.rotaId === rota.id))
         .length,
-      link: '/admin/areas',
-      acao: 'Ligar bairros',
+      link: '/admin/rotas',
+      acao: 'Adicionar bairros',
     },
     {
       id: 'bairro-rota-inativa',

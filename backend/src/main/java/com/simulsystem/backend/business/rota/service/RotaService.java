@@ -5,6 +5,8 @@ import com.simulsystem.backend.business.rota.dto.AreaAtendidaResponseDTO;
 import com.simulsystem.backend.business.rota.dto.AreaDisponivelResponseDTO;
 import com.simulsystem.backend.business.rota.dto.AreaGeometriaRequestDTO;
 import com.simulsystem.backend.business.rota.dto.AreaGeometriaResponseDTO;
+import com.simulsystem.backend.business.rota.dto.BairrosRotaRequestDTO;
+import com.simulsystem.backend.business.rota.dto.BairrosRotaResponseDTO;
 import com.simulsystem.backend.business.rota.dto.ConsultaColetaResponseDTO;
 import com.simulsystem.backend.business.rota.dto.RotaRequestDTO;
 import com.simulsystem.backend.business.rota.dto.RotaResponseDTO;
@@ -43,4 +45,10 @@ public interface RotaService {
 
     /** Ativa ou desativa a rota. */
     RotaResponseDTO alterarStatus(Long id, boolean ativo);
+
+    /**
+     * Coloca vários bairros de uma cidade na rota, numa única transação:
+     * cadastra os novos e move para esta rota os que estavam em outra.
+     */
+    BairrosRotaResponseDTO adicionarBairrosNaRota(Long rotaId, BairrosRotaRequestDTO requestDTO);
 }

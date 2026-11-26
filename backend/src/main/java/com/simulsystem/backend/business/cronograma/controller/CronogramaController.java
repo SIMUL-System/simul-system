@@ -3,6 +3,7 @@ package com.simulsystem.backend.business.cronograma.controller;
 import com.simulsystem.backend.business.cronograma.dto.CronogramaHorarioLoteRequestDTO;
 import com.simulsystem.backend.business.cronograma.dto.CronogramaRequestDTO;
 import com.simulsystem.backend.business.cronograma.dto.CronogramaResponseDTO;
+import com.simulsystem.backend.business.cronograma.dto.SemanaColetaRequestDTO;
 import com.simulsystem.backend.business.cronograma.service.CronogramaService;
 
 import jakarta.validation.Valid;
@@ -57,6 +58,17 @@ public class CronogramaController {
             @Valid @RequestBody CronogramaHorarioLoteRequestDTO requestDTO
     ) {
         List<CronogramaResponseDTO> cronogramas = cronogramaService.alterarHorariosEmLote(requestDTO);
+
+        return ResponseEntity.ok(cronogramas);
+    }
+
+    /** PUT /rota/{rotaId}: define os dias e horários da semana da rota de uma só vez. */
+    @PutMapping("/rota/{rotaId}")
+    public ResponseEntity<List<CronogramaResponseDTO>> definirSemanaDaRota(
+            @PathVariable Long rotaId,
+            @Valid @RequestBody SemanaColetaRequestDTO requestDTO
+    ) {
+        List<CronogramaResponseDTO> cronogramas = cronogramaService.definirSemanaDaRota(rotaId, requestDTO);
 
         return ResponseEntity.ok(cronogramas);
     }

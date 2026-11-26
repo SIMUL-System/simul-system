@@ -8,24 +8,6 @@ function listarCronogramas() {
   })
 }
 
-/** POST /api/admin/cronogramas */
-function criarCronograma(dados) {
-  return apiRequest('/api/admin/cronogramas', {
-    method: 'POST',
-    token: obterToken(),
-    body: dados,
-  })
-}
-
-/** PUT /api/admin/cronogramas/{id} */
-function atualizarCronograma(id, dados) {
-  return apiRequest(`/api/admin/cronogramas/${id}`, {
-    method: 'PUT',
-    token: obterToken(),
-    body: dados,
-  })
-}
-
 /** PUT /api/admin/cronogramas/lote/horario (tudo ou nada) */
 function alterarHorariosEmLote(ids, horarioInicio, horarioFim) {
   return apiRequest('/api/admin/cronogramas/lote/horario', {
@@ -39,18 +21,16 @@ function alterarHorariosEmLote(ids, horarioInicio, horarioFim) {
   })
 }
 
-/** PATCH /api/admin/cronogramas/{id}/status */
-function alterarStatusCronograma(id, ativo) {
-  return apiRequest(`/api/admin/cronogramas/${id}/status?ativo=${ativo}`, {
-    method: 'PATCH',
+/**
+ * PUT /api/admin/cronogramas/rota/{rotaId} (tudo ou nada)
+ * Os dias enviados ficam ativos; os outros dias da rota são desativados.
+ */
+function definirSemanaDaRota(rotaId, dias) {
+  return apiRequest(`/api/admin/cronogramas/rota/${rotaId}`, {
+    method: 'PUT',
     token: obterToken(),
+    body: { dias },
   })
 }
 
-export {
-  listarCronogramas,
-  criarCronograma,
-  atualizarCronograma,
-  alterarStatusCronograma,
-  alterarHorariosEmLote,
-}
+export { listarCronogramas, alterarHorariosEmLote, definirSemanaDaRota }

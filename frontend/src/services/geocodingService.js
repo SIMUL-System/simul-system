@@ -55,6 +55,13 @@ async function buscarCoordenadasArea(cidade, bairro) {
     nome: resultado.display_name,
     geometria: resultado.geojson ?? null,
     boundingBox,
+    // Cidade em que o OpenStreetMap achou o lugar, para conferir se é a cidade certa.
+    cidadeEncontrada:
+      resultado.address?.city ??
+      resultado.address?.town ??
+      resultado.address?.municipality ??
+      resultado.address?.village ??
+      '',
   }
 
   cacheLocalizacoes.set(chaveCache, localizacao)

@@ -3,6 +3,7 @@ package com.simulsystem.backend.business.cronograma.service;
 import com.simulsystem.backend.business.cronograma.dto.CronogramaHorarioLoteRequestDTO;
 import com.simulsystem.backend.business.cronograma.dto.CronogramaRequestDTO;
 import com.simulsystem.backend.business.cronograma.dto.CronogramaResponseDTO;
+import com.simulsystem.backend.business.cronograma.dto.SemanaColetaRequestDTO;
 import com.simulsystem.backend.business.cronograma.model.Cronograma;
 
 import java.time.LocalDateTime;
@@ -26,6 +27,13 @@ public interface CronogramaService {
      * transação. Mantém rota, dia da semana e status de cada um.
      */
     List<CronogramaResponseDTO> alterarHorariosEmLote(CronogramaHorarioLoteRequestDTO requestDTO);
+
+    /**
+     * Define a semana de coleta da rota numa única transação: os dias enviados
+     * ficam ativos com o horário informado e os demais dias são desativados.
+     * Reaproveita o registro existente de cada dia para manter o histórico.
+     */
+    List<CronogramaResponseDTO> definirSemanaDaRota(Long rotaId, SemanaColetaRequestDTO requestDTO);
 
     /** Ativa ou desativa um horário. */
     CronogramaResponseDTO alterarStatus(Long id, boolean ativo);

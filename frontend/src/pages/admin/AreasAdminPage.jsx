@@ -5,6 +5,7 @@ import Alerta from '../../components/Alerta'
 import PainelLateral from '../../components/admin/PainelLateral'
 import EditorContorno from '../../components/admin/area/EditorContorno'
 import FormArea from '../../components/admin/area/FormArea'
+import ImportarContornos from '../../components/admin/area/ImportarContornos'
 import TabelaAreas from '../../components/admin/area/TabelaAreas'
 
 import {
@@ -95,6 +96,11 @@ function AreasAdminPage() {
     setPainel({ modo: 'editar', area, chave: `editar-${area.id}` })
   }
 
+  function abrirImportacao() {
+    setMensagem(null)
+    setPainel({ modo: 'importar', chave: 'importar' })
+  }
+
   function abrirContorno() {
     setPainel((atual) => ({ ...atual, modo: 'contorno', chave: `contorno-${atual.area.id}` }))
   }
@@ -173,6 +179,7 @@ function AreasAdminPage() {
     nova: 'Nova área',
     editar: painel?.area ? `Editar ${painel.area.bairro}` : 'Editar área',
     contorno: painel?.area ? `Contorno de ${painel.area.bairro}` : 'Contorno',
+    importar: 'Contornos do OpenStreetMap',
   }[painel?.modo]
 
   const opcoesMapa = [
@@ -188,12 +195,18 @@ function AreasAdminPage() {
           <h1 className="admin-pagina__titulo">Áreas atendidas</h1>
           <p className="admin-pagina__texto">
             {areas.length} bairros cadastrados
-            {cidades.length === 1 ? ` em ${cidades[0]}` : ` em ${cidades.length} cidades`}, cada um
-            ligado a uma rota. É por aqui que o morador encontra o seu bairro na consulta.
+            {cidades.length === 1 ? ` em ${cidades[0]}` : ` em ${cidades.length} cidades`}. Aqui
+            você cuida do contorno de cada bairro no mapa. Para adicionar vários bairros ou trocar a
+            rota deles, use a tela Rotas.
           </p>
         </div>
 
         <div className="admin-pagina__acoes">
+          {semDesenho > 0 && (
+            <button type="button" className="botao botao--secundario" onClick={abrirImportacao}>
+              Buscar contornos no mapa
+            </button>
+          )}
           <button type="button" className="botao botao--primario" onClick={abrirNova}>
             Nova área
           </button>
@@ -201,6 +214,17 @@ function AreasAdminPage() {
       </header>
 
       {mensagem && <Alerta tipo={mensagem.tipo}>{mensagem.texto}</Alerta>}
+
+      {semDesenho > 0 && painel?.modo !== 'importar' && (
+        <Alerta tipo="info">
+          {semDesenho === 1 ? '1 bairro ainda não tem' : `${semDesenho} bairros ainda não têm`}{' '}
+          contorno salvo no SIMUL. Na consulta, o mapa tenta achar esses bairros no OpenStreetMap a
+          cada visita.{' '}
+          <button type="button" className="botao-link" onClick={abrirImportacao}>
+            Buscar e salvar os contornos de uma vez
+          </button>
+        </Alerta>
+      )}
 
       <div
         className={[
@@ -296,6 +320,10 @@ function AreasAdminPage() {
                 onEnviar={salvarArea}
                 onAbrirContorno={abrirContorno}
               />
+            )}
+
+            {painel.modo === 'importar' && (
+              <ImportarContornos areas={areas} onConcluido={recarregarAreas} />
             )}
 
             {painel.modo === 'contorno' && (

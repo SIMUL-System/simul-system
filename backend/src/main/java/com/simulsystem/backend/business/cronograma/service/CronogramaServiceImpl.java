@@ -3,6 +3,8 @@ package com.simulsystem.backend.business.cronograma.service;
 import com.simulsystem.backend.business.cronograma.dto.CronogramaHorarioLoteRequestDTO;
 import com.simulsystem.backend.business.cronograma.dto.CronogramaRequestDTO;
 import com.simulsystem.backend.business.cronograma.dto.CronogramaResponseDTO;
+import com.simulsystem.backend.business.cronograma.dto.DiaColetaDTO;
+import com.simulsystem.backend.business.cronograma.dto.SemanaColetaRequestDTO;
 import com.simulsystem.backend.business.cronograma.mapper.CronogramaMapper;
 import com.simulsystem.backend.business.cronograma.model.Cronograma;
 import com.simulsystem.backend.business.cronograma.model.DiaSemana;
@@ -18,8 +20,11 @@ import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /** Implementação de CronogramaService. */
@@ -108,6 +113,85 @@ public class CronogramaServiceImpl implements CronogramaService {
                 .stream()
                 .map(cronogramaMapper::toResponseDTO)
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public List<CronogramaResponseDTO> definirSemanaDaRota(Long rotaId, SemanaColetaRequestDTO requestDTO) {
+        Rota rota = rotaValidation.buscarRotaExistente(rotaId);
+
+        cronogramaValidation.validarDiasSemRepeticao(
+                requestDTO.dias().stream().map(DiaColetaDTO::diaSemana).toList()
+        );
+
+        Map<DiaSemana, DiaColetaDTO> novaSemana = new EnumMap<>(DiaSemana.class);
+
+        for (DiaColetaDTO dia : requestDTO.dias()) {
+            LocalTime inicio = dia.horarioInicio().truncatedTo(ChronoUnit.MINUTES);
+            LocalTime fim = dia.horarioFim().truncatedTo(ChronoUnit.MINUTES);
+
+            cronogramaValidation.validarHorarios(inicio, fim);
+            novaSemana.put(dia.diaSemana(), new DiaColetaDTO(dia.diaSemana(), inicio, fim));
+        }
+
+        List<Cronograma> existentes = cronogramaRepository.findByRotaId(rotaId);
+
+        // Primeiro desativa os dias que saíram, liberando o índice único de "ativo por dia".
+        List<Cronograma> desativados = new ArrayList<>();
+
+        for (Cronograma cronograma : existentes) {
+            if (cronograma.getAtivo() && !novaSemana.containsKey(cronograma.getDiaSemana())) {
+                cronograma.setAtivo(false);
+                desativados.add(cronograma);
+            }
+        }
+
+        cronogramaRepository.saveAllAndFlush(desativados);
+
+        List<Cronograma> ativos = new ArrayList<>();
+
+        for (DiaColetaDTO dia : novaSemana.values()) {
+            Cronograma cronograma = escolherRegistroDoDia(existentes, dia.diaSemana());
+
+            if (cronograma == null) {
+                cronograma = new Cronograma();
+                cronograma.setRota(rota);
+                cronograma.setDiaSemana(dia.diaSemana());
+            }
+
+            cronograma.setHorarioInicio(dia.horarioInicio());
+            cronograma.setHorarioFim(dia.horarioFim());
+            cronograma.setAtivo(true);
+            ativos.add(cronograma);
+        }
+
+        return cronogramaRepository
+                .saveAll(ativos)
+                .stream()
+                .sorted(Comparator.comparingInt(cronograma -> cronograma.getDiaSemana().ordinal()))
+                .map(cronogramaMapper::toResponseDTO)
+                .toList();
+    }
+
+    /** Registro a reaproveitar para o dia: o ativo, senão o inativo mais recente. */
+    private Cronograma escolherRegistroDoDia(List<Cronograma> existentes, DiaSemana dia) {
+        Cronograma escolhido = null;
+
+        for (Cronograma cronograma : existentes) {
+            if (cronograma.getDiaSemana() != dia) {
+                continue;
+            }
+
+            if (cronograma.getAtivo()) {
+                return cronograma;
+            }
+
+            if (escolhido == null || cronograma.getId() > escolhido.getId()) {
+                escolhido = cronograma;
+            }
+        }
+
+        return escolhido;
     }
 
     @Override

@@ -13,6 +13,9 @@ public interface CronogramaRepository
     /** Horários ativos de uma rota. */
     List<Cronograma> findByRotaIdAndAtivoTrue(Long rotaId);
 
+    /** Todos os horários de uma rota, ativos e inativos. */
+    List<Cronograma> findByRotaId(Long rotaId);
+
     /** Já existe horário ativo para a rota nesse dia? */
     boolean existsByRotaIdAndDiaSemanaAndAtivoTrue(Long rotaId, DiaSemana diaSemana);
 

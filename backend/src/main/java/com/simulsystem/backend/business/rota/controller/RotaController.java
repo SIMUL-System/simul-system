@@ -4,6 +4,8 @@ import com.simulsystem.backend.business.rota.dto.AreaAtendidaRequestDTO;
 import com.simulsystem.backend.business.rota.dto.AreaAtendidaResponseDTO;
 import com.simulsystem.backend.business.rota.dto.AreaGeometriaRequestDTO;
 import com.simulsystem.backend.business.rota.dto.AreaGeometriaResponseDTO;
+import com.simulsystem.backend.business.rota.dto.BairrosRotaRequestDTO;
+import com.simulsystem.backend.business.rota.dto.BairrosRotaResponseDTO;
 import com.simulsystem.backend.business.rota.dto.RotaRequestDTO;
 import com.simulsystem.backend.business.rota.dto.RotaResponseDTO;
 import com.simulsystem.backend.business.rota.service.RotaService;
@@ -113,5 +115,16 @@ public class RotaController {
         AreaGeometriaResponseDTO area = rotaService.atualizarGeometriaArea(id, requestDTO);
 
         return ResponseEntity.ok(area);
+    }
+
+    /** PUT /{id}/bairros: cadastra bairros novos na rota e move para ela os que estavam em outra. */
+    @PutMapping("/{id}/bairros")
+    public ResponseEntity<BairrosRotaResponseDTO> adicionarBairrosNaRota(
+            @PathVariable Long id,
+            @Valid @RequestBody BairrosRotaRequestDTO requestDTO
+    ) {
+        BairrosRotaResponseDTO resultado = rotaService.adicionarBairrosNaRota(id, requestDTO);
+
+        return ResponseEntity.ok(resultado);
     }
 }
